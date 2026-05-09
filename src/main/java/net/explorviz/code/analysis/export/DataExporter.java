@@ -4,6 +4,7 @@ import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.StateData;
+import net.explorviz.code.proto.TrackableResourceEvent;
 
 /**
  * A DataExporter handles the export of {@link FileData}, {@link CommitData} and request of {@link StateData}.
@@ -18,6 +19,8 @@ public interface DataExporter {
   void persistCommit(final CommitData commitData);
 
   void persistContributor(final ContributorData contributorData);
+
+  void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent);
 
   boolean isRemote();
 

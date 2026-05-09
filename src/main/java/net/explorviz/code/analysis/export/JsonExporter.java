@@ -9,6 +9,7 @@ import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.StateData;
 import net.explorviz.code.proto.StateDataRequest;
+import net.explorviz.code.proto.TrackableResourceEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,6 +168,17 @@ public class JsonExporter implements DataExporter {
     try {
       final String json = unescapeHtml(JsonFormat.printer().print(contributorData));
       final String fileName = "Contributor_" + contributorData.getName() + JSON_FILE_EXTENSION;
+      Files.write(Paths.get(storageDirectory, fileName), json.getBytes());
+    } catch (IOException e) { // NOPMD
+      throw new RuntimeException(e); // NOPMD
+    }
+  }
+
+  @Override
+  public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
+    try {
+      final String json = unescapeHtml(JsonFormat.printer().print(trackableResourceEvent));
+      final String fileName = "TrackableResourceEvent" + trackableResourceEvent.getResourceId() + JSON_FILE_EXTENSION;
       Files.write(Paths.get(storageDirectory, fileName), json.getBytes());
     } catch (IOException e) { // NOPMD
       throw new RuntimeException(e); // NOPMD

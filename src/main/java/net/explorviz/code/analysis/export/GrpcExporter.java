@@ -11,6 +11,8 @@ import net.explorviz.code.proto.FileDataServiceGrpc;
 import net.explorviz.code.proto.StateData;
 import net.explorviz.code.proto.StateDataRequest;
 import net.explorviz.code.proto.StateDataServiceGrpc;
+import net.explorviz.code.proto.TrackableResourceEvent;
+import net.explorviz.code.proto.TrackableResourceServiceGrpc;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +38,9 @@ public final class GrpcExporter implements DataExporter {
   //
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ ContributorServiceGrpc.ContributorServiceBlockingStub contributorDataGrpcClient;
+  //
+  @GrpcClient(GRPC_CLIENT_NAME)
+    /* package */ TrackableResourceServiceGrpc.TrackableResourceServiceBlockingStub trackableResourceGrpcClient;
 
   @ConfigProperty(name = "explorviz.landscape.token")
   /* default */ String landscapeTokenProperty;
@@ -91,13 +96,33 @@ public final class GrpcExporter implements DataExporter {
     }
   }
 
-  @Override public void persistContributor(final ContributorData contributorData) {
+  @Override
+  public void persistContributor(final ContributorData contributorData) {
     LOGGER.info("Sending contributor data on {}", contributorData.getName(), contributorData.getEmail());
+    System.out.println(
+        String.format("Sending contributor data on {}", contributorData.getName(), contributorData.getEmail()));
     try {
       contributorDataGrpcClient.persistContributor(contributorData);
     } catch (final Exception e) {
       if (LOGGER.isErrorEnabled()) {
         LOGGER.error("Failed to send contributor data {}", contributorData);
+        LOGGER.error(e.getMessage());
+      }
+    }
+  }
+
+  @Override
+  public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
+    LOGGER.info(
+        "Sending contributor data on {} #{}",
+        trackableResourceEvent.getResourceType(),
+        trackableResourceEvent.getResourceId()
+    );
+    try {
+      trackableResourceGrpcClient.persistTrackableResourceEvent(trackableResourceEvent);
+    } catch (final Exception e) {
+      if (LOGGER.isErrorEnabled()) {
+        LOGGER.error("Failed to send contributor data {}", trackableResourceEvent);
         LOGGER.error(e.getMessage());
       }
     }
