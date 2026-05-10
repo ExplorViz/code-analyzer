@@ -18,7 +18,8 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     boolean calculateMetrics,
     Optional<String> startCommit, Optional<String> endCommit,
     Optional<Integer> commitAnalysisLimit,
-    String landscapeToken, String applicationName) {
+    String landscapeToken, String applicationName,
+    boolean fetchSocialData, Optional<String> fetchEndDate, Optional<Integer> socialDataTimeFrameDays) {
 
   /**
    * Builder for AnalysisConfig.
@@ -42,7 +43,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
 
     // Social data analysis
     private boolean fetchSocialData = true;
-    private String fetchEndDate = Date.from(Instant.now()).toString();
+    private Optional<String> fetchEndDate = Optional.empty();
     private Optional<Integer> socialDataTimeFrameDays = Optional.empty();
 
     public Builder repoPath(final Optional<String> repoPath) {
@@ -115,6 +116,21 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       return this;
     }
 
+    public Builder fetchSocialData(final boolean fetchSocialData) {
+      this.fetchSocialData = fetchSocialData;
+      return this;
+    }
+
+    public Builder fetchEndDate(final Optional<String> fetchEndDate) {
+      this.fetchEndDate = fetchEndDate;
+      return this;
+    }
+
+    public Builder socialDataTimeFrameDays(final Optional<Integer> socialDataTimeFrameDays) {
+      this.socialDataTimeFrameDays = socialDataTimeFrameDays;
+      return this;
+    }
+
     public AnalysisConfig build() {
       return new AnalysisConfig(
           repoPath,
@@ -130,7 +146,10 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
           endCommit,
           commitAnalysisLimit,
           landscapeToken,
-          applicationName);
+          applicationName,
+          fetchSocialData,
+          fetchEndDate,
+          socialDataTimeFrameDays);
     }
   }
 

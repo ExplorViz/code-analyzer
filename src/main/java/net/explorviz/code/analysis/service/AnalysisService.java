@@ -11,6 +11,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -126,6 +129,9 @@ public class AnalysisService {
   public void analyzeAndSendRepo(final AnalysisConfig config, final DataExporter exporter) // NOCS
       throws IOException, GitAPIException, NotFoundException, PropertyNotDefinedException { // NOPMD
 
+
+    manageGitHubSocialAnalysis(config, exporter);
+
     try (Repository repository = this.gitRepositoryHandler.getGitRepository(config)) {
 
       final String fullBranch = repository.getFullBranch();
@@ -172,7 +178,6 @@ public class AnalysisService {
         final List<java.nio.file.PathMatcher> excludeMatchers = compileMatchers(
             config.excludeFromAnalysisExpressions());
 
-        manageGitHubSocialAnalysis(config, exporter);
 
         for (final RevCommit commit : revWalk) {
 
@@ -267,6 +272,11 @@ public class AnalysisService {
 
   private void manageGitHubSocialAnalysis(AnalysisConfig config, DataExporter exporter) {
 
+    if (!config.fetchSocialData()) {
+      LOGGER.info("Skipping GitHub social data fetch, not enabled in config.");
+      return;
+    }
+
     // TODO: handle config, better check
     if (config.repoRemoteUrl().isEmpty()) { //|| !config.repoRemoteUrl().get().contains("github)")) {
       LOGGER.info("Skipping GitHub social data fetch, remote url missing or wrong.");
@@ -274,19 +284,37 @@ public class AnalysisService {
     }
 
     String repoSubString = config.repoRemoteUrl().get().split("github.com[:/]")[1].replace(".git", "");
+    int socialDataTimeFrameDays = config.socialDataTimeFrameDays().isPresent()
+        ? config.socialDataTimeFrameDays().get() : 90;
+
+    Date endDate = Date.from(Instant.now()); // Default fallback
+    if (config.fetchEndDate().isPresent() && !config.fetchEndDate().get().isBlank()) {
+      String dateStr = config.fetchEndDate().get();
+      try {
+        // Try parsing ISO timestamp first
+        endDate = Date.from(Instant.parse(dateStr));
+      } catch (DateTimeParseException e) {
+        // Fallback to simple date parsing "YYYY-MM-DD"
+        endDate = Date.from(LocalDate.parse(dateStr).atStartOfDay(ZoneId.systemDefault()).toInstant());
+      }
+    }
+
+    LOGGER.info("Configured to fetch GitHub social data for repo '{}' from {} days ago until {}.",
+        repoSubString, socialDataTimeFrameDays, endDate);
 
     // GitHub social data fetching
-    // Define time window to search by using current date and TODO: Date range to be set in frontend or via api request
-    Date startDate = Date.from(Instant.now().minus(90, ChronoUnit.DAYS));
-    Date endDate = Date.from(Instant.now());
+    // Define time window to search by using current date and
+    // Date startDate = Date.from(Instant.now().minus(socialDataTimeFrameDays, ChronoUnit.DAYS));
+    Date startDate = Date.from(endDate.toInstant().minus(socialDataTimeFrameDays, ChronoUnit.DAYS));
 
+    final Date finalEndDate = endDate;
     managedExecutor.execute(() -> {
       try {
         LOGGER.info("Starting independent background fetch for GitHub Social Data (Last 180 Days).");
         socialFetcherService.fetchSocialDataInRangeAsync(
             repoSubString,
             startDate,
-            endDate,
+            finalEndDate,
             exporter,
             config.landscapeToken()
         );
