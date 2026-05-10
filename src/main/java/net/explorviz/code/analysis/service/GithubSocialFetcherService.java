@@ -56,8 +56,8 @@ public class GithubSocialFetcherService {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     String dateRange = String.format("%s..%s", sdf.format(startDate), sdf.format(endDate));
 
-    String issueQueryStr = String.format("repo:%s is:issue created:%s", repositoryName, dateRange);
-    String pullRequestQueryStr = String.format("repo:%s is:pr created:%s", repositoryName, dateRange);
+    String issueQueryStr = String.format("repo:%s is:issue updated:%s", repositoryName, dateRange);
+    String pullRequestQueryStr = String.format("repo:%s is:pr updated:%s", repositoryName, dateRange);
 
     LOGGER.info("Executing Issue Search with query: {}", issueQueryStr);
     executePaginatedSearch(issueQueryStr, exporter, landscapeToken, repositoryName);

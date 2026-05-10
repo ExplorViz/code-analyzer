@@ -1,6 +1,8 @@
 package net.explorviz.code.analysis.service;
 
 import com.google.protobuf.Timestamp;
+import io.smallrye.context.SmallRyeManagedExecutor;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.File;
@@ -8,8 +10,11 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -18,7 +23,6 @@ import net.explorviz.code.analysis.exceptions.DebugFileWriter;
 import net.explorviz.code.analysis.exceptions.NotFoundException;
 import net.explorviz.code.analysis.exceptions.PropertyNotDefinedException;
 import net.explorviz.code.analysis.export.DataExporter;
-import net.explorviz.code.analysis.git.DirectoryFinder;
 import net.explorviz.code.analysis.git.GitMetricCollector;
 import net.explorviz.code.analysis.git.GitRepositoryHandler;
 import net.explorviz.code.analysis.handler.AbstractFileDataHandler;
@@ -31,7 +35,6 @@ import net.explorviz.code.analysis.parser.AntlrPythonParserService;
 import net.explorviz.code.analysis.parser.AntlrTypeScriptParserService;
 import net.explorviz.code.analysis.types.FileDescriptor;
 import net.explorviz.code.analysis.types.Triple;
-import net.explorviz.code.analysis.visitor.FileDataVisitor;
 import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.Language;
 import net.explorviz.code.proto.StateData;
@@ -97,6 +100,10 @@ public class AnalysisService {
   /* package */ CommitReportHandler commitReportHandler;
   @Inject
   /* package */ AnalysisStatusService analysisStatusService;
+  @Inject
+  /* package */ GithubSocialFetcherService socialFetcherService;
+  @Inject
+  /* package */ SmallRyeManagedExecutor managedExecutor;
   @ConfigProperty(name = "explorviz.gitanalysis.save-crashed_files")
   /* default */ boolean saveCrashedFilesProperty;
 
@@ -164,6 +171,8 @@ public class AnalysisService {
             config.includeInAnalysisExpressions());
         final List<java.nio.file.PathMatcher> excludeMatchers = compileMatchers(
             config.excludeFromAnalysisExpressions());
+
+        manageGitHubSocialAnalysis(config, exporter);
 
         for (final RevCommit commit : revWalk) {
 
@@ -254,6 +263,38 @@ public class AnalysisService {
       // checkout the branch, so not a single commit is checked out after the run
       Git.wrap(repository).checkout().setName(fullBranch).call();
     }
+  }
+
+  private void manageGitHubSocialAnalysis(AnalysisConfig config, DataExporter exporter) {
+
+    // TODO: handle config, better check
+    if (config.repoRemoteUrl().isEmpty()) { //|| !config.repoRemoteUrl().get().contains("github)")) {
+      LOGGER.info("Skipping GitHub social data fetch, remote url missing or wrong.");
+      return;
+    }
+
+    String repoSubString = config.repoRemoteUrl().get().split("github.com[:/]")[1].replace(".git", "");
+
+    // GitHub social data fetching
+    // Define time window to search by using current date and TODO: Date range to be set in frontend or via api request
+    Date startDate = Date.from(Instant.now().minus(90, ChronoUnit.DAYS));
+    Date endDate = Date.from(Instant.now());
+
+    managedExecutor.execute(() -> {
+      try {
+        LOGGER.info("Starting independent background fetch for GitHub Social Data (Last 180 Days).");
+        socialFetcherService.fetchSocialDataInRangeAsync(
+            repoSubString,
+            startDate,
+            endDate,
+            exporter,
+            config.landscapeToken()
+        );
+      } catch (Exception e) {
+        LOGGER.error("Background social fetch aborted: {}", e.getMessage());
+      }
+    });
+
   }
 
   private void checkIfCommitsAreReachable(final Optional<String> startCommit,

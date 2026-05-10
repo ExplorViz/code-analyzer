@@ -1,5 +1,7 @@
 package net.explorviz.code.analysis.service;
 
+import java.sql.Date;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -37,6 +39,11 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     private Optional<Integer> commitAnalysisLimit = Optional.empty();
     private String landscapeToken = "";
     private String applicationName = "";
+
+    // Social data analysis
+    private boolean fetchSocialData = true;
+    private String fetchEndDate = Date.from(Instant.now()).toString();
+    private Optional<Integer> socialDataTimeFrameDays = Optional.empty();
 
     public Builder repoPath(final Optional<String> repoPath) {
       this.repoPath = repoPath;
