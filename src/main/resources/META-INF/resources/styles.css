@@ -156,6 +156,59 @@ button.primary:hover:not(:disabled) {
   filter: brightness(1.05);
 }
 
+button.secondary {
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font: inherit;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-primary);
+  width: fit-content;
+  transition:
+    border-color 0.2s ease,
+    filter 0.2s ease;
+}
+
+button.secondary:hover:not(:disabled) {
+  filter: brightness(1.03);
+  border-color: var(--accent);
+}
+
+.applications-editor {
+  display: grid;
+  gap: 0.75rem;
+  grid-column: 1 / -1;
+}
+
+.applications-heading .label-header {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.applications-rows {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.application-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem 1rem;
+  align-items: end;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.application-row-actions {
+  display: flex;
+  align-items: flex-end;
+}
+
 .status {
   margin-top: 1rem;
   padding: 1rem 1.2rem;
@@ -253,6 +306,13 @@ details summary {
 .label-header {
   display: flex;
   align-items: center;
+}
+
+.label-header .hint {
+  margin-left: 0.35rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
 }
 
 .examples-table-container {

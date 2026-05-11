@@ -2,6 +2,7 @@ package net.explorviz.code.analysis.export;
 
 import io.quarkus.grpc.GrpcClient;
 import jakarta.enterprise.context.ApplicationScoped;
+import java.util.Map;
 import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.CommitServiceGrpc;
 import net.explorviz.code.proto.FileData;
@@ -47,14 +48,21 @@ public final class GrpcExporter implements DataExporter {
   @Override
   public StateData getStateData(final String repositoryName, final String branchName,
       final String token,
-      final String applicationName, final String applicationRoot) {
+      final Map<String, String> applicationPaths) {
     final StateDataRequest.Builder requestBuilder = StateDataRequest.newBuilder();
     requestBuilder.setBranchName(branchName);
     requestBuilder.setRepositoryName(repositoryName);
     requestBuilder.setLandscapeToken("".equals(token) ? landscapeTokenProperty : token);
 
-    final String appName = "".equals(applicationName) ? applicationNameProperty : applicationName;
-    requestBuilder.putApplicationPaths(appName, applicationRoot);
+    if (applicationPaths == null || applicationPaths.isEmpty()) {
+      requestBuilder.putApplicationPaths(applicationNameProperty, "");
+    } else {
+      for (final Map.Entry<String, String> entry : applicationPaths.entrySet()) {
+        final String key = "".equals(entry.getKey()) ? applicationNameProperty : entry.getKey();
+        final String value = entry.getValue() != null ? entry.getValue() : "";
+        requestBuilder.putApplicationPaths(key, value);
+      }
+    }
 
     final StateDataRequest request = requestBuilder.build();
     LOGGER.debug("Sending state request: {}", request);

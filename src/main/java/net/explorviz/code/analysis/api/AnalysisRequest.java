@@ -1,12 +1,39 @@
 package net.explorviz.code.analysis.api;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import net.explorviz.code.analysis.service.AnalysisConfig;
+import net.explorviz.code.analysis.service.ApplicationPath;
 
 /**
  * Request object for triggering a Git analysis.
  */
 public class AnalysisRequest {
+
+  /**
+   * Optional multi-application configuration (name and repo-relative root per app).
+   */
+  public static final class ApplicationSpec {
+    private String name;
+    private String root;
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(final String name) {
+      this.name = name;
+    }
+
+    public String getRoot() {
+      return root;
+    }
+
+    public void setRoot(final String root) {
+      this.root = root;
+    }
+  }
 
   private String repoPath;
   private String repoRemoteUrl;
@@ -25,6 +52,7 @@ public class AnalysisRequest {
   private String landscapeToken = "mytokenvalue";
   private String applicationName = "";
   private String applicationRoot;
+  private List<ApplicationSpec> applications;
 
   public AnalysisRequest() {
   }
@@ -141,6 +169,14 @@ public class AnalysisRequest {
     this.applicationName = applicationName;
   }
 
+  public List<ApplicationSpec> getApplications() {
+    return applications;
+  }
+
+  public void setApplications(final List<ApplicationSpec> applications) {
+    this.applications = applications;
+  }
+
   public Integer getCommitAnalysisLimit() {
     return commitAnalysisLimit;
   }
@@ -155,7 +191,18 @@ public class AnalysisRequest {
    * @return The analysis configuration
    */
   public AnalysisConfig toConfig() {
-    return new AnalysisConfig.Builder()
+    final List<ApplicationPath> paths = new ArrayList<>();
+    if (applications != null) {
+      for (final ApplicationSpec spec : applications) {
+        if (spec == null || spec.getName() == null || spec.getName().isBlank()) {
+          continue;
+        }
+        final String root = spec.getRoot() != null ? spec.getRoot().trim() : "";
+        paths.add(new ApplicationPath(spec.getName().trim(), root));
+      }
+    }
+
+    final AnalysisConfig.Builder builder = new AnalysisConfig.Builder()
         .repoPath(Optional.ofNullable(repoPath))
         .repoRemoteUrl(Optional.ofNullable(repoRemoteUrl))
         .gitUsername(Optional.ofNullable(username))
@@ -167,9 +214,14 @@ public class AnalysisRequest {
         .startCommit(Optional.ofNullable(startCommit))
         .endCommit(Optional.ofNullable(endCommit))
         .commitAnalysisLimit(Optional.ofNullable(commitAnalysisLimit))
-        .landscapeToken((landscapeToken != null && !landscapeToken.isBlank()) ? landscapeToken : "mytokenvalue")
-        .applicationName(applicationName != null ? applicationName : "")
-        .applicationRoot(Optional.ofNullable(applicationRoot))
-        .build();
+        .landscapeToken((landscapeToken != null && !landscapeToken.isBlank()) ? landscapeToken : "mytokenvalue");
+
+    if (!paths.isEmpty()) {
+      builder.applicationPaths(paths);
+    } else {
+      builder.applicationName(applicationName != null ? applicationName : "")
+          .applicationRoot(Optional.ofNullable(applicationRoot));
+    }
+    return builder.build();
   }
 }

@@ -199,7 +199,7 @@ public class AnalysisService {
                   repository,
                   Optional.ofNullable(baseCommit),
                   commit,
-                  config.applicationRoot().orElse(config.includeInAnalysisExpressions().orElse("")));
+                  config.pathRestrictionForDiff());
 
           final List<FileDescriptor> descriptorAddedList = descTriple.right(); // NOPMD
           final List<FileDescriptor> descriptorModifiedList = descTriple.left();
@@ -267,8 +267,7 @@ public class AnalysisService {
       final DataExporter exporter, final String branch) {
     final StateData remoteState = exporter.getStateData(
         config.getRepositoryName(), branch,
-        config.landscapeToken(), config.applicationName(),
-        config.applicationRoot().orElse(""));
+        config.landscapeToken(), config.applicationPathsMap());
     if (exporter.isRemote()) {
 
       if (remoteState.getCommitId().isEmpty() || remoteState.getCommitId().isBlank()) {
@@ -344,6 +343,9 @@ public class AnalysisService {
       final List<java.nio.file.PathMatcher> excludeMatchers)
       throws GitAPIException, NotFoundException, IOException {
 
+    createCommitReport(config, repository, commit, lastCommit, exporter, branchName, descriptorTriple,
+        restrictMatchers, excludeMatchers);
+
     Git.wrap(repository).checkout().setName(commit.getName()).call();
 
     antlrParserService.reset();
@@ -392,9 +394,6 @@ public class AnalysisService {
       }
     });
 
-    createCommitReport(config, repository, commit, lastCommit, exporter, branchName, descriptorTriple,
-        restrictMatchers, excludeMatchers);
-
   }
 
   private void createCommitReport(final AnalysisConfig config, final Repository repository,
@@ -421,6 +420,12 @@ public class AnalysisService {
     final List<FileDescriptor> deletedFiles = descriptorTriple.middle();
     final List<FileDescriptor> addedFiles = descriptorTriple.right();
 
+    for (final FileDescriptor addedFile : addedFiles) {
+      commitReportHandler.addAdded(addedFile);
+    }
+    for (final FileDescriptor modifiedFile : modifiedFiles) {
+      commitReportHandler.addModified(modifiedFile);
+    }
     for (final FileDescriptor deletedFile : deletedFiles) {
       commitReportHandler.addDeleted(deletedFile);
     }
