@@ -22,10 +22,3 @@ message ContributorData {
   string github_login = 6;
   string avatar_url = 7;
 }
-
-message CommitAuthorAssociation {
-  string landscape_token = 1;
-  string repository_name = 2;
-  string commit_id = 3;
-  string contributor_id = 4;
-}

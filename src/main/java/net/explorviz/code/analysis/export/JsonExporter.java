@@ -164,17 +164,6 @@ public class JsonExporter implements DataExporter {
   }
 
   @Override
-  public void persistContributor(final ContributorData contributorData) {
-    try {
-      final String json = unescapeHtml(JsonFormat.printer().print(contributorData));
-      final String fileName = "Contributor_" + contributorData.getGitUsername() + JSON_FILE_EXTENSION;
-      Files.write(Paths.get(storageDirectory, fileName), json.getBytes());
-    } catch (IOException e) { // NOPMD
-      throw new RuntimeException(e); // NOPMD
-    }
-  }
-
-  @Override
   public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
     try {
       final String json = unescapeHtml(JsonFormat.printer().print(trackableResourceEvent));

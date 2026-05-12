@@ -29,11 +29,6 @@ public class VoidExporter implements DataExporter {
   }
 
   @Override
-  public void persistContributor(final ContributorData contributorData) {
-    // DO NOTHING
-  }
-
-  @Override
   public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
     // DO NOTHING
   }

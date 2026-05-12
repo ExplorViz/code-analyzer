@@ -42,8 +42,7 @@ public class GithubSocialFetcherService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GithubSocialFetcherService.class);
 
-  @ConfigProperty(name = "quarkus.smallrye-graphql-client.github.url")
-  String githubUrl;
+  final String githubUrl = "https://api.github.com/graphql";
 
   public void fetchSocialDataInRangeAsync(
       final String repositoryName,
@@ -75,6 +74,8 @@ public class GithubSocialFetcherService {
 
       LOGGER.info("Executing Pull Request Search with query: {}", pullRequestQueryStr);
       executePaginatedSearch(pullRequestQueryStr, exporter, landscapeToken, repositoryName, githubClient);
+
+      LOGGER.info("Completed all Social fetch queries.");
     } catch (Exception e) {
       LOGGER.error("Failed to fetch social data: {}", e.getMessage(), e);
     }
@@ -112,6 +113,21 @@ public class GithubSocialFetcherService {
           break;
         }
 
+        // Check Rate Limit
+        if (response.getData().containsKey("rateLimit")) {
+          JsonObject rateLimit = response.getData().getJsonObject("rateLimit");
+          int cost = rateLimit.getInt("cost");
+          int remaining = rateLimit.getInt("remaining");
+          String resetAt = rateLimit.getString("resetAt");
+
+          LOGGER.info("GitHub API Rate Limit: Cost: {}, Remaining: {}, Resets At: {}", cost, remaining, resetAt);
+
+          if (remaining < 50) {
+            LOGGER.warn("GitHub API Rate Limit reached (Remaining: {}). Stopping social data fetch.", remaining);
+            break;
+          }
+        }
+
         //LOGGER.info("Raw Response Data: {}", response.getData().toString());
 
         JsonObject search = response.getData().getJsonObject("search");
@@ -133,12 +149,12 @@ public class GithubSocialFetcherService {
           List<TrackableResourceEvent> events = mapToEvents(node, landscapeToken, repositoryName);
 
           for (TrackableResourceEvent event : events) {
-            LOGGER.info(
-                "Generated Event: {} for resource {} with state {}",
-                event.getAnnotationType(),
-                event.getResourceId(),
-                event.getNewState()
-            );
+            //            LOGGER.info(
+            //                "Generated Event: {} for resource {} with state {}",
+            //                event.getAnnotationType(),
+            //                event.getResourceId(),
+            //                event.getNewState()
+            //            );
             exporter.persistTrackableResourceEvent(event);
             // TODO: test, integrate into git analysis, decide on window
           }
@@ -149,6 +165,7 @@ public class GithubSocialFetcherService {
         break;
       }
     }
+    LOGGER.info("completed social data fetch for query {}", queryStr);
   }
 
   private List<TrackableResourceEvent> mapToEvents(
@@ -163,21 +180,13 @@ public class GithubSocialFetcherService {
         ? TrackableResourceType.ISSUE
         : TrackableResourceType.PULL_REQUEST;
 
-    LOGGER.info("Processing {}, {}", typeName, node.getInt("number"));
-
     String resourceId = String.valueOf(node.getInt("number"));
-
     String id = (node.containsKey("id") && !node.isNull("id")) ? node.getString("id") : "";
-
     String title = (node.containsKey("title") && !node.isNull("title")) ? node.getString("title") : "";
-
     String description = (node.containsKey("body") && !node.isNull("body")) ? node.getString("body") : "";
-
     String webUrl = (node.containsKey("url") && !node.isNull("url")) ? node.getString("url") : "";
-
     String rawState = (
         node.containsKey("state") && !node.isNull("state")) ? node.getString("state") : "OPEN";
-
     String repoName = repositoryName.split("/")[1];
 
     ResourceState resourceState = switch (rawState) {
@@ -190,7 +199,6 @@ public class GithubSocialFetcherService {
       }
     };
 
-    // Safe Author parsing
     String authorLogin = "unknown";
     String authorEmail = "";
     String avatarUrl = "";
@@ -249,30 +257,24 @@ public class GithubSocialFetcherService {
           .setNewState(ResourceState.OPEN)
           .setEventTimestamp(parseTimestamp(node.getString("createdAt")))
           .build();
-      LOGGER.info("Fetched event: {} for {} by {}", event.getAnnotationType(), resourceId,
-          event.getActor().getGithubLogin());
       events.add(event);
     }
 
     if (node.containsKey("mergedAt") && !node.isNull("mergedAt")) {
       TrackableResourceEvent event = baseBuilder.clone()
           .setAnnotationType(AnnotationType.MERGE)
-          .setAnnotationId(id + "-MERGE")
+          .setAnnotationId(id)
           .setNewState(ResourceState.MERGED)
           .setEventTimestamp(parseTimestamp(node.getString("mergedAt")))
           .build();
-      LOGGER.info("Fetched event: {} for {} by {}", event.getAnnotationType(), resourceId,
-          event.getActor().getGithubLogin());
       events.add(event);
     } else if (node.containsKey("closedAt") && !node.isNull("closedAt")) {
       TrackableResourceEvent event = baseBuilder.clone()
           .setAnnotationType(AnnotationType.CLOSE)
-          .setAnnotationId(id + "-CLOSE")
+          .setAnnotationId(id)
           .setNewState(ResourceState.CLOSED)
           .setEventTimestamp(parseTimestamp(node.getString("closedAt")))
           .build();
-      LOGGER.info("Fetched event: {} for {} by {}", event.getAnnotationType(), resourceId,
-          event.getActor().getGithubLogin());
       events.add(event);
     }
 
@@ -334,8 +336,6 @@ public class GithubSocialFetcherService {
             .setNewState(newState)
             .build();
         
-        LOGGER.info("Fetched timeline event: {} for {} by {}", event.getAnnotationType(), resourceId,
-            event.getActor().getGithubLogin());
         events.add(event);
       }
     }
@@ -361,10 +361,8 @@ public class GithubSocialFetcherService {
       return Timestamp.getDefaultInstance(); // Safe fallback
     }
 
-    // 1. Parse the ISO-8601 string into a Java Instant
+    // parse instant to protobuf timestamp
     Instant instant = Instant.parse(isoTimestamp);
-
-    // 2. Build the Protobuf Timestamp explicitly
     return Timestamp.newBuilder()
         .setSeconds(instant.getEpochSecond())
         .setNanos(instant.getNano())
@@ -458,6 +456,11 @@ public class GithubSocialFetcherService {
                         )
                     )
                 )
+            ),
+            field("rateLimit",
+                field("cost"),
+                field("remaining"),
+                field("resetAt")
             )
         )
     );

@@ -97,28 +97,13 @@ public final class GrpcExporter implements DataExporter {
   }
 
   @Override
-  public void persistContributor(final ContributorData contributorData) {
-    LOGGER.info("Sending contributor data on {}", contributorData.getGitUsername(), contributorData.getEmail());
-    System.out.println(
-        String.format("Sending contributor data on {}", contributorData.getGitUsername(), contributorData.getEmail()));
-    try {
-      contributorDataGrpcClient.persistContributor(contributorData);
-    } catch (final Exception e) {
-      if (LOGGER.isErrorEnabled()) {
-        LOGGER.error("Failed to send contributor data {}", contributorData);
-        LOGGER.error(e.getMessage());
-      }
-    }
-  }
-
-  @Override
   public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
-    LOGGER.info(
-        "Sending TrackableResourceEvent {} for {} #{}",
-        trackableResourceEvent.getAnnotationType(),
-        trackableResourceEvent.getResourceType(),
-        trackableResourceEvent.getResourceId()
-    );
+    //  LOGGER.info(
+    //      "Sending TrackableResourceEvent {} for {} #{}",
+    //      trackableResourceEvent.getAnnotationType(),
+    //      trackableResourceEvent.getResourceType(),
+    //      trackableResourceEvent.getResourceId()
+    //  );
     try {
       trackableResourceGrpcClient.persistTrackableResourceEvent(trackableResourceEvent);
     } catch (final Exception e) {
