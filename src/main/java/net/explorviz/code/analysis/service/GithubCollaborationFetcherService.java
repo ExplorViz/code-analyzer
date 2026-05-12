@@ -17,7 +17,6 @@ import io.smallrye.graphql.client.core.Variable;
 import io.smallrye.graphql.client.dynamic.api.DynamicGraphQLClient;
 import io.smallrye.graphql.client.dynamic.api.DynamicGraphQLClientBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import java.text.SimpleDateFormat;
@@ -33,19 +32,32 @@ import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.ResourceState;
 import net.explorviz.code.proto.TrackableResourceEvent;
 import net.explorviz.code.proto.TrackableResourceType;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Service to fetch GitHub social data for a given repository.
+ */
 @ApplicationScoped
-public class GithubSocialFetcherService {
+public class GithubCollaborationFetcherService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(GithubSocialFetcherService.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(GithubCollaborationFetcherService.class);
 
   final String githubUrl = "https://api.github.com/graphql";
 
-  public void fetchSocialDataInRangeAsync(
-      final String repositoryName,
+  /**
+   * Fetches social data for a given time range.
+   *
+   * @param repoOwnerAndName the name of the owner and repository
+   * @param startDate the date for the analysis to start
+   * @param endDate the date for the analysis to end
+   * @param exporter the exporter to use for sending data
+   * @param landscapeToken the landscape token to use
+   * @param githubToken the GitHub personal access token to use
+   */
+  @SuppressWarnings("try")
+  public void fetchSocialDataInRange(
+      final String repoOwnerAndName,
       final Date startDate,
       final Date endDate,
       final DataExporter exporter,
@@ -56,9 +68,9 @@ public class GithubSocialFetcherService {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     String dateRange = String.format("%s..%s", sdf.format(startDate), sdf.format(endDate));
 
-    String issueQueryStr = String.format("repo:%s is:issue updated:%s", repositoryName, dateRange);
-    String pullRequestQueryStr = String.format("repo:%s is:pr updated:%s", repositoryName, dateRange);
-
+    // predefine base graphql queries
+    String issueQueryStr = String.format("repo:%s is:issue updated:%s", repoOwnerAndName, dateRange);
+    String pullRequestQueryStr = String.format("repo:%s is:pr updated:%s", repoOwnerAndName, dateRange);
 
     try (DynamicGraphQLClient githubClient = DynamicGraphQLClientBuilder.newBuilder()
         .url(githubUrl)
@@ -69,14 +81,17 @@ public class GithubSocialFetcherService {
         throw new IllegalArgumentException("Invalid github token. Aborting GitHub Data fetching.");
       }
 
-      LOGGER.info("Executing Issue Search with query: {}", issueQueryStr);
-      executePaginatedSearch(issueQueryStr, exporter, landscapeToken, repositoryName, githubClient);
+      LOGGER.info("Initiating Issue search with query: {}", issueQueryStr);
+      executePaginatedSearch(issueQueryStr, exporter, landscapeToken, repoOwnerAndName, githubClient);
 
-      LOGGER.info("Executing Pull Request Search with query: {}", pullRequestQueryStr);
-      executePaginatedSearch(pullRequestQueryStr, exporter, landscapeToken, repositoryName, githubClient);
+      LOGGER.info("Initiating Pull-Request search with query: {}", pullRequestQueryStr);
+      executePaginatedSearch(pullRequestQueryStr, exporter, landscapeToken, repoOwnerAndName, githubClient);
 
-      LOGGER.info("Completed all Social fetch queries.");
+      LOGGER.info("✅ Completed all social fetch queries.");
     } catch (Exception e) {
+      if (e instanceof InterruptedException || e.getCause() instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
       LOGGER.error("Failed to fetch social data: {}", e.getMessage(), e);
     }
   }
@@ -92,13 +107,10 @@ public class GithubSocialFetcherService {
         var("cursor", "String")
         );
 
-    //System.out.println("Constructed GraphQL Query: " + queryStr);
-
     boolean hasNextPage = true;
     String cursor = null;
 
     while (hasNextPage) {
-      hasNextPage = false;
       try {
 
         Map<String, Object> variables = new HashMap<>();
@@ -108,27 +120,9 @@ public class GithubSocialFetcherService {
 
         Response response = githubClient.executeSync(query, variables);
 
-        if (response.hasError()) {
-          LOGGER.error("GraphQL Errors: {}", response.getErrors());
+        if (response.hasError() || isRateLimitExceeded(response)) {
           break;
         }
-
-        // Check Rate Limit
-        if (response.getData().containsKey("rateLimit")) {
-          JsonObject rateLimit = response.getData().getJsonObject("rateLimit");
-          int cost = rateLimit.getInt("cost");
-          int remaining = rateLimit.getInt("remaining");
-          String resetAt = rateLimit.getString("resetAt");
-
-          LOGGER.info("GitHub API Rate Limit: Cost: {}, Remaining: {}, Resets At: {}", cost, remaining, resetAt);
-
-          if (remaining < 50) {
-            LOGGER.warn("GitHub API Rate Limit reached (Remaining: {}). Stopping social data fetch.", remaining);
-            break;
-          }
-        }
-
-        //LOGGER.info("Raw Response Data: {}", response.getData().toString());
 
         JsonObject search = response.getData().getJsonObject("search");
         JsonObject pageInfo = search.getJsonObject("pageInfo");
@@ -145,18 +139,10 @@ public class GithubSocialFetcherService {
 
         for (int i = 0; i < nodes.size(); i++) {
           JsonObject node = nodes.getJsonObject(i);
-          //System.out.println("Node " + i + ": " + node.toString());
           List<TrackableResourceEvent> events = mapToEvents(node, landscapeToken, repositoryName);
 
           for (TrackableResourceEvent event : events) {
-            //            LOGGER.info(
-            //                "Generated Event: {} for resource {} with state {}",
-            //                event.getAnnotationType(),
-            //                event.getResourceId(),
-            //                event.getNewState()
-            //            );
             exporter.persistTrackableResourceEvent(event);
-            // TODO: test, integrate into git analysis, decide on window
           }
         }
 
@@ -170,53 +156,48 @@ public class GithubSocialFetcherService {
 
   private List<TrackableResourceEvent> mapToEvents(
       JsonObject node, String landscapeToken, String repositoryName) {
+
     List<TrackableResourceEvent> events = new ArrayList<>();
 
-    // FIX 1: Check containsKey FIRST, then isNull
-    String typeName = (node.containsKey("__typename") && !node.isNull("__typename"))
-        ? node.getString("__typename") : "Unknown";
+    TrackableResourceEvent.Builder baseBuilder = parseBaseResource(node, landscapeToken, repositoryName);
+    if (baseBuilder == null) {
+      return events;
+    }
+
+    events.addAll(generateLifecycleEvents(node, baseBuilder));
+
+    if (node.containsKey("timelineItems") && !node.isNull("timelineItems")) {
+      events.addAll(parseTimelineEvents(node, baseBuilder));
+    }
+
+    return events;
+  }
+
+  private TrackableResourceEvent.Builder parseBaseResource(
+      JsonObject node, String landscapeToken, String repositoryName) {
+
+    String typeName = getJsonString(node, "__typename", "Unknown");
 
     final TrackableResourceType resourceType = typeName.equals("Issue")
         ? TrackableResourceType.ISSUE
         : TrackableResourceType.PULL_REQUEST;
 
     String resourceId = String.valueOf(node.getInt("number"));
-    String id = (node.containsKey("id") && !node.isNull("id")) ? node.getString("id") : "";
-    String title = (node.containsKey("title") && !node.isNull("title")) ? node.getString("title") : "";
-    String description = (node.containsKey("body") && !node.isNull("body")) ? node.getString("body") : "";
-    String webUrl = (node.containsKey("url") && !node.isNull("url")) ? node.getString("url") : "";
-    String rawState = (
-        node.containsKey("state") && !node.isNull("state")) ? node.getString("state") : "OPEN";
+    String title = getJsonString(node, "title", "");
+    String description = getJsonString(node, "body", "");
+    String webUrl = getJsonString(node, "url", "");
+    //  String rawState = getJsonString(node, "state", "OPEN");
     String repoName = repositoryName.split("/")[1];
-
-    ResourceState resourceState = switch (rawState) {
-      case "OPEN" -> ResourceState.OPEN;
-      case "CLOSED" -> ResourceState.CLOSED;
-      case "MERGED" -> ResourceState.MERGED;
-      default -> {
-        LOGGER.warn("Unknown state '{}' for resource {}, defaulting to OPEN", rawState, resourceId);
-        yield ResourceState.OPEN;
-      }
-    };
 
     String authorLogin = "unknown";
     String authorEmail = "";
     String avatarUrl = "";
-    String authorName = "unknown";
 
     if (node.containsKey("author") && !node.isNull("author")) {
       JsonObject authorObj = node.getJsonObject("author");
-      authorLogin = (authorObj.containsKey("login") && !authorObj.isNull("login"))
-          ? authorObj.getString("login") : "unknown";
-
-      authorEmail = (authorObj.containsKey("email") && !authorObj.isNull("email"))
-          ? authorObj.getString("email") : "";
-
-      avatarUrl = (authorObj.containsKey("avatarUrl") && !authorObj.isNull("avatarUrl"))
-          ? authorObj.getString("avatarUrl") : "";
-
-      authorName = (authorObj.containsKey("name") && !authorObj.isNull("name"))
-          ? authorObj.getString("name") : authorName;
+      authorLogin = getJsonString(authorObj, "login", "unknown");
+      authorEmail = getJsonString(authorObj, "email", "");
+      avatarUrl = getJsonString(authorObj, "avatarUrl", "");
     }
 
     ContributorData actor = ContributorData.newBuilder()
@@ -239,7 +220,7 @@ public class GithubSocialFetcherService {
       labelsStr = String.join(",", labelNames);
     }
 
-    TrackableResourceEvent.Builder baseBuilder = TrackableResourceEvent.newBuilder()
+    return TrackableResourceEvent.newBuilder()
         .setLandscapeToken(landscapeToken)
         .setRepositoryName(repoName)
         .setResourceId(resourceId)
@@ -249,6 +230,14 @@ public class GithubSocialFetcherService {
         .setDescription(description)
         .setWebUrl(webUrl)
         .setLabels(labelsStr);
+  }
+
+  private List<TrackableResourceEvent> generateLifecycleEvents(
+      JsonObject node, TrackableResourceEvent.Builder baseBuilder) {
+
+    List<TrackableResourceEvent> events = new ArrayList<>();
+
+    String id = getJsonString(node, "id", "");
 
     if (node.containsKey("createdAt") && !node.isNull("createdAt")) {
       TrackableResourceEvent event = baseBuilder.clone()
@@ -277,6 +266,16 @@ public class GithubSocialFetcherService {
           .build();
       events.add(event);
     }
+    return events;
+  }
+
+  private List<TrackableResourceEvent> parseTimelineEvents(
+      JsonObject node, TrackableResourceEvent.Builder baseBuilder) {
+
+    List<TrackableResourceEvent> events = new ArrayList<>();
+    String id = getJsonString(node, "id", "");
+
+    String authorLogin = baseBuilder.getActor().getGithubLogin();
 
     // Process Timeline Items
     if (node.containsKey("timelineItems") && !node.isNull("timelineItems")) {
@@ -300,7 +299,7 @@ public class GithubSocialFetcherService {
           eventActorLogin = eventNode.getJsonObject("author").getString("login", authorLogin);
         }
 
-        ResourceState newState = resourceState; // Default to current state
+        ResourceState newState = baseBuilder.getNewState(); // Default to current state
 
         // Special handling for PullRequestCommit
         if ("PullRequestCommit".equals(type)) {
@@ -323,7 +322,7 @@ public class GithubSocialFetcherService {
           newState = ResourceState.MERGED;
         }
 
-        ContributorData eventActor = actor.toBuilder()
+        ContributorData eventActor = baseBuilder.getActor().toBuilder()
             .setGithubLogin(eventActorLogin)
             .setGitUsername(eventActorLogin)
             .build();
@@ -335,38 +334,11 @@ public class GithubSocialFetcherService {
             .setActor(eventActor)
             .setNewState(newState)
             .build();
-        
+
         events.add(event);
       }
     }
-
     return events;
-  }
-
-  private AnnotationType mapToAnnotationType(String typeName) {
-    return switch (typeName) {
-      case "ClosedEvent" -> AnnotationType.CLOSE;
-      case "MergedEvent" -> AnnotationType.MERGE;
-      case "ReopenedEvent" -> AnnotationType.REOPEN;
-      case "IssueComment" -> AnnotationType.COMMENT;
-      case "PullRequestCommit" -> AnnotationType.COMMIT;
-      case "PullRequestReview" -> AnnotationType.REVIEW;
-      case "HeadRefForcePushedEvent" -> AnnotationType.FORCE_PUSH;
-      default -> null;
-    };
-  }
-
-  public Timestamp parseTimestamp(String isoTimestamp) {
-    if (isoTimestamp == null || isoTimestamp.isBlank()) {
-      return Timestamp.getDefaultInstance(); // Safe fallback
-    }
-
-    // parse instant to protobuf timestamp
-    Instant instant = Instant.parse(isoTimestamp);
-    return Timestamp.newBuilder()
-        .setSeconds(instant.getEpochSecond())
-        .setNanos(instant.getNano())
-        .build();
   }
 
   private Document buildUnifiedSearchQuery(Variable queryVar, Variable typeVar, Variable cursorVar) {
@@ -464,5 +436,56 @@ public class GithubSocialFetcherService {
             )
         )
     );
+  }
+
+  private AnnotationType mapToAnnotationType(String typeName) {
+    return switch (typeName) {
+      case "ClosedEvent" -> AnnotationType.CLOSE;
+      case "MergedEvent" -> AnnotationType.MERGE;
+      case "ReopenedEvent" -> AnnotationType.REOPEN;
+      case "IssueComment" -> AnnotationType.COMMENT;
+      case "PullRequestCommit" -> AnnotationType.COMMIT;
+      case "PullRequestReview" -> AnnotationType.REVIEW;
+      case "HeadRefForcePushedEvent" -> AnnotationType.FORCE_PUSH;
+      default -> null;
+    };
+  }
+
+  private boolean isRateLimitExceeded(Response response) {
+
+    // Check Rate Limit
+    if (response.getData().containsKey("rateLimit")) {
+      JsonObject rateLimit = response.getData().getJsonObject("rateLimit");
+      int cost = rateLimit.getInt("cost");
+      int remaining = rateLimit.getInt("remaining");
+      String resetAt = rateLimit.getString("resetAt");
+
+      LOGGER.info("GitHub API Rate Limit: Cost: {}, Remaining: {}, Resets At: {}", cost, remaining, resetAt);
+
+      if (remaining < 50) {
+        LOGGER.warn("GitHub API Rate Limit reached (Remaining: {}). Stopping social data fetch.", remaining);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private String getJsonString(JsonObject obj, String key, String defaultValue) {
+    return (obj != null && obj.containsKey(key) && !obj.isNull(key))
+        ? obj.getString(key)
+        : defaultValue;
+  }
+
+  public Timestamp parseTimestamp(String isoTimestamp) {
+    if (isoTimestamp == null || isoTimestamp.isBlank()) {
+      return Timestamp.getDefaultInstance(); // Safe fallback
+    }
+
+    // parse instant to protobuf timestamp
+    Instant instant = Instant.parse(isoTimestamp);
+    return Timestamp.newBuilder()
+        .setSeconds(instant.getEpochSecond())
+        .setNanos(instant.getNano())
+        .build();
   }
 }

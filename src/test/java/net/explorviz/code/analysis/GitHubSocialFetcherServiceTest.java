@@ -7,14 +7,14 @@ import jakarta.inject.Inject;
 import java.util.Calendar;
 import java.util.Date;
 import net.explorviz.code.analysis.export.DataExporter;
-import net.explorviz.code.analysis.service.GithubSocialFetcherService;
+import net.explorviz.code.analysis.service.GithubCollaborationFetcherService;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 public class GitHubSocialFetcherServiceTest {
 
   @Inject
-  GithubSocialFetcherService githubSocialFetcherService;
+  GithubCollaborationFetcherService githubSocialFetcherService;
 
   @Test
   void testFetchSocialDataInRange() {
@@ -31,8 +31,8 @@ public class GitHubSocialFetcherServiceTest {
 
     DataExporter mockExporter = mock(DataExporter.class);
     System.out.println("#######################################################");
-    System.out.println("Calling fetchSocialDataInRangeAsync");
-    githubSocialFetcherService.fetchSocialDataInRangeAsync(
+    System.out.println("Calling fetchSocialDataInRange");
+    githubSocialFetcherService.fetchSocialDataInRange(
         repositoryName, startDate, endDate, mockExporter, landscapeToken, "dummy-token");
     System.out.println("Finished testFetchSocialDataInRange");
     System.out.println("#######################################################");
