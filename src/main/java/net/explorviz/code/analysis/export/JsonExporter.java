@@ -167,7 +167,7 @@ public class JsonExporter implements DataExporter {
   public void persistContributor(final ContributorData contributorData) {
     try {
       final String json = unescapeHtml(JsonFormat.printer().print(contributorData));
-      final String fileName = "Contributor_" + contributorData.getName() + JSON_FILE_EXTENSION;
+      final String fileName = "Contributor_" + contributorData.getGitUsername() + JSON_FILE_EXTENSION;
       Files.write(Paths.get(storageDirectory, fileName), json.getBytes());
     } catch (IOException e) { // NOPMD
       throw new RuntimeException(e); // NOPMD

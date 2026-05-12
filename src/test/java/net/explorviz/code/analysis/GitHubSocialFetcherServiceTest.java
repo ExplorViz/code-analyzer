@@ -33,7 +33,7 @@ public class GitHubSocialFetcherServiceTest {
     System.out.println("#######################################################");
     System.out.println("Calling fetchSocialDataInRangeAsync");
     githubSocialFetcherService.fetchSocialDataInRangeAsync(
-        repositoryName, startDate, endDate, mockExporter, landscapeToken);
+        repositoryName, startDate, endDate, mockExporter, landscapeToken, "dummy-token");
     System.out.println("Finished testFetchSocialDataInRange");
     System.out.println("#######################################################");
 

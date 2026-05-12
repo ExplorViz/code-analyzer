@@ -80,7 +80,7 @@ public final class GitMetricCollector {
     String email = commit.getAuthorIdent().getEmailAddress();
 
     Builder builder = ContributorData.newBuilder()
-        .setName(name)
+        .setGitUsername(name)
         .setEmail(email)
         .setLandscapeToken(landscapeToken)
         .setRepositoryName(repositoryName);

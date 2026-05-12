@@ -130,8 +130,6 @@ public class AnalysisService {
       throws IOException, GitAPIException, NotFoundException, PropertyNotDefinedException { // NOPMD
 
 
-    manageGitHubSocialAnalysis(config, exporter);
-
     try (Repository repository = this.gitRepositoryHandler.getGitRepository(config)) {
 
       final String fullBranch = repository.getFullBranch();
@@ -139,6 +137,9 @@ public class AnalysisService {
 
       // get fetch data from remote
       final Optional<String> startCommit = findStartCommit(config, exporter, branch);
+
+      manageGitHubSocialAnalysis(config, exporter);
+
       final Optional<String> endCommit = exporter.isRemote() ? Optional.empty() : config.endCommit();
 
       checkIfCommitsAreReachable(startCommit, endCommit, fullBranch);
@@ -316,7 +317,8 @@ public class AnalysisService {
             startDate,
             finalEndDate,
             exporter,
-            config.landscapeToken()
+            config.landscapeToken(),
+            config.gitPassword().orElse("")
         );
       } catch (Exception e) {
         LOGGER.error("Background social fetch aborted: {}", e.getMessage());

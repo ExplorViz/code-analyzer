@@ -23,6 +23,11 @@ enum AnnotationType {
   LABEL = 2;
   UNLABEL = 3;
   MERGE = 4;
+  REOPEN = 5;
+  COMMENT = 6;
+  COMMIT = 7;
+  REVIEW = 8;
+  FORCE_PUSH = 9;
 }
 
 enum ResourceState {

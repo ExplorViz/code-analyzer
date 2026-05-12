@@ -98,9 +98,9 @@ public final class GrpcExporter implements DataExporter {
 
   @Override
   public void persistContributor(final ContributorData contributorData) {
-    LOGGER.info("Sending contributor data on {}", contributorData.getName(), contributorData.getEmail());
+    LOGGER.info("Sending contributor data on {}", contributorData.getGitUsername(), contributorData.getEmail());
     System.out.println(
-        String.format("Sending contributor data on {}", contributorData.getName(), contributorData.getEmail()));
+        String.format("Sending contributor data on {}", contributorData.getGitUsername(), contributorData.getEmail()));
     try {
       contributorDataGrpcClient.persistContributor(contributorData);
     } catch (final Exception e) {
@@ -114,7 +114,8 @@ public final class GrpcExporter implements DataExporter {
   @Override
   public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
     LOGGER.info(
-        "Sending contributor data on {} #{}",
+        "Sending TrackableResourceEvent {} for {} #{}",
+        trackableResourceEvent.getAnnotationType(),
         trackableResourceEvent.getResourceType(),
         trackableResourceEvent.getResourceId()
     );
@@ -122,8 +123,9 @@ public final class GrpcExporter implements DataExporter {
       trackableResourceGrpcClient.persistTrackableResourceEvent(trackableResourceEvent);
     } catch (final Exception e) {
       if (LOGGER.isErrorEnabled()) {
-        LOGGER.error("Failed to send contributor data {}", trackableResourceEvent);
-        LOGGER.error(e.getMessage());
+        LOGGER.error("Failed to send trackable resource event {}: {}", trackableResourceEvent.getAnnotationId(),
+            e.getMessage());
+        LOGGER.debug("Detailed event data: {}", trackableResourceEvent);
       }
     }
   }
