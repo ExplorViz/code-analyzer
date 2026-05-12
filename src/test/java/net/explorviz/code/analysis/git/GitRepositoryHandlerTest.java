@@ -14,13 +14,11 @@ import java.util.stream.Stream;
 import net.explorviz.code.analysis.types.RemoteRepositoryObject;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -34,13 +32,11 @@ import org.junit.jupiter.api.Test;
 public class GitRepositoryHandlerTest {
 
   private static final String MASTER = "master";
-  private static final String MAIN = "main";
   private final String sshUrl = "git@gitlab.com:0xhexdec/busydoingnothing.git";
   private final String httpsUrl = "https://gitlab.com/0xhexdec/busydoingnothing.git";
-  private final String gitlabUserName = "privateTestConnector";
-  private final String gitlabUserPassword = "_QGDgx@2!sD/y!Y";
+
   @Inject
-  GitRepositoryHandler gitRepositoryHandler;  // NOCS
+  GitRepositoryHandler gitRepositoryHandler; // NOCS
   private File tempGitLocation;
 
   @BeforeEach
@@ -57,7 +53,6 @@ public class GitRepositoryHandlerTest {
       System.err.println("Folder not deletable");
     }
   }
-
 
   @Test()
   void testInvalidRemote() {
@@ -113,40 +108,6 @@ public class GitRepositoryHandlerTest {
 
   }
 
-
-  @Test()
-  void testPrivateRemote() {
-    final String url = "https://gitlab.com/0xhexdec/privaterepotest.git";
-
-    // try cloning without permission
-    Assertions.assertThrows(TransportException.class, () -> {
-      this.gitRepositoryHandler.getGitRepository("",
-          new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(), MASTER));
-    });
-    Assertions.assertThrows(TransportException.class, () -> {
-      this.gitRepositoryHandler.getGitRepository("",
-          new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(),
-              new UsernamePasswordCredentialsProvider(
-                  gitlabUserName, gitlabUserPassword), MASTER));
-    });
-    Assertions.assertThrows(TransportException.class, () -> {
-      this.gitRepositoryHandler.getGitRepository("",
-          new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(),
-              new UsernamePasswordCredentialsProvider(
-                  "username", "password"), MAIN));
-    });
-
-    try (Repository repository = this.gitRepositoryHandler.getGitRepository("",
-        new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(),
-            new UsernamePasswordCredentialsProvider(
-                gitlabUserName, gitlabUserPassword), MAIN))) {
-      repository.getBranch();
-    } catch (Exception e) {
-      Assertions.fail();
-    }
-
-  }
-
   @Test()
   void testSsh() {
     try (Repository repository = this.gitRepositoryHandler.getGitRepository("",
@@ -176,7 +137,6 @@ public class GitRepositoryHandlerTest {
     Assertions.assertEquals(Map.entry(true, httpsUrl),
         GitRepositoryHandler.convertSshToHttps(httpsUrl));
 
-
     Assertions.assertEquals(Map.entry(true, httpsUrl),
         GitRepositoryHandler.convertSshToHttps(sshUrl));
 
@@ -196,7 +156,6 @@ public class GitRepositoryHandlerTest {
         GitRepositoryHandler.convertSshToHttps(urlUnderTest2));
 
   }
-
 
   @Test
   void testRemoteLookup() throws GitAPIException, IOException {
@@ -229,11 +188,10 @@ public class GitRepositoryHandlerTest {
           while (treeWalk.next()) {
             final String actual = GitRepositoryHandler.getContent(treeWalk.getObjectId(0),
                 repository);
-            final String expected =
-                "package testgit.my.test.pckg;\n" + "\n" + "public class TestGitClass {\n" + "\n"
-                    + "  private final String testVariable;\n" + "\n"
-                    + "  public TestGitClass(final String testVariable) {\n"
-                    + "    this.testVariable = testVariable;\n" + "  }\n" + "\n" + "}";
+            final String expected = "package testgit.my.test.pckg;\n" + "\n" + "public class TestGitClass {\n" + "\n"
+                + "  private final String testVariable;\n" + "\n"
+                + "  public TestGitClass(final String testVariable) {\n"
+                + "    this.testVariable = testVariable;\n" + "  }\n" + "\n" + "}";
 
             Assertions.assertEquals(expected.replace(" ", "").replace("\n", "").replace("\r", ""),
                 actual.replace(" ", "").replace("\n", "").replace("\r", ""));

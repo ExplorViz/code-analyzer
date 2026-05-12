@@ -193,13 +193,15 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
   }
 
   /**
-   * Returns the name of the repository extracted from the remote URL or the local
-   * path.
+   * Returns the name of the repository extracted from the remote URL or the local path.
    *
-   * @return The repository name, or an empty string if not found.
+   * @param repoPath optional local filesystem path to the repository
+   * @param repoRemoteUrl optional clone URL (takes precedence over {@code repoPath})
+   * @return The repository name, or an empty string if neither source yields one
    */
-  public String getRepositoryName() {
-    if (repoRemoteUrl.isPresent()) {
+  public static String deriveRepositoryName(final Optional<String> repoPath,
+      final Optional<String> repoRemoteUrl) {
+    if (repoRemoteUrl != null && repoRemoteUrl.isPresent()) {
       String upstream = repoRemoteUrl.get();
       // remove trailing slash if present
       if (upstream.endsWith("/")) {
@@ -217,7 +219,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
         return upstream.substring(lastSeparator + 1);
       }
       return upstream;
-    } else if (repoPath.isPresent()) {
+    } else if (repoPath != null && repoPath.isPresent()) {
       String pathStr = repoPath.get();
       // remove trailing slash if present
       if (pathStr.endsWith("/") || pathStr.endsWith("\\")) {
@@ -231,5 +233,15 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       return pathStr;
     }
     return "";
+  }
+
+  /**
+   * Returns the name of the repository extracted from the remote URL or the local
+   * path.
+   *
+   * @return The repository name, or an empty string if not found.
+   */
+  public String getRepositoryName() {
+    return deriveRepositoryName(repoPath, repoRemoteUrl);
   }
 }

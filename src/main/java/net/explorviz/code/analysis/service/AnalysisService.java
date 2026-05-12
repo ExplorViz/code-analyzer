@@ -347,6 +347,8 @@ public class AnalysisService {
         restrictMatchers, excludeMatchers);
 
     Git.wrap(repository).checkout().setName(commit.getName()).call();
+    createCommitReport(config, repository, commit, lastCommit, exporter, branchName, descriptorTriple,
+        restrictMatchers, excludeMatchers);
 
     antlrParserService.reset();
     GitMetricCollector.resetAuthor();
@@ -381,10 +383,10 @@ public class AnalysisService {
             LOGGER.error("File size of file " + fileDescriptor.relativePath
                 + " could not be analyzed." + e.getMessage());
           }
+          // Add Git metrics for all files
           GitMetricCollector.addCommitGitMetrics(fileDataHandler, commit);
           fileDataHandler.setLandscapeToken(config.landscapeToken());
           fileDataHandler.setRepositoryName(config.getRepositoryName());
-          fileDataHandler.setCommitId(commit.getName());
           exporter.persistFile(fileDataHandler.getProtoBufObject());
         }
       } catch (IOException e) {
@@ -423,11 +425,13 @@ public class AnalysisService {
     for (final FileDescriptor addedFile : addedFiles) {
       commitReportHandler.addAdded(addedFile);
     }
-    for (final FileDescriptor modifiedFile : modifiedFiles) {
-      commitReportHandler.addModified(modifiedFile);
-    }
+
     for (final FileDescriptor deletedFile : deletedFiles) {
       commitReportHandler.addDeleted(deletedFile);
+    }
+
+    for (final FileDescriptor modifiedFile : modifiedFiles) {
+      commitReportHandler.addModified(modifiedFile);
     }
 
     final List<Ref> list = Git.wrap(repository).tagList().call();
@@ -443,7 +447,6 @@ public class AnalysisService {
 
     exporter.persistCommit(commitReportHandler.getCommitData());
   }
-
 
   /**
    * Checks if a file is a text file by checking its MIME type. Detects text/*,

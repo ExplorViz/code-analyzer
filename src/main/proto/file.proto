@@ -94,7 +94,4 @@ message FileData {
   int32 added_lines = 12;
   int32 modified_lines = 13;
   int32 deleted_lines = 14;
-
-  // The commit ID this file belongs to
-  string commit_id = 15;
 }

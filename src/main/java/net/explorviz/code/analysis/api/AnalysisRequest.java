@@ -219,7 +219,13 @@ public class AnalysisRequest {
     if (!paths.isEmpty()) {
       builder.applicationPaths(paths);
     } else {
-      builder.applicationName(applicationName != null ? applicationName : "")
+      String resolvedName = applicationName != null ? applicationName.trim() : "";
+      if (resolvedName.isEmpty()) {
+        resolvedName = AnalysisConfig.deriveRepositoryName(
+            Optional.ofNullable(repoPath),
+            Optional.ofNullable(repoRemoteUrl));
+      }
+      builder.applicationName(resolvedName)
           .applicationRoot(Optional.ofNullable(applicationRoot));
     }
     return builder.build();

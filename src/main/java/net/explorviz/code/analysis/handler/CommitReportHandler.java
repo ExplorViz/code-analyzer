@@ -15,12 +15,13 @@ import net.explorviz.code.proto.FileIdentifier;
 public class CommitReportHandler { // NOPMD
 
   private final List<FileIdentifier> addedFiles = new ArrayList<>();
-  private final List<FileIdentifier> modifiedFiles = new ArrayList<>();
   private final List<FileIdentifier> deletedFiles = new ArrayList<>();
+  private final List<FileIdentifier> modifiedFiles = new ArrayList<>();
   private CommitData.Builder builder;
 
   /**
-   * Creates a blank handler, use {@link CommitReportHandler#init(String, String, String)} to initialize it.
+   * Creates a blank handler, use
+   * {@link CommitReportHandler#init(String, String, String)} to initialize it.
    */
   public CommitReportHandler() {
     this.builder = CommitData.newBuilder();
@@ -33,15 +34,16 @@ public class CommitReportHandler { // NOPMD
   public void clear() {
     this.builder = CommitData.newBuilder();
     this.addedFiles.clear();
-    this.modifiedFiles.clear();
     this.deletedFiles.clear();
+    this.modifiedFiles.clear();
   }
 
   /**
    * Initialize the current report handler.
    *
    * @param commitId       the id of the commit
-   * @param parentCommitId the id of the parent commit, can be null if no parent exists
+   * @param parentCommitId the id of the parent commit, can be null if no parent
+   *                       exists
    * @param branchName     the name of the branch
    */
   public void init(final String commitId, final String parentCommitId, final String branchName) {
@@ -55,7 +57,6 @@ public class CommitReportHandler { // NOPMD
     return fileDescriptor.objectId.name();
   }
 
-
   private FileIdentifier toFileId(final FileDescriptor fileDescriptor) {
     return FileIdentifier.newBuilder()
         .setFilePath(fileDescriptor.reportedPath)
@@ -63,25 +64,18 @@ public class CommitReportHandler { // NOPMD
         .build();
   }
 
-
-
   public void addAdded(final FileDescriptor fileDescriptor) {
     addedFiles.add(toFileId(fileDescriptor));
-  }
-
-  public void addModified(final FileDescriptor fileDescriptor) {
-    modifiedFiles.add(toFileId(fileDescriptor));
   }
 
   public void addDeleted(final FileDescriptor fileDescriptor) {
     deletedFiles.add(toFileId(fileDescriptor));
   }
 
+  public void addModified(final FileDescriptor fileDescriptor) {
+    modifiedFiles.add(toFileId(fileDescriptor));
+  }
 
-
-  /**
-   * ...
-   */
   public void addTags(final List<String> tags) {
     builder.addAllTags(tags);
   }
@@ -112,4 +106,3 @@ public class CommitReportHandler { // NOPMD
     return builder.build();
   }
 }
-

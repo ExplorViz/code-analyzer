@@ -55,7 +55,7 @@ function addApplicationRow(name = "", root = "") {
   row.dataset.applicationRow = "";
 
   const nameLabel = document.createElement("label");
-  nameLabel.innerHTML = `<span class="label-header">Application name <span class="hint">(required)</span></span>`;
+  nameLabel.innerHTML = `<span class="label-header">Application name <span class="hint"></span></span>`;
   const nameInput = document.createElement("input");
   nameInput.type = "text";
   nameInput.className = "app-name-input";
@@ -104,7 +104,7 @@ function resetApplicationRows() {
     return;
   }
   applicationRowsContainer.replaceChildren();
-  addApplicationRow("default-application-name", "");
+  addApplicationRow("", "");
 }
 
 function collectPayload(formData) {
@@ -259,11 +259,6 @@ async function handleSubmit(event) {
 
   if (!payload.repoPath && !payload.repoRemoteUrl) {
     setStatus("Provide either a local repository path or a remote URL.", "error");
-    return;
-  }
-
-  if (!payload.applications || payload.applications.length === 0) {
-    setStatus("Add at least one application with a non-empty name.", "error");
     return;
   }
 
