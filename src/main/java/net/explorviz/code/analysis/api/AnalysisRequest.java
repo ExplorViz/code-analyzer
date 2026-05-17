@@ -26,7 +26,7 @@ public class AnalysisRequest {
   private String applicationName = "";
   private String applicationRoot;
 
-  private boolean fetchSocialData = true;
+  private boolean fetchSocialData = false;
   private String fetchEndDate;
   private Integer socialDataTimeFrameDays;
 

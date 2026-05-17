@@ -98,12 +98,12 @@ public final class GrpcExporter implements DataExporter {
 
   @Override
   public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
-    //  LOGGER.info(
-    //      "Sending TrackableResourceEvent {} for {} #{}",
-    //      trackableResourceEvent.getAnnotationType(),
-    //      trackableResourceEvent.getResourceType(),
-    //      trackableResourceEvent.getResourceId()
-    //  );
+    LOGGER.info(
+        "Sending TrackableResourceEvent {} for {} #{}",
+        trackableResourceEvent.getAnnotationType(),
+        trackableResourceEvent.getResourceType(),
+        trackableResourceEvent.getResourceId()
+    );
     try {
       trackableResourceGrpcClient.persistTrackableResourceEvent(trackableResourceEvent);
     } catch (final Exception e) {

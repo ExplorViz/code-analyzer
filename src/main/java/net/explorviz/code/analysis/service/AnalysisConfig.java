@@ -42,7 +42,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     private String applicationName = "";
 
     // Social data analysis
-    private boolean fetchSocialData = true;
+    private boolean fetchSocialData = false;
     private Optional<String> fetchEndDate = Optional.empty();
     private Optional<Integer> socialDataTimeFrameDays = Optional.empty();
 

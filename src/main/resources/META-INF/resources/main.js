@@ -109,7 +109,7 @@ function applySample() {
   });
   form.elements.calculateMetrics.checked = true;
   form.elements.sendToRemote.checked = true;
-  form.elements.fetchSocialData.checked = true;
+  form.elements.fetchSocialData.checked = false;
 
   handleInput();
   setStatus("Sample payload applied.", "success");
