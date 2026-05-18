@@ -25,6 +25,7 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -113,39 +114,39 @@ public class GitRepositoryHandlerTest {
 
   }
 
+  @Disabled("Credentials invalid?")
+  @Test()
+  void testPrivateRemote() {
+    final String url = "https://gitlab.com/0xhexdec/privaterepotest.git";
 
-  // @Test()
-  // void testPrivateRemote() {
-  //   final String url = "https://gitlab.com/0xhexdec/privaterepotest.git";
+    // try cloning without permission
+    Assertions.assertThrows(TransportException.class, () -> {
+      this.gitRepositoryHandler.getGitRepository("",
+          new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(), MASTER));
+    });
+    Assertions.assertThrows(TransportException.class, () -> {
+      this.gitRepositoryHandler.getGitRepository("",
+          new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(),
+              new UsernamePasswordCredentialsProvider(
+                  gitlabUserName, gitlabUserPassword), MASTER));
+    });
+    Assertions.assertThrows(TransportException.class, () -> {
+      this.gitRepositoryHandler.getGitRepository("",
+          new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(),
+              new UsernamePasswordCredentialsProvider(
+                  "username", "password"), MAIN));
+    });
 
-  //   // try cloning without permission
-  //   Assertions.assertThrows(TransportException.class, () -> {
-  //     this.gitRepositoryHandler.getGitRepository("",
-  //         new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(), MASTER));
-  //   });
-  //   Assertions.assertThrows(TransportException.class, () -> {
-  //     this.gitRepositoryHandler.getGitRepository("",
-  //         new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(),
-  //             new UsernamePasswordCredentialsProvider(
-  //                 gitlabUserName, gitlabUserPassword), MASTER));
-  //   });
-  //   Assertions.assertThrows(TransportException.class, () -> {
-  //     this.gitRepositoryHandler.getGitRepository("",
-  //         new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(),
-  //             new UsernamePasswordCredentialsProvider(
-  //                 "username", "password"), MAIN));
-  //   });
+    try (Repository repository = this.gitRepositoryHandler.getGitRepository("",
+        new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(),
+            new UsernamePasswordCredentialsProvider(
+                gitlabUserName, gitlabUserPassword), MAIN))) {
+      repository.getBranch();
+    } catch (Exception e) {
+      Assertions.fail();
+    }
 
-  //   try (Repository repository = this.gitRepositoryHandler.getGitRepository("",
-  //       new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(),
-  //           new UsernamePasswordCredentialsProvider(
-  //               gitlabUserName, gitlabUserPassword), MAIN))) {
-  //     repository.getBranch();
-  //   } catch (Exception e) {
-  //     Assertions.fail();
-  //   }
-
-  // }
+  }
 
   @Test()
   void testSsh() {

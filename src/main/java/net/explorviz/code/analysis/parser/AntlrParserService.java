@@ -61,9 +61,6 @@ public class AntlrParserService {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final Java20Parser parser = new Java20Parser(tokens);
 
-    lexer.removeErrorListeners();
-    parser.removeErrorListeners();
-    
     // Parse the compilation unit
     final Java20Parser.CompilationUnitContext compilationUnit = parser.compilationUnit();
 

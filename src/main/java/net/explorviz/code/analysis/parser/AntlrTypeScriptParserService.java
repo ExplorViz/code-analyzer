@@ -60,9 +60,6 @@ public class AntlrTypeScriptParserService {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final TypeScriptParser parser = new TypeScriptParser(tokens);
 
-    lexer.removeErrorListeners();
-    parser.removeErrorListeners();
-
     // Parse the program (entry point for TS/JS)
     final TypeScriptParser.ProgramContext program = parser.program();
 

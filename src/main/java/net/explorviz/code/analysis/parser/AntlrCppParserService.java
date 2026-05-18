@@ -57,9 +57,6 @@ public class AntlrCppParserService {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final CPP14Parser parser = new CPP14Parser(tokens);
 
-    lexer.removeErrorListeners();
-    parser.removeErrorListeners();
-
     // Parse the translation unit (entry point for C/C++)
     final CPP14Parser.TranslationUnitContext translationUnit = parser.translationUnit();
 
