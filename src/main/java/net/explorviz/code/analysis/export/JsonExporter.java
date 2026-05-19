@@ -6,9 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import net.explorviz.code.proto.CommitData;
+import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.StateData;
 import net.explorviz.code.proto.StateDataRequest;
+import net.explorviz.code.proto.TrackableResourceEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,6 +174,17 @@ public class JsonExporter implements DataExporter {
       throw new RuntimeException(e); // NOPMD
     }
     this.commitCount++;
+  }
+
+  @Override
+  public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
+    try {
+      final String json = unescapeHtml(JsonFormat.printer().print(trackableResourceEvent));
+      final String fileName = "TrackableResourceEvent" + trackableResourceEvent.getResourceId() + JSON_FILE_EXTENSION;
+      Files.write(Paths.get(storageDirectory, fileName), json.getBytes());
+    } catch (IOException e) { // NOPMD
+      throw new RuntimeException(e); // NOPMD
+    }
   }
 
   @Override

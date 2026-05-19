@@ -1,5 +1,8 @@
 package net.explorviz.code.analysis.service;
 
+import java.sql.Date;
+import java.time.Instant;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +20,8 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     boolean calculateMetrics,
     Optional<String> startCommit, Optional<String> endCommit,
     Optional<Integer> commitAnalysisLimit,
-    String landscapeToken) {
+    String landscapeToken,
+    boolean fetchSocialData, Optional<String> fetchEndDate, Optional<Integer> socialDataTimeFrameDays) {
 
   /**
    * Path filter passed to Git diffs: union of all application roots, or global filters when appropriate.
@@ -91,6 +95,11 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     private String applicationName = "";
     private List<ApplicationPath> explicitApplicationPaths;
 
+    // Social data analysis
+    private boolean fetchSocialData = false;
+    private Optional<String> fetchEndDate = Optional.empty();
+    private Optional<Integer> socialDataTimeFrameDays = Optional.empty();
+
     public Builder repoPath(final Optional<String> repoPath) {
       this.repoPath = repoPath;
       return this;
@@ -161,6 +170,21 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       return this;
     }
 
+    public Builder fetchSocialData(final boolean fetchSocialData) {
+      this.fetchSocialData = fetchSocialData;
+      return this;
+    }
+
+    public Builder fetchEndDate(final Optional<String> fetchEndDate) {
+      this.fetchEndDate = fetchEndDate;
+      return this;
+    }
+
+    public Builder socialDataTimeFrameDays(final Optional<Integer> socialDataTimeFrameDays) {
+      this.socialDataTimeFrameDays = socialDataTimeFrameDays;
+      return this;
+    }
+    
     public Builder applicationPaths(final List<ApplicationPath> paths) {
       this.explicitApplicationPaths = paths;
       return this;
@@ -188,7 +212,10 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
           startCommit,
           endCommit,
           commitAnalysisLimit,
-          landscapeToken);
+          landscapeToken,
+          fetchSocialData,
+          fetchEndDate,
+          socialDataTimeFrameDays);
     }
   }
 

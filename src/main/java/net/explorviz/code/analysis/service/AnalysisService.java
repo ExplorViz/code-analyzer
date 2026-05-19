@@ -8,8 +8,14 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -18,7 +24,6 @@ import net.explorviz.code.analysis.exceptions.DebugFileWriter;
 import net.explorviz.code.analysis.exceptions.NotFoundException;
 import net.explorviz.code.analysis.exceptions.PropertyNotDefinedException;
 import net.explorviz.code.analysis.export.DataExporter;
-import net.explorviz.code.analysis.git.DirectoryFinder;
 import net.explorviz.code.analysis.git.GitMetricCollector;
 import net.explorviz.code.analysis.git.GitRepositoryHandler;
 import net.explorviz.code.analysis.handler.AbstractFileDataHandler;
@@ -31,7 +36,7 @@ import net.explorviz.code.analysis.parser.AntlrPythonParserService;
 import net.explorviz.code.analysis.parser.AntlrTypeScriptParserService;
 import net.explorviz.code.analysis.types.FileDescriptor;
 import net.explorviz.code.analysis.types.Triple;
-import net.explorviz.code.analysis.visitor.FileDataVisitor;
+import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.Language;
 import net.explorviz.code.proto.StateData;
 import org.eclipse.jgit.api.Git;
@@ -42,6 +47,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +100,10 @@ public class AnalysisService {
   /* package */ AntlrCppParserService cppParserService;
   @Inject
   /* package */ AnalysisStatusService analysisStatusService;
+  @Inject
+  /* package */ GithubCollaborationFetcherService socialFetcherService;
+  @Inject
+  /* package */ ManagedExecutor managedExecutor;
   @ConfigProperty(name = "explorviz.gitanalysis.save-crashed_files")
   /* default */ boolean saveCrashedFilesProperty;
 
@@ -116,6 +126,9 @@ public class AnalysisService {
   public void analyzeAndSendRepo(final AnalysisConfig config, final DataExporter exporter) // NOCS
       throws IOException, GitAPIException, NotFoundException, PropertyNotDefinedException { // NOPMD
 
+    // start social analysis to run async while repo is being cloned
+    fetchSocialData(config, exporter);
+
     try (Repository repository = this.gitRepositoryHandler.getGitRepository(config)) {
 
       final String fullBranch = repository.getFullBranch();
@@ -123,6 +136,7 @@ public class AnalysisService {
 
       // get fetch data from remote
       final Optional<String> startCommit = findStartCommit(config, exporter, branch);
+
       final Optional<String> endCommit = exporter.isRemote() ? Optional.empty() : config.endCommit();
 
       checkIfCommitsAreReachable(startCommit, endCommit, fullBranch);
@@ -146,6 +160,7 @@ public class AnalysisService {
       LOGGER.info("Total commits to analyze: {}", commitsToAnalyze);
       analysisStatusService.markRunning(config.landscapeToken(), commitsToAnalyze, 0);
 
+
       try (RevWalk revWalk = new RevWalk(repository)) {
         prepareRevWalk(repository, revWalk, fullBranch);
 
@@ -161,6 +176,7 @@ public class AnalysisService {
             config.includeInAnalysisExpressions());
         final List<java.nio.file.PathMatcher> excludeMatchers = compileMatchers(
             config.excludeFromAnalysisExpressions());
+
 
         for (final RevCommit commit : revWalk) {
 
@@ -250,6 +266,89 @@ public class AnalysisService {
       }
       // checkout the branch, so not a single commit is checked out after the run
       Git.wrap(repository).checkout().setName(fullBranch).call();
+    }
+  }
+
+  private void fetchSocialData(final AnalysisConfig config, final DataExporter exporter) {
+
+    if (!config.fetchSocialData()) {
+      LOGGER.info("Skipping GitHub social data fetch, not enabled in config.");
+      return;
+    }
+
+    // determine repo sub string with format "owner/repo" needed for graphql query
+    final Optional<String> repoSubString = extractGithubRepoSubString(config.repoRemoteUrl().get());
+    if (repoSubString.isEmpty()) {
+      return;
+    }
+
+    // send state data before fetching to make sure precondition is met
+    preInitializeRemoteState(config, exporter);
+
+    // determine time frame to fetch
+    final int socialDataTimeFrameDays = config.socialDataTimeFrameDays().orElse(90);
+    final Date endDate = determineEndDate(config);
+    final Date startDate = Date.from(endDate.toInstant().minus(socialDataTimeFrameDays, ChronoUnit.DAYS));
+
+    managedExecutor.execute(() -> {
+      try {
+        LOGGER.info("Starting independent background fetch for GitHub Social Data (Last {} Days).",
+            socialDataTimeFrameDays);
+        socialFetcherService.fetchSocialDataInRange(
+            repoSubString.get(),
+            startDate,
+            endDate,
+            exporter,
+            config.landscapeToken(),
+            config.gitPassword().orElse("")
+        );
+      } catch (final Exception e) {
+        LOGGER.error("Background social fetch aborted: {}", e.getMessage());
+      }
+    });
+  }
+
+  private Optional<String> extractGithubRepoSubString(String remoteUrl) {
+    if (!remoteUrl.contains("github.com")) {
+      LOGGER.info("Skipping GitHub collaboration data fetch, not a GitHub repository: {}", remoteUrl);
+      return Optional.empty();
+    }
+    final String[] parts = remoteUrl.split("github.com[:/]");
+    if (parts.length < 2) {
+      LOGGER.warn("Could not extract repo name from GitHub URL: {}", remoteUrl);
+      return Optional.empty();
+    }
+    return Optional.of(parts[1].replace(".git", ""));
+  }
+
+  private Date determineEndDate(AnalysisConfig config) {
+
+    Date endDate = Date.from(Instant.now()); // Default fallback
+    if (config.fetchEndDate().isPresent() && !config.fetchEndDate().get().isBlank()) {
+      final String dateStr = config.fetchEndDate().get();
+      try {
+        // Try parsing ISO timestamp first
+        endDate = Date.from(Instant.parse(dateStr));
+      } catch (final DateTimeParseException e) {
+        // Fallback to simple date parsing "YYYY-MM-DD"
+        endDate = Date.from(LocalDate.parse(dateStr).atStartOfDay(ZoneId.systemDefault()).toInstant());
+      }
+    }
+    return endDate;
+  }
+
+  private void preInitializeRemoteState(AnalysisConfig config, DataExporter exporter) {
+    if (exporter.isRemote()) {
+      try {
+        exporter.getStateData(
+            config.getRepositoryName(),
+            config.branch().orElse("main"),
+            config.landscapeToken(),
+            config.applicationPathsMap()
+        );
+      } catch (final Exception e) {
+        LOGGER.warn("Could not pre-initialize remote state for social fetch: {}", e.getMessage());
+      }
     }
   }
 
@@ -445,6 +544,14 @@ public class AnalysisService {
     commitReportHandler.addToken(config.landscapeToken());
     commitReportHandler.setRepositoryName(config.getRepositoryName());
 
+    ContributorData contributorData = GitMetricCollector.createContributorData(
+        commit, 
+        config.landscapeToken(),
+        config.getRepositoryName()
+    );
+
+    commitReportHandler.setAuthor(contributorData);
+
     exporter.persistCommit(commitReportHandler.getCommitData());
   }
 
@@ -509,6 +616,10 @@ public class AnalysisService {
 
     try {
       AbstractFileDataHandler fileDataHandler = null;
+
+      LOGGER.atError()
+          .addArgument(file.reportedPath)
+          .log("ANALYZING FILE: {} with size {} bytes", file.reportedPath, fileContent.length());
 
       // Route to appropriate parser based on file extension
       if (fileName.endsWith(".ts") || fileName.endsWith(".tsx")

@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "net.explorviz.code.proto";
+option java_outer_classname = "TrackableResourceProto";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "contributor.proto";
+
+service TrackableResourceService {
+  rpc persistTrackableResourceEvent (TrackableResourceEvent) returns (google.protobuf.Empty) {}
+}
+
+enum TrackableResourceType {
+  ISSUE = 0;
+  PULL_REQUEST = 1;
+}
+
+enum AnnotationType {
+  CREATE = 0;
+  CLOSE = 1;
+  LABEL = 2;
+  UNLABEL = 3;
+  MERGE = 4;
+  REOPEN = 5;
+  COMMENT = 6;
+  COMMIT = 7;
+  REVIEW = 8;
+  FORCE_PUSH = 9;
+}
+
+enum ResourceState {
+  OPEN = 0;
+  CLOSED = 1;
+  MERGED = 2;
+}
+
+message TrackableResourceEvent {
+  // Identity
+  string landscape_token = 1;
+  string repository_name = 2;
+  string resource_id = 3; // external Issue or PR number as string
+  TrackableResourceType resource_type = 4;
+
+  // Event data
+  google.protobuf.Timestamp event_timestamp = 5;
+  AnnotationType annotation_type = 6;
+  string annotation_id = 7; // external ID to match unique events (e.g., GitHub event ID)
+  ContributorData actor = 8; // The user who performed the event
+
+  // New State data (should be sent always, but technically only needs to be populated for CREATE)
+  ResourceState new_state = 9; // State after the event (e.g., OPEN, CLOSED, MERGED)
+  string title = 10;
+  string description = 11;
+  string web_url = 12;
+  string labels = 13;
+
+}

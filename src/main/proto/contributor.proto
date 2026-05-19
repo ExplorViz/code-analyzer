@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "net.explorviz.code.proto";
+option java_outer_classname = "ContributorProto";
+
+import "google/protobuf/empty.proto";
+
+service ContributorService {
+  rpc PersistContributor (ContributorData) returns (google.protobuf.Empty) {}
+}
+
+message ContributorData {
+  // Git data
+  string landscape_token = 1;
+  string repository_name = 2;
+  string contributor_id = 3;
+  string git_username = 4;
+  string email = 5;
+
+  // GitHub-specific data
+  string github_login = 6;
+  string avatar_url = 7;
+}

@@ -54,6 +54,10 @@ public class AnalysisRequest {
   private String applicationRoot;
   private List<ApplicationSpec> applications;
 
+  private boolean fetchSocialData = false;
+  private String fetchEndDate;
+  private Integer socialDataTimeFrameDays;
+
   public AnalysisRequest() {
   }
 
@@ -185,6 +189,30 @@ public class AnalysisRequest {
     this.commitAnalysisLimit = commitAnalysisLimit;
   }
 
+  public boolean isFetchSocialData() {
+    return fetchSocialData;
+  }
+
+  public void setFetchSocialData(final boolean fetchSocialData) {
+    this.fetchSocialData = fetchSocialData;
+  }
+
+  public String getFetchEndDate() {
+    return fetchEndDate;
+  }
+
+  public void setFetchEndDate(final String fetchEndDate) {
+    this.fetchEndDate = fetchEndDate;
+  }
+
+  public Integer getSocialDataTimeFrameDays() {
+    return socialDataTimeFrameDays;
+  }
+
+  public void setSocialDataTimeFrameDays(final Integer socialDataTimeFrameDays) {
+    this.socialDataTimeFrameDays = socialDataTimeFrameDays;
+  }
+
   /**
    * Converts this request to an AnalysisConfig.
    *
@@ -214,7 +242,11 @@ public class AnalysisRequest {
         .startCommit(Optional.ofNullable(startCommit))
         .endCommit(Optional.ofNullable(endCommit))
         .commitAnalysisLimit(Optional.ofNullable(commitAnalysisLimit))
-        .landscapeToken((landscapeToken != null && !landscapeToken.isBlank()) ? landscapeToken : "mytokenvalue");
+        .landscapeToken((landscapeToken != null && !landscapeToken.isBlank()) ? landscapeToken : "mytokenvalue")
+        .applicationRoot(Optional.ofNullable(applicationRoot))
+        .fetchSocialData(fetchSocialData)
+        .socialDataTimeFrameDays(Optional.ofNullable(socialDataTimeFrameDays))
+        .fetchEndDate(Optional.ofNullable(fetchEndDate).filter(s -> !s.isEmpty()));
 
     if (!paths.isEmpty()) {
       builder.applicationPaths(paths);

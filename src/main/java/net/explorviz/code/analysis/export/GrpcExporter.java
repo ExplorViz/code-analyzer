@@ -5,11 +5,15 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.util.Map;
 import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.CommitServiceGrpc;
+import net.explorviz.code.proto.ContributorData;
+import net.explorviz.code.proto.ContributorServiceGrpc;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.FileDataServiceGrpc;
 import net.explorviz.code.proto.StateData;
 import net.explorviz.code.proto.StateDataRequest;
 import net.explorviz.code.proto.StateDataServiceGrpc;
+import net.explorviz.code.proto.TrackableResourceEvent;
+import net.explorviz.code.proto.TrackableResourceServiceGrpc;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +36,12 @@ public final class GrpcExporter implements DataExporter {
   //
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ StateDataServiceGrpc.StateDataServiceBlockingStub stateDataGrpcClient;
+  //
+  @GrpcClient(GRPC_CLIENT_NAME)
+  /* package */ ContributorServiceGrpc.ContributorServiceBlockingStub contributorDataGrpcClient;
+  //
+  @GrpcClient(GRPC_CLIENT_NAME)
+    /* package */ TrackableResourceServiceGrpc.TrackableResourceServiceBlockingStub trackableResourceGrpcClient;
 
   @ConfigProperty(name = "explorviz.landscape.token")
   /* default */ String landscapeTokenProperty;
@@ -92,7 +102,25 @@ public final class GrpcExporter implements DataExporter {
         LOGGER.error(e.getMessage());
       }
     }
+  }
 
+  @Override
+  public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
+    LOGGER.info(
+        "Sending TrackableResourceEvent {} for {} #{}",
+        trackableResourceEvent.getAnnotationType(),
+        trackableResourceEvent.getResourceType(),
+        trackableResourceEvent.getResourceId()
+    );
+    try {
+      trackableResourceGrpcClient.persistTrackableResourceEvent(trackableResourceEvent);
+    } catch (final Exception e) {
+      if (LOGGER.isErrorEnabled()) {
+        LOGGER.error("Failed to send trackable resource event {}: {}", trackableResourceEvent.getAnnotationId(),
+            e.getMessage());
+        LOGGER.debug("Detailed event data: {}", trackableResourceEvent);
+      }
+    }
   }
 
   @Override

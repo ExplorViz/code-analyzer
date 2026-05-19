@@ -270,6 +270,28 @@
               <input name="landscapeToken" placeholder="mytokenvalue" type="password" />
             </label>
           </div>
+          <div class="field-grid" style="margin-top: 1rem;">
+            <label>
+              <span class="label-header">
+                Social Fetch End Date
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text">Optional: Date to end fetching social data (e.g. 2026-05-10 or ISO timestamp).</span>
+                </span>
+              </span>
+              <input name="fetchEndDate" placeholder="current date" type="text" />
+            </label>
+            <label>
+              <span class="label-header">
+                Social Fetch Time Frame
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text">How many days in the past social data will be fetched.</span>
+                </span>
+              </span>
+              <input name="socialDataTimeFrameDays" placeholder="365" type="number" />
+            </label>
+          </div>
           <div class="toggle-row">
             <label class="toggle">
               <input checked name="calculateMetrics" type="checkbox" />
@@ -288,6 +310,16 @@
                 <span class="tooltip-container">
                   <span class="tooltip-icon">?</span>
                   <span class="tooltip-text">Whether to push the analysis results to the persistence-service.</span>
+                </span>
+              </span>
+            </label>
+            <label class="toggle">
+              <input name="fetchSocialData" type="checkbox" />
+              <span class="label-header">
+                Fetch Social Data
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text">Whether to fetch social data.</span>
                 </span>
               </span>
             </label>

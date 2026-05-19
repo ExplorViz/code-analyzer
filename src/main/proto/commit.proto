@@ -6,6 +6,7 @@ option java_outer_classname = "CommitProto";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "contributor.proto";
 
 service CommitService {
   rpc PersistCommit (CommitData) returns (google.protobuf.Empty) {}
@@ -20,6 +21,9 @@ message CommitData {
   google.protobuf.Timestamp commit_date = 6;
   string branch_name = 7;
   repeated string tags = 8;
+
+  // Author association data
+  ContributorData author = 9;
 
   // Git file metrics
   repeated FileIdentifier added_files = 10;

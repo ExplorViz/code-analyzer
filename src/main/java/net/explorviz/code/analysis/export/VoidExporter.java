@@ -2,8 +2,10 @@ package net.explorviz.code.analysis.export;
 
 import java.util.Map;
 import net.explorviz.code.proto.CommitData;
+import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.StateData;
+import net.explorviz.code.proto.TrackableResourceEvent;
 
 /**
  * Dummy to dump the data into void.
@@ -24,6 +26,11 @@ public class VoidExporter implements DataExporter {
 
   @Override
   public void persistCommit(final CommitData commitData) {
+    // DO NOTHING
+  }
+
+  @Override
+  public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
     // DO NOTHING
   }
 

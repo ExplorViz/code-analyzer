@@ -22,6 +22,8 @@ const SAMPLE_VALUES = {
   startCommit: "",
   endCommit: "",
   landscapeToken: "mytokenvalue",
+  fetchEndDate: "",
+  socialDataTimeFrameDays: "",
 };
 
 const SAMPLE_APPLICATION_ROWS = [
@@ -118,9 +120,13 @@ function collectPayload(formData) {
 
   payload.calculateMetrics = formData.get("calculateMetrics") !== null;
   payload.sendToRemote = formData.get("sendToRemote") !== null;
+  payload.fetchSocialData = formData.get("fetchSocialData") !== null;
 
   if (payload.commitAnalysisLimit) {
     payload.commitAnalysisLimit = parseInt(payload.commitAnalysisLimit);
+  }
+  if (payload.socialDataTimeFrameDays) {
+    payload.socialDataTimeFrameDays = parseInt(payload.socialDataTimeFrameDays);
   }
 
   const applications = collectApplications();
@@ -284,6 +290,7 @@ function applySample() {
   });
   form.elements.calculateMetrics.checked = true;
   form.elements.sendToRemote.checked = true;
+  form.elements.fetchSocialData.checked = false;
 
   if (applicationRowsContainer) {
     applicationRowsContainer.replaceChildren();

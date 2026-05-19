@@ -23,6 +23,9 @@ dependencies {
     implementation 'io.quarkus:quarkus-rest-jackson'
     implementation 'io.quarkus:quarkus-grpc'
 
+    // GraphQL Client
+    implementation 'io.quarkus:quarkus-smallrye-graphql-client'
+
     implementation 'com.google.protobuf:protobuf-java-util'
 
     // Java Parsing
