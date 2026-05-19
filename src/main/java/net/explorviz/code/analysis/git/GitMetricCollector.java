@@ -15,7 +15,7 @@ public final class GitMetricCollector {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GitMetricCollector.class);
 
-  private static String author = "";
+  private static final ThreadLocal<String> AUTHOR_CACHE = ThreadLocal.withInitial(() -> "");
 
   private GitMetricCollector() {
   }
@@ -26,7 +26,7 @@ public final class GitMetricCollector {
    * {@link GitMetricCollector#addCommitGitMetrics(AbstractFileDataHandler, RevCommit)}.
    */
   public static void resetAuthor() {
-    author = "";
+    AUTHOR_CACHE.remove();
   }
 
   /**
@@ -38,11 +38,14 @@ public final class GitMetricCollector {
    */
   public static void addCommitGitMetrics(final AbstractFileDataHandler fileDataHandler,
       final RevCommit commit) {
+    String author = AUTHOR_CACHE.get();
     if (author.isBlank()) {
       author = commit.getAuthorIdent().getEmailAddress();
+      AUTHOR_CACHE.set(author);
     }
     fileDataHandler.setAuthor(author);
   }
+
 
   /**
    * Adds git metrics that are valid for a specific file.

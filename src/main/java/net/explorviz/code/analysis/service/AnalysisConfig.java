@@ -3,10 +3,11 @@ package net.explorviz.code.analysis.service;
 import java.sql.Date;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Configuration object for Git analysis operations.
@@ -14,12 +15,64 @@ import java.util.stream.Stream;
 public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRemoteUrl, Optional<String> gitUsername,
     Optional<String> gitPassword, Optional<String> branch,
     Optional<String> includeInAnalysisExpressions,
-    Optional<String> excludeFromAnalysisExpressions, Optional<String> applicationRoot,
+    Optional<String> excludeFromAnalysisExpressions,
+    List<ApplicationPath> applicationPaths,
     boolean calculateMetrics,
     Optional<String> startCommit, Optional<String> endCommit,
     Optional<Integer> commitAnalysisLimit,
-    String landscapeToken, String applicationName,
+    String landscapeToken,
     boolean fetchSocialData, Optional<String> fetchEndDate, Optional<Integer> socialDataTimeFrameDays) {
+
+  /**
+   * Path filter passed to Git diffs: union of all application roots, or global filters when appropriate.
+   */
+  public String pathRestrictionForDiff() {
+    if (applicationPaths == null || applicationPaths.isEmpty()) {
+      return includeInAnalysisExpressions().orElse("");
+    }
+    final boolean anyBlankRoot = applicationPaths.stream()
+        .map(ApplicationPath::root)
+        .anyMatch(r -> r == null || r.isBlank());
+    if (anyBlankRoot) {
+      return includeInAnalysisExpressions().orElse("");
+    }
+    return applicationPaths.stream()
+        .map(ApplicationPath::root)
+        .map(String::trim)
+        .filter(r -> !r.isEmpty())
+        .collect(Collectors.joining(","));
+  }
+
+  /**
+   * Map for {@link net.explorviz.code.proto.StateDataRequest} {@code application_paths}.
+   */
+  public Map<String, String> applicationPathsMap() {
+    final Map<String, String> map = new LinkedHashMap<>();
+    if (applicationPaths == null) {
+      return map;
+    }
+    for (final ApplicationPath path : applicationPaths) {
+      final String name = path.name() == null ? "" : path.name().trim();
+      final String root = path.root() == null ? "" : path.root().trim();
+      if (!name.isEmpty()) {
+        map.put(name, root);
+      }
+    }
+    return map;
+  }
+
+  /** First non-blank application name; used for JSON export folder layout. */
+  public String primaryApplicationNameForExport() {
+    if (applicationPaths == null) {
+      return "";
+    }
+    return applicationPaths.stream()
+        .map(ApplicationPath::name)
+        .filter(n -> n != null && !n.isBlank())
+        .findFirst()
+        .orElse("")
+        .trim();
+  }
 
   /**
    * Builder for AnalysisConfig.
@@ -40,6 +93,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     private Optional<Integer> commitAnalysisLimit = Optional.empty();
     private String landscapeToken = "";
     private String applicationName = "";
+    private List<ApplicationPath> explicitApplicationPaths;
 
     // Social data analysis
     private boolean fetchSocialData = false;
@@ -130,8 +184,21 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       this.socialDataTimeFrameDays = socialDataTimeFrameDays;
       return this;
     }
+    
+    public Builder applicationPaths(final List<ApplicationPath> paths) {
+      this.explicitApplicationPaths = paths;
+      return this;
+    }
 
     public AnalysisConfig build() {
+      final List<ApplicationPath> paths;
+      if (explicitApplicationPaths != null && !explicitApplicationPaths.isEmpty()) {
+        paths = List.copyOf(explicitApplicationPaths);
+      } else {
+        paths = List.of(new ApplicationPath(
+            applicationName != null ? applicationName : "",
+            applicationRoot.orElse("")));
+      }
       return new AnalysisConfig(
           repoPath,
           repoRemoteUrl,
@@ -140,13 +207,12 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
           branch,
           includeInAnalysisExpressions,
           excludeFromAnalysisExpressions,
-          applicationRoot,
+          paths,
           calculateMetrics,
           startCommit,
           endCommit,
           commitAnalysisLimit,
           landscapeToken,
-          applicationName,
           fetchSocialData,
           fetchEndDate,
           socialDataTimeFrameDays);
@@ -154,13 +220,15 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
   }
 
   /**
-   * Returns the name of the repository extracted from the remote URL or the local
-   * path.
+   * Returns the name of the repository extracted from the remote URL or the local path.
    *
-   * @return The repository name, or an empty string if not found.
+   * @param repoPath optional local filesystem path to the repository
+   * @param repoRemoteUrl optional clone URL (takes precedence over {@code repoPath})
+   * @return The repository name, or an empty string if neither source yields one
    */
-  public String getRepositoryName() {
-    if (repoRemoteUrl.isPresent()) {
+  public static String deriveRepositoryName(final Optional<String> repoPath,
+      final Optional<String> repoRemoteUrl) {
+    if (repoRemoteUrl != null && repoRemoteUrl.isPresent()) {
       String upstream = repoRemoteUrl.get();
       // remove trailing slash if present
       if (upstream.endsWith("/")) {
@@ -178,7 +246,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
         return upstream.substring(lastSeparator + 1);
       }
       return upstream;
-    } else if (repoPath.isPresent()) {
+    } else if (repoPath != null && repoPath.isPresent()) {
       String pathStr = repoPath.get();
       // remove trailing slash if present
       if (pathStr.endsWith("/") || pathStr.endsWith("\\")) {
@@ -192,5 +260,15 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       return pathStr;
     }
     return "";
+  }
+
+  /**
+   * Returns the name of the repository extracted from the remote URL or the local
+   * path.
+   *
+   * @return The repository name, or an empty string if not found.
+   */
+  public String getRepositoryName() {
+    return deriveRepositoryName(repoPath, repoRemoteUrl);
   }
 }

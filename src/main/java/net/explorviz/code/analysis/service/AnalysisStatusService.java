@@ -43,30 +43,30 @@ public class AnalysisStatusService {
   }
 
   public void incrementAnalyzedCommit(final String landscapeToken) {
-    updateExistingStateAndNotify(landscapeToken, state ->
-      new AnalysisProgressState(state.status(), state.totalCommits(),
-          state.analyzedCommits() + 1, state.totalFiles(), state.analyzedFiles(),
-          state.currentAnalysingFile()));
+    updateExistingStateAndNotify(landscapeToken,
+        state -> new AnalysisProgressState(state.status(), state.totalCommits(),
+            state.analyzedCommits() + 1, state.totalFiles(), state.analyzedFiles(),
+            state.currentAnalysingFile()));
   }
 
   public void setCurrentCommitFiles(final String landscapeToken, final int totalFiles) {
-    updateExistingStateAndNotify(landscapeToken, state ->
-      new AnalysisProgressState(state.status(), state.totalCommits(),
-          state.analyzedCommits(), Math.max(0, totalFiles), 0, null));
+    updateExistingStateAndNotify(landscapeToken,
+        state -> new AnalysisProgressState(state.status(), state.totalCommits(),
+            state.analyzedCommits(), Math.max(0, totalFiles), 0, null));
   }
 
   public void setCurrentAnalyzingFile(final String landscapeToken, final String currentAnalysingFile) {
-    updateExistingStateAndNotify(landscapeToken, state ->
-      new AnalysisProgressState(state.status(), state.totalCommits(),
-          state.analyzedCommits(), state.totalFiles(), state.analyzedFiles(),
-          currentAnalysingFile));
+    updateExistingStateAndNotify(landscapeToken,
+        state -> new AnalysisProgressState(state.status(), state.totalCommits(),
+            state.analyzedCommits(), state.totalFiles(), state.analyzedFiles(),
+            currentAnalysingFile));
   }
 
   public void incrementAnalyzedFile(final String landscapeToken) {
-    updateExistingStateAndNotify(landscapeToken, state ->
-      new AnalysisProgressState(state.status(), state.totalCommits(),
-          state.analyzedCommits(), state.totalFiles(), state.analyzedFiles() + 1,
-          state.currentAnalysingFile()));
+    updateExistingStateAndNotify(landscapeToken,
+        state -> new AnalysisProgressState(state.status(), state.totalCommits(),
+            state.analyzedCommits(), state.totalFiles(), state.analyzedFiles() + 1,
+            state.currentAnalysingFile()));
   }
 
   public void markFinished(final String landscapeToken) {
@@ -110,8 +110,7 @@ public class AnalysisStatusService {
         .computeIfAbsent(token, ignored -> ConcurrentHashMap.newKeySet())
         .add(subscriber);
 
-    final AnalysisProgressState currentState =
-        stateByLandscapeToken.getOrDefault(token, emptyState(STATUS_PENDING));
+    final AnalysisProgressState currentState = stateByLandscapeToken.getOrDefault(token, emptyState(STATUS_PENDING));
     sendState(token, subscriber, currentState);
   }
 
@@ -186,10 +185,6 @@ public class AnalysisStatusService {
     if (subscribers == null) {
       return;
     }
-
-    Logger logger = Logger.getLogger(AnalysisStatusService.class);
-    logger.debug("test: removing subscriber");
-
     subscribers.remove(subscriber);
     if (subscribers.isEmpty()) {
       subscribersByLandscapeToken.remove(landscapeToken);

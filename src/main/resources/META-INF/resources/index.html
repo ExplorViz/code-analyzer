@@ -64,18 +64,6 @@
                   type="text"
                 />
               </label>
-              <label>
-                <span class="label-header">
-                  Analyze Commit Count
-                  <span class="tooltip-container">
-                    <span class="tooltip-icon">?</span>
-                    <span class="tooltip-text"
-                      >Determines how many of the newest commits should be analyzed.</span
-                    >
-                  </span>
-                </span>
-                <input min="1" name="commitAnalysisLimit" placeholder="all" type="number" value="1" />
-              </label>
             </div>
 
             <div class="remote-repo-fields field-grid" style="grid-column: 1 / -1; display: grid">
@@ -104,19 +92,35 @@
             <div class="local-repo-fields field-grid" style="grid-column: 1 / -1; display: none">
               <label>
                 <span class="label-header">
-                  Local Repository Path (required)
+                  Local Repository (required)
                   <span class="tooltip-container">
                     <span class="tooltip-icon">?</span>
                     <span class="tooltip-text"
-                      >The absolute path to a local directory containing the Git repository.</span
+                      >A repository below the local cloned-repositories folder. The selected value is submitted relative
+                      to that folder.</span
                     >
                   </span>
                 </span>
-                <input name="repoPath" placeholder="/absolute/path/to/repo" type="text" />
+                <select id="local-repository-select" name="repoPath">
+                  <option value="">Loading cloned repositories...</option>
+                </select>
               </label>
             </div>
 
-            <label>
+            <label style="grid-column: 1 / -1">
+              <span class="label-header">
+                Analyze Commit Count
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text"
+                    >Determines how many of the newest commits should be analyzed (remote and local).</span
+                  >
+                </span>
+              </span>
+              <input min="1" name="commitAnalysisLimit" placeholder="all" type="number" value="1" />
+            </label>
+
+            <label class="remote-branch-field">
               <span class="label-header">
                 Branch
                 <span class="tooltip-container">
@@ -127,6 +131,21 @@
                 </span>
               </span>
               <input name="branch" placeholder="default" type="text" />
+            </label>
+            <label class="local-branch-field" style="display: none">
+              <span class="label-header">
+                Branch
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text"
+                    >The branch to analyze from the selected local repository. Uses the current branch if none is
+                    selected.</span
+                  >
+                </span>
+              </span>
+              <select disabled id="local-branch-select" name="branch">
+                <option value="">Select a repository first</option>
+              </select>
             </label>
             <label>
               <span class="label-header">
@@ -223,27 +242,23 @@
 
         <section class="card">
           <h2>Analysis Configuration</h2>
-          <div class="field-grid">
-            <label>
+          <div class="applications-editor">
+            <div class="applications-heading">
               <span class="label-header">
-                Application Name
+                Applications
                 <span class="tooltip-container">
                   <span class="tooltip-icon">?</span>
-                  <span class="tooltip-text">The name of analyzed application.</span>
+                  <span class="tooltip-text"
+                    >One or more logical applications: each has a name and an optional project root path relative to the
+                    repository root. Use multiple rows for monorepos.</span
+                  >
                 </span>
               </span>
-              <input name="applicationName" placeholder="default-application-name" type="text" />
-            </label>
-            <label>
-              <span class="label-header">
-                Application Root
-                <span class="tooltip-container">
-                  <span class="tooltip-icon">?</span>
-                  <span class="tooltip-text">Project root relative to repository root. Useful for monorepos.</span>
-                </span>
-              </span>
-              <input name="applicationRoot" placeholder="e.g. app/src" type="text" />
-            </label>
+            </div>
+            <div id="application-rows" class="applications-rows"></div>
+            <button class="secondary" id="add-application" type="button">Add application</button>
+          </div>
+          <div class="field-grid" style="margin-top: 1rem">
             <label>
               <span class="label-header">
                 Landscape Token

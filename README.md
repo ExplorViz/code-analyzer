@@ -13,10 +13,19 @@ The property `explorviz.gitanalysis.run-mode` determines if the code-agent runs 
     ./gradlew quarkusDev
     ```
 2. Visit [http://localhost:8078/](http://localhost:8078/). The new single-page UI is served directly from `src/main/resources/META-INF/resources/index.html`.
-3. Fill in either a local repository path or a remote URL (plus any optional parameters such as branch,filters, credentials, metrics toggles, etc.).
-4. Hit **Run Analysis**. The page calls the existing REST endpoint at `/api/analysis/trigger` and streams the textual response back into the UI.
+3. Configure one or more **applications** (name and optional repo-relative root for each), or any optional parameters such as branch, filters, credentials, metrics toggles, etc.
+4. Hit **Run Analysis**. The page calls the REST endpoint at `/api/analysis/trigger` and streams the textual response back into the UI.
 
-The form mirrors the fields of `AnalysisRequest`, so anything you can configure via JSON can now be triggered from the browser.
+The form mirrors the fields of `AnalysisRequest`, so anything you can configure via JSON can now be triggered from the browser. For several apps in one repo (monorepo), send an `applications` array, for example:
+
+```json
+"applications": [
+  { "name": "service-a", "root": "apps/service-a" },
+  { "name": "service-b", "root": "apps/service-b" }
+]
+```
+
+Legacy fields `applicationName` and `applicationRoot` still work when `applications` is omitted.
 
 ### CI / Non-Interactive Mode
 
@@ -62,7 +71,7 @@ To see the restrictions of the different settings values, consider its respectiv
 
 Type: String or empty
 
-This is the path to an already cloned local repository. It has to contain a Git repository and be an absolute path, any relative path may or may not work.
+This is the path to an already cloned local repository. Absolute paths are supported. Relative paths are resolved from the configured `explorviz.gitanalysis.remote.storage-path`, which defaults to `cloned-repositories`.
 
 ### explorviz.gitanalysis.remote.storage-path
 

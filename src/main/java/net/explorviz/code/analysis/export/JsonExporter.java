@@ -4,6 +4,7 @@ import com.google.protobuf.util.JsonFormat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Map;
 import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.FileData;
@@ -69,39 +70,51 @@ public class JsonExporter implements DataExporter {
   @Override
   public StateData getStateData(final String repositoryName, final String branchName,
       final String token,
-      final String applicationName, final String applicationRoot) {
+      final Map<String, String> applicationPaths) {
     LOGGER.atInfo()
         .addArgument(repositoryName)
         .addArgument(branchName)
-        .addArgument(applicationName)
-        .log("📥 State data requested for {} on branch {} (application: {})");
+        .addArgument(applicationPaths != null ? applicationPaths.keySet() : "[]")
+        .log("📥 State data requested for {} on branch {} (applications: {})");
 
     final StateData stateData = StateData.newBuilder().build();
     try {
-      final StateDataRequest request = StateDataRequest.newBuilder()
+      final StateDataRequest.Builder requestBuilder = StateDataRequest.newBuilder()
           .setRepositoryName(repositoryName)
           .setBranchName(branchName)
-          .setLandscapeToken(token)
-          .putApplicationPaths(applicationName, applicationRoot)
-          .build();
+          .setLandscapeToken(token);
+      if (applicationPaths != null) {
+        requestBuilder.putAllApplicationPaths(applicationPaths);
+      }
+
+      final StateDataRequest request = requestBuilder.build();
 
       final String resultJson = unescapeHtml(JsonFormat.printer().print(stateData));
       final String requestJson = unescapeHtml(JsonFormat.printer().print(request));
 
-      final String stateFileName = "StateData_" + applicationName + JSON_FILE_EXTENSION;
-      final String requestFileName = "StateRequest_" + applicationName + JSON_FILE_EXTENSION;
+      final String stateFileName;
+      final String requestFileName;
+      if (applicationPaths == null || applicationPaths.isEmpty()) {
+        stateFileName = "StateData" + JSON_FILE_EXTENSION;
+        requestFileName = "StateRequest" + JSON_FILE_EXTENSION;
+      } else if (applicationPaths.size() == 1) {
+        final String onlyName = applicationPaths.keySet().iterator().next();
+        stateFileName = "StateData_" + onlyName + JSON_FILE_EXTENSION;
+        requestFileName = "StateRequest_" + onlyName + JSON_FILE_EXTENSION;
+      } else {
+        stateFileName = "StateData_multi" + JSON_FILE_EXTENSION;
+        requestFileName = "StateRequest_multi" + JSON_FILE_EXTENSION;
+      }
 
       Files.write(Paths.get(storageDirectory, stateFileName), resultJson.getBytes());
       Files.write(Paths.get(storageDirectory, requestFileName), requestJson.getBytes());
 
       LOGGER.atInfo()
-          .addArgument(applicationName)
-          .log("✅ Successfully exported state request and result for: {}");
+          .log("✅ Successfully exported state request and result");
     } catch (IOException e) {
       LOGGER.atError()
-          .addArgument(applicationName)
           .addArgument(e.getMessage())
-          .log("❌ Failed to export state data for {}: {}");
+          .log("❌ Failed to export state data: {}");
     }
     return stateData;
   }

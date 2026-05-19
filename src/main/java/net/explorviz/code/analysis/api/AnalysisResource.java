@@ -11,6 +11,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.sse.Sse;
 import jakarta.ws.rs.sse.SseEventSink;
+import java.io.IOException;
 import net.explorviz.code.analysis.export.DataExporter;
 import net.explorviz.code.analysis.export.GrpcExporter;
 import net.explorviz.code.analysis.export.JsonExporter;
@@ -18,6 +19,7 @@ import net.explorviz.code.analysis.service.AnalysisConfig;
 import net.explorviz.code.analysis.service.AnalysisProgressState;
 import net.explorviz.code.analysis.service.AnalysisStatusService;
 import net.explorviz.code.analysis.service.ConcurrentAnalysisService;
+import net.explorviz.code.analysis.service.LocalRepositoryService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +43,9 @@ public class AnalysisResource {
 
   @Inject
   /* default */ AnalysisStatusService analysisStatusService; // NOCS
+
+  @Inject
+  /* default */ LocalRepositoryService localRepositoryService; // NOCS
 
   /**
    * Triggers a Git repository analysis with the provided configuration. The
@@ -77,7 +82,7 @@ public class AnalysisResource {
       if (request.isSendToRemote()) {
         exporter = grpcExporter;
       } else {
-        exporter = new JsonExporter(config.getRepositoryName(), config.applicationName());
+        exporter = new JsonExporter(config.getRepositoryName(), config.primaryApplicationNameForExport());
       }
 
       // Submit to queue for async processing
@@ -102,6 +107,20 @@ public class AnalysisResource {
       LOGGER.error("❌ Failed to queue analysis request: {}", e.getMessage(), e);
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
           .entity("Failed to queue analysis request: " + e.getMessage())
+          .build();
+    }
+  }
+
+  @GET
+  @Path("/local-repositories")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getLocalRepositories() {
+    try {
+      return Response.ok(localRepositoryService.listRepositories()).build();
+    } catch (IOException exception) {
+      LOGGER.error("Failed to list local repositories: {}", exception.getMessage(), exception);
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity("Failed to list local repositories")
           .build();
     }
   }

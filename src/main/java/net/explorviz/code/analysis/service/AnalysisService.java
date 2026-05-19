@@ -99,8 +99,6 @@ public class AnalysisService {
   @Inject
   /* package */ AntlrCppParserService cppParserService;
   @Inject
-  /* package */ CommitReportHandler commitReportHandler;
-  @Inject
   /* package */ AnalysisStatusService analysisStatusService;
   @Inject
   /* package */ GithubCollaborationFetcherService socialFetcherService;
@@ -217,7 +215,7 @@ public class AnalysisService {
                   repository,
                   Optional.ofNullable(baseCommit),
                   commit,
-                  config.applicationRoot().orElse(config.includeInAnalysisExpressions().orElse("")));
+                  config.pathRestrictionForDiff());
 
           final List<FileDescriptor> descriptorAddedList = descTriple.right(); // NOPMD
           final List<FileDescriptor> descriptorModifiedList = descTriple.left();
@@ -346,8 +344,7 @@ public class AnalysisService {
             config.getRepositoryName(),
             config.branch().orElse("main"),
             config.landscapeToken(),
-            config.applicationName(),
-            config.applicationRoot().orElse("")
+            config.applicationPathsMap()
         );
       } catch (final Exception e) {
         LOGGER.warn("Could not pre-initialize remote state for social fetch: {}", e.getMessage());
@@ -369,8 +366,7 @@ public class AnalysisService {
       final DataExporter exporter, final String branch) {
     final StateData remoteState = exporter.getStateData(
         config.getRepositoryName(), branch,
-        config.landscapeToken(), config.applicationName(),
-        config.applicationRoot().orElse(""));
+        config.landscapeToken(), config.applicationPathsMap());
     if (exporter.isRemote()) {
 
       if (remoteState.getCommitId().isEmpty() || remoteState.getCommitId().isBlank()) {
@@ -446,6 +442,9 @@ public class AnalysisService {
       final List<java.nio.file.PathMatcher> excludeMatchers)
       throws GitAPIException, NotFoundException, IOException {
 
+    createCommitReport(config, repository, commit, lastCommit, exporter, branchName, descriptorTriple,
+        restrictMatchers, excludeMatchers);
+
     Git.wrap(repository).checkout().setName(commit.getName()).call();
     createCommitReport(config, repository, commit, lastCommit, exporter, branchName, descriptorTriple,
         restrictMatchers, excludeMatchers);
@@ -455,7 +454,7 @@ public class AnalysisService {
 
     LOGGER.atTrace().addArgument(descriptorList.toString()).log("Files: {}");
 
-    for (final FileDescriptor fileDescriptor : descriptorList) {
+    descriptorList.parallelStream().forEach(fileDescriptor -> {
       try {
         analysisStatusService.setCurrentAnalyzingFile(config.landscapeToken(),
             fileDescriptor.reportedPath);
@@ -489,10 +488,13 @@ public class AnalysisService {
           fileDataHandler.setRepositoryName(config.getRepositoryName());
           exporter.persistFile(fileDataHandler.getProtoBufObject());
         }
+      } catch (IOException e) {
+        LOGGER.error("Failed to analyze file {}: {}", fileDescriptor.reportedPath, e.getMessage());
       } finally {
         analysisStatusService.incrementAnalyzedFile(config.landscapeToken());
       }
-    }
+    });
+
   }
 
   private void createCommitReport(final AnalysisConfig config, final Repository repository,
@@ -502,6 +504,8 @@ public class AnalysisService {
       final List<java.nio.file.PathMatcher> restrictMatchers,
       final List<java.nio.file.PathMatcher> excludeMatchers)
       throws NotFoundException, IOException, GitAPIException {
+    final CommitReportHandler commitReportHandler = new CommitReportHandler();
+
     if (lastCommit == null) {
       commitReportHandler.init(commit.getId().getName(), null, branchName);
     } else {
@@ -513,27 +517,20 @@ public class AnalysisService {
     commitReportHandler.setCommitDate(Timestamp.newBuilder()
         .setSeconds(commit.getCommitterIdent().getWhen().getTime() / 1000).build());
 
-    final List<FileDescriptor> files = gitRepositoryHandler.listFilesInCommit(repository, commit,
-        config.applicationRoot().orElse(config.includeInAnalysisExpressions().orElse("")));
-
-    applyGlobFiltering(files, restrictMatchers, excludeMatchers);
-
     final List<FileDescriptor> modifiedFiles = descriptorTriple.left();
     final List<FileDescriptor> deletedFiles = descriptorTriple.middle();
     final List<FileDescriptor> addedFiles = descriptorTriple.right();
 
-    commitReportHandler.add(files);
-
-    for (final FileDescriptor modifiedFile : modifiedFiles) {
-      commitReportHandler.addModified(modifiedFile);
+    for (final FileDescriptor addedFile : addedFiles) {
+      commitReportHandler.addAdded(addedFile);
     }
 
     for (final FileDescriptor deletedFile : deletedFiles) {
       commitReportHandler.addDeleted(deletedFile);
     }
 
-    for (final FileDescriptor addedFile : addedFiles) {
-      commitReportHandler.addAdded(addedFile);
+    for (final FileDescriptor modifiedFile : modifiedFiles) {
+      commitReportHandler.addModified(modifiedFile);
     }
 
     final List<Ref> list = Git.wrap(repository).tagList().call();

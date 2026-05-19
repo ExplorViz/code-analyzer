@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.git; // NOPMD
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -18,6 +19,7 @@ import net.explorviz.code.analysis.FileIO;
 import net.explorviz.code.analysis.exceptions.NotFoundException;
 import net.explorviz.code.analysis.exceptions.PropertyNotDefinedException;
 import net.explorviz.code.analysis.service.AnalysisConfig;
+import net.explorviz.code.analysis.service.LocalRepositoryService;
 import net.explorviz.code.analysis.types.FileDescriptor;
 import net.explorviz.code.analysis.types.RemoteRepositoryObject;
 import net.explorviz.code.analysis.types.Triple;
@@ -63,6 +65,9 @@ public class GitRepositoryHandler { // NOPMD
 
   @ConfigProperty(name = "explorviz.gitanalysis.remote.storage-path")
   /* default */ Optional<String> repoLocalStoragePathProperty; // NOCS
+
+  @Inject
+  /* default */ LocalRepositoryService localRepositoryService; // NOCS
 
   private Git git;
 
@@ -268,7 +273,8 @@ public class GitRepositoryHandler { // NOPMD
     this.git = Git.open(localRepositoryDirectory);
     if (!branchName.isBlank()) {
       try {
-        if ("true".equals(System.getenv("GITLAB_CI"))) {
+        if ("true".equals(System.getenv("GITLAB_CI"))
+            || this.git.getRepository().findRef("refs/heads/" + branchName) == null) {
           this.git.checkout().setName(branchName).setCreateBranch(true)
               .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
               .setStartPoint("origin/" + branchName).call();
@@ -311,7 +317,7 @@ public class GitRepositoryHandler { // NOPMD
     } else if (new File(localRepositoryPath).isAbsolute()) {
       return this.openGitRepository(localRepositoryPath, remoteRepositoryObject.getBranchName());
     } else {
-      String absolutePath = GitRepositoryHandler.convertRelativeToAbsolutePath(localRepositoryPath);
+      String absolutePath = localRepositoryService.resolveRelativeRepositoryPath(localRepositoryPath).toString();
       return this.openGitRepository(absolutePath, remoteRepositoryObject.getBranchName());
     }
   }

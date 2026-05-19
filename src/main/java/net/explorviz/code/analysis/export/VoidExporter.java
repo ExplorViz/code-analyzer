@@ -1,5 +1,6 @@
 package net.explorviz.code.analysis.export;
 
+import java.util.Map;
 import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.FileData;
@@ -14,7 +15,7 @@ public class VoidExporter implements DataExporter {
   @Override
   public StateData getStateData(final String repositoryName, final String branchName,
       final String token,
-      final String applicationName, final String applicationRoot) {
+      final Map<String, String> applicationPaths) {
     return StateData.newBuilder().build();
   }
 

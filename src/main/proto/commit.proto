@@ -26,10 +26,9 @@ message CommitData {
   ContributorData author = 9;
 
   // Git file metrics
-  repeated FileIdentifier unchanged_files = 10;
-  repeated FileIdentifier added_files = 11;
-  repeated FileIdentifier modified_files = 12;
-  repeated FileIdentifier deleted_files = 13;
+  repeated FileIdentifier added_files = 10;
+  repeated FileIdentifier modified_files = 11;
+  repeated FileIdentifier deleted_files = 12;
 }
 
 message FileIdentifier {
