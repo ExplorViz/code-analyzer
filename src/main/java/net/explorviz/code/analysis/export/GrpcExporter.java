@@ -5,7 +5,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.util.Map;
 import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.CommitServiceGrpc;
-import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.ContributorServiceGrpc;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.FileDataServiceGrpc;
@@ -30,18 +29,18 @@ public final class GrpcExporter implements DataExporter {
 
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ FileDataServiceGrpc.FileDataServiceBlockingStub fileDataGrpcClient;
-  //
+
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ CommitServiceGrpc.CommitServiceBlockingStub commitDataGrpcClient;
-  //
+
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ StateDataServiceGrpc.StateDataServiceBlockingStub stateDataGrpcClient;
-  //
+
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ ContributorServiceGrpc.ContributorServiceBlockingStub contributorDataGrpcClient;
-  //
+
   @GrpcClient(GRPC_CLIENT_NAME)
-    /* package */ TrackableResourceServiceGrpc.TrackableResourceServiceBlockingStub trackableResourceGrpcClient;
+  /* package */ TrackableResourceServiceGrpc.TrackableResourceServiceBlockingStub trackableResourceGrpcClient;
 
   @ConfigProperty(name = "explorviz.landscape.token")
   /* default */ String landscapeTokenProperty;
@@ -97,10 +96,8 @@ public final class GrpcExporter implements DataExporter {
     try {
       commitDataGrpcClient.persistCommit(commitData);
     } catch (final Exception e) {
-      if (LOGGER.isErrorEnabled()) {
-        LOGGER.error("Failed to send commit data {}", commitData);
-        LOGGER.error(e.getMessage());
-      }
+      LOGGER.error("Failed to send commit data {}", commitData.getCommitId(), e);
+      throw new RuntimeException("Failed to send commit data for " + commitData.getCommitId(), e);
     }
   }
 

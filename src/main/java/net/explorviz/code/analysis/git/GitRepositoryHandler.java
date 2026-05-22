@@ -11,6 +11,8 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,9 +36,11 @@ import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.diff.EditList;
 import org.eclipse.jgit.errors.MissingObjectException;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.patch.FileHeader;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -206,11 +210,22 @@ public class GitRepositoryHandler { // NOPMD
 
       FileIO.cleanDirectory(repoPath);
 
+      final String branchToClone = resolveBranchToClone(
+          remoteRepositoryObject, checkedRepositoryUrl.getValue());
+
       final var cloneCommand = Git.cloneRepository()
           .setURI(checkedRepositoryUrl.getValue())
           .setCredentialsProvider(remoteRepositoryObject.getCredentialsProvider())
           .setDirectory(new File(repoPath))
-          .setBranch(remoteRepositoryObject.getBranchNameOrNull());
+          .setCloneAllBranches(false)
+          .setBranch(branchToClone != null ? branchToClone : Constants.HEAD);
+
+      if (branchToClone != null) {
+        cloneCommand.setBranchesToClone(
+            Collections.singletonList(Constants.R_HEADS + branchToClone));
+        LOGGER.atInfo().addArgument(branchToClone)
+            .log("Performing single-branch clone for branch: {}");
+      }
 
       // Apply shallow clone if depth is specified
       if (remoteRepositoryObject.getCloneDepth() != null
@@ -248,6 +263,34 @@ public class GitRepositoryHandler { // NOPMD
       }
       throw e;
     }
+  }
+
+  private String resolveBranchToClone(final RemoteRepositoryObject remoteRepositoryObject,
+      final String repositoryUrl) throws GitAPIException {
+    final String configuredBranch = remoteRepositoryObject.getBranchName();
+    if (!configuredBranch.isBlank()) {
+      return configuredBranch;
+    }
+    return resolveRemoteDefaultBranch(repositoryUrl,
+        remoteRepositoryObject.getCredentialsProvider());
+  }
+
+  private String resolveRemoteDefaultBranch(final String repositoryUrl,
+      final CredentialsProvider credentialsProvider) throws GitAPIException {
+    final Collection<Ref> refs = Git.lsRemoteRepository()
+        .setRemote(repositoryUrl)
+        .setCredentialsProvider(credentialsProvider)
+        .call();
+    for (final Ref ref : refs) {
+      if (Constants.HEAD.equals(ref.getName()) && ref.isSymbolic()) {
+        final String branchName = Repository.shortenRefName(ref.getTarget().getName());
+        LOGGER.atInfo().addArgument(branchName)
+            .log("No branch configured, using remote default branch: {}");
+        return branchName;
+      }
+    }
+    LOGGER.atWarn().log("Could not resolve remote default branch; falling back to HEAD");
+    return null;
   }
 
   /**

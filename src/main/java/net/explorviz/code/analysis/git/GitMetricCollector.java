@@ -15,37 +15,30 @@ public final class GitMetricCollector {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GitMetricCollector.class);
 
-  private static final ThreadLocal<String> AUTHOR_CACHE = ThreadLocal.withInitial(() -> "");
-
   private GitMetricCollector() {
   }
 
-
   /**
-   * Resets the author, call once per commit before calling
-   * {@link GitMetricCollector#addCommitGitMetrics(AbstractFileDataHandler, RevCommit)}.
-   */
-  public static void resetAuthor() {
-    AUTHOR_CACHE.remove();
-  }
-
-  /**
-   * Adds git metrics that are valid for all files within a commit. For performance reasons, some data gets cached.
-   * before calling this method for a commit, call {@link GitMetricCollector#resetAuthor()} once for every new commit.
+   * Adds git metrics that are valid for all files within a commit.
    *
    * @param fileDataHandler the fileDataHandler to add the metric to
    * @param commit          the current commit
    */
   public static void addCommitGitMetrics(final AbstractFileDataHandler fileDataHandler,
       final RevCommit commit) {
-    String author = AUTHOR_CACHE.get();
-    if (author.isBlank()) {
-      author = commit.getAuthorIdent().getEmailAddress();
-      AUTHOR_CACHE.set(author);
-    }
-    fileDataHandler.setAuthor(author);
+    addCommitGitMetrics(fileDataHandler, commit.getAuthorIdent().getEmailAddress());
   }
 
+  /**
+   * Adds git metrics that are valid for all files within a commit.
+   *
+   * @param fileDataHandler the fileDataHandler to add the metric to
+   * @param authorEmail     the author email for the current commit
+   */
+  public static void addCommitGitMetrics(final AbstractFileDataHandler fileDataHandler,
+      final String authorEmail) {
+    fileDataHandler.setAuthor(authorEmail);
+  }
 
   /**
    * Adds git metrics that are valid for a specific file.
@@ -65,7 +58,7 @@ public final class GitMetricCollector {
     }
   }
 
-  /** 
+  /**
    * Creates a ContributorData object based on the given commit, landscape token and repository name.
    *
    * @param commit the commit to extract contributor information from
@@ -77,7 +70,7 @@ public final class GitMetricCollector {
         final RevCommit commit,
         final String landscapeToken,
         final String repositoryName
-      
+
   ) {
     String name = commit.getAuthorIdent().getName();
     String email = commit.getAuthorIdent().getEmailAddress();

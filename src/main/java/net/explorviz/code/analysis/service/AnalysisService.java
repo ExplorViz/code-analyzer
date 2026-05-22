@@ -20,6 +20,11 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import net.explorviz.code.analysis.exceptions.DebugFileWriter;
 import net.explorviz.code.analysis.exceptions.NotFoundException;
 import net.explorviz.code.analysis.exceptions.PropertyNotDefinedException;
@@ -37,6 +42,7 @@ import net.explorviz.code.analysis.parser.AntlrTypeScriptParserService;
 import net.explorviz.code.analysis.types.FileDescriptor;
 import net.explorviz.code.analysis.types.Triple;
 import net.explorviz.code.proto.ContributorData;
+import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
 import net.explorviz.code.proto.StateData;
 import org.eclipse.jgit.api.Git;
@@ -106,6 +112,10 @@ public class AnalysisService {
   /* package */ ManagedExecutor managedExecutor;
   @ConfigProperty(name = "explorviz.gitanalysis.save-crashed_files")
   /* default */ boolean saveCrashedFilesProperty;
+  @ConfigProperty(name = "explorviz.gitanalysis.file-analysis-parallelism", defaultValue = "0")
+  /* default */ int fileAnalysisParallelismProperty;
+  @ConfigProperty(name = "explorviz.gitanalysis.file-persist-parallelism", defaultValue = "0")
+  /* default */ int filePersistParallelismProperty;
 
   private static String toErrorText(final String position, final String commitId,
       final String branchName) {
@@ -160,7 +170,6 @@ public class AnalysisService {
       LOGGER.info("Total commits to analyze: {}", commitsToAnalyze);
       analysisStatusService.markRunning(config.landscapeToken(), commitsToAnalyze, 0);
 
-
       try (RevWalk revWalk = new RevWalk(repository)) {
         prepareRevWalk(repository, revWalk, fullBranch);
 
@@ -177,26 +186,25 @@ public class AnalysisService {
         final List<java.nio.file.PathMatcher> excludeMatchers = compileMatchers(
             config.excludeFromAnalysisExpressions());
 
-
         for (final RevCommit commit : revWalk) {
 
           if (!inAnalysisRange) {
             if (commit.name().equals(startCommit.get())) {
               inAnalysisRange = true;
               if (exporter.isRemote()) {
-                lastCheckedCommit = commit;
+                lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
                 continue;
               }
             } else {
               if (exporter.isRemote()) {
-                lastCheckedCommit = commit;
+                lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
               }
               continue;
             }
           }
           if (skippedInPreAnalysis < commitsToSkipBeforeAnalyzing) {
             skippedInPreAnalysis++;
-            lastCheckedCommit = commit;
+            lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
             continue;
           }
 
@@ -238,7 +246,7 @@ public class AnalysisService {
 
             commitCount++;
             analysisStatusService.incrementAnalyzedCommit(config.landscapeToken());
-            lastCheckedCommit = commit;
+            lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
             if (endCommit.isPresent() && commit.name().equals(endCommit.get())) {
               break;
             }
@@ -255,11 +263,16 @@ public class AnalysisService {
           commitCount++;
           analysisStatusService.incrementAnalyzedCommit(config.landscapeToken());
 
-          lastCheckedCommit = commit;
+          lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
           // break if endCommit is reached, if endCommit is empty, run for all commits
           if (endCommit.isPresent() && commit.name().equals(endCommit.get())) {
             break;
           }
+        }
+
+        if (lastCheckedCommit != null) {
+          lastCheckedCommit.disposeBody();
+          lastCheckedCommit = null;
         }
 
         LOGGER.atTrace().addArgument(commitCount).log("Analyzed {} commits");
@@ -300,8 +313,7 @@ public class AnalysisService {
             endDate,
             exporter,
             config.landscapeToken(),
-            config.gitPassword().orElse("")
-        );
+            config.gitPassword().orElse(""));
       } catch (final Exception e) {
         LOGGER.error("Background social fetch aborted: {}", e.getMessage());
       }
@@ -344,8 +356,7 @@ public class AnalysisService {
             config.getRepositoryName(),
             config.branch().orElse("main"),
             config.landscapeToken(),
-            config.applicationPathsMap()
-        );
+            config.applicationPathsMap());
       } catch (final Exception e) {
         LOGGER.warn("Could not pre-initialize remote state for social fetch: {}", e.getMessage());
       }
@@ -446,55 +457,152 @@ public class AnalysisService {
         restrictMatchers, excludeMatchers);
 
     Git.wrap(repository).checkout().setName(commit.getName()).call();
-    createCommitReport(config, repository, commit, lastCommit, exporter, branchName, descriptorTriple,
-        restrictMatchers, excludeMatchers);
 
     antlrParserService.reset();
-    GitMetricCollector.resetAuthor();
 
     LOGGER.atTrace().addArgument(descriptorList.toString()).log("Files: {}");
 
-    descriptorList.parallelStream().forEach(fileDescriptor -> {
-      try {
-        analysisStatusService.setCurrentAnalyzingFile(config.landscapeToken(),
-            fileDescriptor.reportedPath);
+    final String commitAuthor = commit.getAuthorIdent().getEmailAddress();
+    final String repositoryPath = GitRepositoryHandler.getCurrentRepositoryPath();
+    final int parallelism = resolveFileAnalysisParallelism();
+    final Semaphore inFlightTasks = new Semaphore(parallelism);
+    final List<CompletableFuture<FileData>> analysisTasks = new ArrayList<>(descriptorList.size());
 
-        LOGGER.atInfo()
-            .addArgument(fileDescriptor.reportedPath)
-            .log("📄 Analyzing file: {}");
+    for (final FileDescriptor fileDescriptor : descriptorList) {
+      analysisTasks.add(managedExecutor.supplyAsync(() -> {
+        try {
+          inFlightTasks.acquire();
+          analysisStatusService.setCurrentAnalyzingFile(config.landscapeToken(),
+              fileDescriptor.reportedPath);
 
-        final AbstractFileDataHandler fileDataHandler = fileAnalysis(config, repository, fileDescriptor,
-            commit.getName());
+          LOGGER.atDebug()
+              .addArgument(fileDescriptor.reportedPath)
+              .log("Analyzing file: {}");
 
-        if (fileDataHandler == null) {
-          LOGGER.atError()
-              .addArgument(fileDescriptor.relativePath)
-              .log("❌ Analysis of file {} failed - handler is NULL");
-        } else {
-          LOGGER.atInfo()
-              .addArgument(fileDescriptor.relativePath)
-              .log("✅ Analysis of file {} succeeded - sending to exporter");
-          try {
-            File file = new File(GitRepositoryHandler.getCurrentRepositoryPath() + "/"
-                + fileDescriptor.relativePath);
-            fileDataHandler.addMetric(CommonFileDataListener.FILE_SIZE, String.valueOf(file.length()));
-          } catch (NullPointerException e) {
-            LOGGER.error("File size of file " + fileDescriptor.relativePath
-                + " could not be analyzed." + e.getMessage());
+          AbstractFileDataHandler fileDataHandler = analyzeFileForCommit(config, repository,
+              fileDescriptor, commit.getName(), commitAuthor, repositoryPath);
+          if (fileDataHandler == null) {
+            LOGGER.atWarn()
+                .addArgument(fileDescriptor.reportedPath)
+                .log("Analysis of file {} failed - sending minimal file data with updated hash");
+            fileDataHandler = createMinimalFileDataHandler(fileDescriptor, commit);
+            GitMetricCollector.addCommitGitMetrics(fileDataHandler, commitAuthor);
+            fileDataHandler.setLandscapeToken(config.landscapeToken());
+            fileDataHandler.setRepositoryName(config.getRepositoryName());
           }
-          // Add Git metrics for all files
-          GitMetricCollector.addCommitGitMetrics(fileDataHandler, commit);
-          fileDataHandler.setLandscapeToken(config.landscapeToken());
-          fileDataHandler.setRepositoryName(config.getRepositoryName());
-          exporter.persistFile(fileDataHandler.getProtoBufObject());
+
+          return fileDataHandler.getProtoBufObject();
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          LOGGER.warn("File analysis interrupted for {}", fileDescriptor.reportedPath);
+          final AbstractFileDataHandler minimalHandler =
+              createMinimalFileDataHandler(fileDescriptor, commit);
+          GitMetricCollector.addCommitGitMetrics(minimalHandler, commitAuthor);
+          minimalHandler.setLandscapeToken(config.landscapeToken());
+          minimalHandler.setRepositoryName(config.getRepositoryName());
+          return minimalHandler.getProtoBufObject();
+        } finally {
+          inFlightTasks.release();
+          analysisStatusService.incrementAnalyzedFile(config.landscapeToken());
         }
-      } catch (IOException e) {
-        LOGGER.error("Failed to analyze file {}: {}", fileDescriptor.reportedPath, e.getMessage());
-      } finally {
-        analysisStatusService.incrementAnalyzedFile(config.landscapeToken());
-      }
+      }));
+    }
+
+    pipelinePersistAnalyzedFiles(exporter, analysisTasks, commit.getName());
+  }
+
+  private void pipelinePersistAnalyzedFiles(final DataExporter exporter,
+      final List<CompletableFuture<FileData>> analysisTasks, final String commitId) {
+    if (analysisTasks.isEmpty()) {
+      return;
+    }
+
+    final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
+    final CountDownLatch analysisFinished = new CountDownLatch(1);
+
+    // Use a dedicated virtual thread so persistence is not starved by analysis tasks
+    // competing for the same ManagedExecutor worker pool.
+    final Thread persistThread = Thread.ofVirtual().name("file-persist-" + commitId).start(() -> {
+      LOGGER.atDebug()
+          .addArgument(commitId)
+          .log("Starting pipelined persistence for commit {}");
+      exporter.persistFilesFromQueue(completedFiles, analysisFinished,
+          resolveFilePersistParallelism());
     });
 
+    for (final CompletableFuture<FileData> analysisTask : analysisTasks) {
+      analysisTask.whenComplete((fileData, error) -> {
+        if (error != null) {
+          LOGGER.error("Unexpected analysis failure during pipelined persist for commit {}: {}",
+              commitId, error.getMessage());
+        }
+        if (fileData != null) {
+          completedFiles.offer(fileData);
+        }
+      });
+    }
+
+    CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture[0])).join();
+    analysisFinished.countDown();
+    try {
+      persistThread.join();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private AbstractFileDataHandler analyzeFileForCommit(final AnalysisConfig config,
+      final Repository repository, final FileDescriptor fileDescriptor, final String commitSha,
+      final String commitAuthor, final String repositoryPath) {
+    try {
+      LOGGER.atDebug()
+          .addArgument(fileDescriptor.reportedPath)
+          .log("Analyzing file: {}");
+
+      AbstractFileDataHandler fileDataHandler = fileAnalysis(config, repository, fileDescriptor,
+          commitSha);
+      if (fileDataHandler == null) {
+        return null;
+      }
+
+      try {
+        final File file = new File(repositoryPath + "/" + fileDescriptor.relativePath);
+        fileDataHandler.addMetric(CommonFileDataListener.FILE_SIZE, String.valueOf(file.length()));
+      } catch (NullPointerException e) {
+        LOGGER.error("File size of file {} could not be analyzed: {}", fileDescriptor.relativePath,
+            e.getMessage());
+      }
+
+      GitMetricCollector.addCommitGitMetrics(fileDataHandler, commitAuthor);
+      fileDataHandler.setLandscapeToken(config.landscapeToken());
+      fileDataHandler.setRepositoryName(config.getRepositoryName());
+      return fileDataHandler;
+    } catch (IOException e) {
+      LOGGER.error("Failed to analyze file {}: {}", fileDescriptor.reportedPath, e.getMessage());
+      return null;
+    }
+  }
+
+  private int resolveFileAnalysisParallelism() {
+    if (fileAnalysisParallelismProperty > 0) {
+      return fileAnalysisParallelismProperty;
+    }
+    return Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+  }
+
+  private int resolveFilePersistParallelism() {
+    if (filePersistParallelismProperty > 0) {
+      return filePersistParallelismProperty;
+    }
+    return resolveFileAnalysisParallelism();
+  }
+
+  private RevCommit advanceLastCheckedCommit(final RevCommit commit,
+      final RevCommit previousCommit) {
+    if (previousCommit != null) {
+      previousCommit.disposeBody();
+    }
+    return commit;
   }
 
   private void createCommitReport(final AnalysisConfig config, final Repository repository,
@@ -545,10 +653,9 @@ public class AnalysisService {
     commitReportHandler.setRepositoryName(config.getRepositoryName());
 
     ContributorData contributorData = GitMetricCollector.createContributorData(
-        commit, 
+        commit,
         config.landscapeToken(),
-        config.getRepositoryName()
-    );
+        config.getRepositoryName());
 
     commitReportHandler.setAuthor(contributorData);
 
@@ -617,9 +724,9 @@ public class AnalysisService {
     try {
       AbstractFileDataHandler fileDataHandler = null;
 
-      LOGGER.atError()
+      LOGGER.atDebug()
           .addArgument(file.reportedPath)
-          .log("ANALYZING FILE: {} with size {} bytes", file.reportedPath, fileContent.length());
+          .log("Analyzing file {} with size {} bytes", file.reportedPath, fileContent.length());
 
       // Route to appropriate parser based on file extension
       if (fileName.endsWith(".ts") || fileName.endsWith(".tsx")
@@ -749,6 +856,7 @@ public class AnalysisService {
           DebugFileWriter.saveDebugFile("/logs/crashedfiles/", fileContent,
               file.fileName);
         }
+        fileDataHandler = createMinimalFileDataHandler(file, commitSha);
       } else {
         final long loc = fileContent.lines().count();
         fileDataHandler.addMetric(CommonFileDataListener.LOC, String.valueOf(loc));
@@ -760,8 +868,22 @@ public class AnalysisService {
       if (LOGGER.isWarnEnabled()) {
         LOGGER.warn(e.toString());
       }
-      return null;
+      return createMinimalFileDataHandler(file, commitSha);
     }
+  }
+
+  private AbstractFileDataHandler createMinimalFileDataHandler(
+      final FileDescriptor file, final RevCommit commit) {
+    return createMinimalFileDataHandler(file, commit.getName());
+  }
+
+  private AbstractFileDataHandler createMinimalFileDataHandler(
+      final FileDescriptor file, final String commitSha) {
+    final TextFileDataHandler handler =
+        new TextFileDataHandler(file.reportedPath, Language.LANGUAGE_UNSPECIFIED);
+    handler.setFileHash(file.objectId.getName());
+    GitMetricCollector.addFileGitMetrics(handler, file);
+    return handler;
   }
 
   void applyGlobFiltering(final List<FileDescriptor> descriptors,
