@@ -151,6 +151,17 @@ public class GitRepositoryHandlerTest {
         Map.entry(true, "https://github.com/ExplorViz/code-agent"),
         GitRepositoryHandler.convertSshToHttps("git@github.com:ExplorViz/code-agent"));
 
+    // GitHub SSH URL with hyphenated org/repo names
+    Assertions.assertEquals(
+        Map.entry(true, "https://github.com/open-telemetry/opentelemetry-demo.git"),
+        GitRepositoryHandler.convertSshToHttps(
+            "git@github.com:open-telemetry/opentelemetry-demo.git"));
+
+    // ssh:// style GitHub URL
+    Assertions.assertEquals(
+        Map.entry(true, "https://github.com/ExplorViz/code-agent.git"),
+        GitRepositoryHandler.convertSshToHttps("ssh://git@github.com/ExplorViz/code-agent.git"));
+
     // if the url looks off, assume the user wants it that way
     final String urlUnderTest2 = "abc.xyz";
     Assertions.assertEquals(Map.entry(false, urlUnderTest2),

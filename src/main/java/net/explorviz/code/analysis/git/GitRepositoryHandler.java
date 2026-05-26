@@ -102,8 +102,18 @@ public class GitRepositoryHandler { // NOPMD
    *         url itself
    */
   public static Map.Entry<Boolean, String> convertSshToHttps(final String url) {
-    if (url.matches("^git@\\S+\\.\\S+:\\w+(/[\\S&&[^/]]+)+(\\.git)?$")) {
-      final String convertedUrl = url.replace(":", "/").replace("git@", "https://");
+    if (url.startsWith("git@")) {
+      final int colonIndex = url.indexOf(':');
+      if (colonIndex > "git@".length() && colonIndex < url.length() - 1) {
+        final String convertedUrl = "https://" + url.substring("git@".length(), colonIndex) + "/"
+            + url.substring(colonIndex + 1);
+        if (LOGGER.isInfoEnabled()) {
+          LOGGER.info("SSH URL detected, converting to HTTPS: " + convertedUrl);
+        }
+        return Map.entry(true, convertedUrl);
+      }
+    } else if (url.startsWith("ssh://git@") && url.length() > "ssh://git@".length()) {
+      final String convertedUrl = "https://" + url.substring("ssh://git@".length());
       if (LOGGER.isInfoEnabled()) {
         LOGGER.info("SSH URL detected, converting to HTTPS: " + convertedUrl);
       }
@@ -111,12 +121,12 @@ public class GitRepositoryHandler { // NOPMD
     } else if (url.matches("^https?://\\S+(/[\\S&&[^/]]+)+(\\.git)?$")) {
       // it should not matter if it is http or https here, the user should know
       return Map.entry(true, url);
-    } else {
-      if (LOGGER.isErrorEnabled()) {
-        LOGGER.error("Could not convert the url to https url.");
-      }
-      return Map.entry(false, url);
     }
+
+    if (LOGGER.isErrorEnabled()) {
+      LOGGER.error("Could not convert the url to https url.");
+    }
+    return Map.entry(false, url);
   }
 
   /**
