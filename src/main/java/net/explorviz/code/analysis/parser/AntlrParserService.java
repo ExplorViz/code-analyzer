@@ -3,8 +3,8 @@ package net.explorviz.code.analysis.parser;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.io.IOException;
 import java.nio.file.Path;
-import net.explorviz.code.analysis.antlr.generated.Java20Lexer;
-import net.explorviz.code.analysis.antlr.generated.Java20Parser;
+import net.explorviz.code.analysis.antlr.generated.JavaLexer;
+import net.explorviz.code.analysis.antlr.generated.JavaParser;
 import net.explorviz.code.analysis.handler.JavaFileDataHandler;
 import net.explorviz.code.analysis.listener.JavaFileDataListener;
 import org.antlr.v4.runtime.CharStream;
@@ -57,12 +57,12 @@ public class AntlrParserService {
   private JavaFileDataHandler parse(final CharStream charStream, final String fileName,
       final String fileHash) {
     // Create lexer and parser
-    final Java20Lexer lexer = new Java20Lexer(charStream);
+    final JavaLexer lexer = new JavaLexer(charStream);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
-    final Java20Parser parser = new Java20Parser(tokens);
+    final JavaParser parser = new JavaParser(tokens);
 
     // Parse the compilation unit
-    final Java20Parser.CompilationUnitContext compilationUnit = parser.compilationUnit();
+    final JavaParser.CompilationUnitContext compilationUnit = parser.compilationUnit();
 
     // Create Java file data handler
     final JavaFileDataHandler fileDataHandler = new JavaFileDataHandler(fileName);
