@@ -23,6 +23,8 @@ enum Language {
   CSHARP = 9;
   RUST = 10;
   KOTLIN = 11;
+  PHP = 12;
+  SWIFT = 13;
 }
 
 enum ClassType {

@@ -41,8 +41,10 @@ import net.explorviz.code.analysis.parser.AntlrCppParserService;
 import net.explorviz.code.analysis.parser.AntlrGoParserService;
 import net.explorviz.code.analysis.parser.AntlrKotlinParserService;
 import net.explorviz.code.analysis.parser.AntlrParserService;
+import net.explorviz.code.analysis.parser.AntlrPhpParserService;
 import net.explorviz.code.analysis.parser.AntlrPythonParserService;
 import net.explorviz.code.analysis.parser.AntlrRustParserService;
+import net.explorviz.code.analysis.parser.AntlrSwiftParserService;
 import net.explorviz.code.analysis.parser.AntlrTypeScriptParserService;
 import net.explorviz.code.analysis.types.FileDescriptor;
 import net.explorviz.code.analysis.types.Triple;
@@ -119,6 +121,10 @@ public class AnalysisService {
   /* package */ AntlrRustParserService rustParserService;
   @Inject
   /* package */ AntlrKotlinParserService kotlinParserService;
+  @Inject
+  /* package */ AntlrPhpParserService phpParserService;
+  @Inject
+  /* package */ AntlrSwiftParserService swiftParserService;
   @Inject
   /* package */ AnalysisStatusService analysisStatusService;
   @Inject
@@ -885,6 +891,44 @@ public class AnalysisService {
           LOGGER.atError()
               .addArgument(file.reportedPath)
               .log("❌ ANTLR Kotlin parser returned NULL for file: {}");
+        }
+      } else if (fileName.endsWith(".php")) {
+        LOGGER.atInfo()
+            .addArgument(file.reportedPath)
+            .addArgument(fileContent.length())
+            .log("Parsing PHP file with ANTLR: {} (size: {} bytes)");
+
+        fileDataHandler = phpParserService.parseFileContent(fileContent, file.reportedPath,
+            file.objectId.getName());
+
+        if (fileDataHandler != null) {
+          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
+          LOGGER.atInfo()
+              .addArgument(file.reportedPath)
+              .log("✅ Successfully parsed PHP file with ANTLR: {}");
+        } else {
+          LOGGER.atError()
+              .addArgument(file.reportedPath)
+              .log("❌ ANTLR PHP parser returned NULL for file: {}");
+        }
+      } else if (fileName.endsWith(".swift")) {
+        LOGGER.atInfo()
+            .addArgument(file.reportedPath)
+            .addArgument(fileContent.length())
+            .log("Parsing Swift file with ANTLR: {} (size: {} bytes)");
+
+        fileDataHandler = swiftParserService.parseFileContent(fileContent, file.reportedPath,
+            file.objectId.getName());
+
+        if (fileDataHandler != null) {
+          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
+          LOGGER.atInfo()
+              .addArgument(file.reportedPath)
+              .log("✅ Successfully parsed Swift file with ANTLR: {}");
+        } else {
+          LOGGER.atError()
+              .addArgument(file.reportedPath)
+              .log("❌ ANTLR Swift parser returned NULL for file: {}");
         }
       } else if (fileName.endsWith(".c") || fileName.endsWith(".h")) {
         LOGGER.atInfo()

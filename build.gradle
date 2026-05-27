@@ -83,6 +83,8 @@ def antlrLanguages = [
     'csharp'     : 'net.explorviz.code.analysis.antlr.generated.csharp',
     'rust'       : 'net.explorviz.code.analysis.antlr.generated.rust',
     'kotlin'     : 'net.explorviz.code.analysis.antlr.generated.kotlin',
+    'php'        : 'net.explorviz.code.analysis.antlr.generated.php',
+    'swift'      : 'net.explorviz.code.analysis.antlr.generated.swift',
     'python'     : 'net.explorviz.code.analysis.antlr.generated.python',
     'typescript' : 'net.explorviz.code.analysis.antlr.generated.typescript',
 ]

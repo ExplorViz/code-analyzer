@@ -46,4 +46,7 @@ tasks.withType(Checkstyle) {
   exclude '**/CSharpParserBase.java'
   exclude '**/RustLexerBase.java'
   exclude '**/RustParserBase.java'
+  exclude '**/PhpLexerBase.java'
+  exclude '**/SwiftSupport.java'
+  exclude '**/SwiftSupportLexer.java'
 }
