@@ -19,6 +19,7 @@ enum Language {
   PLAINTEXT = 5;
   CPP = 6;
   C = 7;
+  GO = 8;
 }
 
 enum ClassType {

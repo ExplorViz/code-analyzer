@@ -37,6 +37,7 @@ import net.explorviz.code.analysis.handler.TextFileDataHandler;
 import net.explorviz.code.analysis.listener.CommonFileDataListener;
 import net.explorviz.code.analysis.parser.AntlrCParserService;
 import net.explorviz.code.analysis.parser.AntlrCppParserService;
+import net.explorviz.code.analysis.parser.AntlrGoParserService;
 import net.explorviz.code.analysis.parser.AntlrParserService;
 import net.explorviz.code.analysis.parser.AntlrPythonParserService;
 import net.explorviz.code.analysis.parser.AntlrTypeScriptParserService;
@@ -107,6 +108,8 @@ public class AnalysisService {
   /* package */ AntlrCppParserService cppParserService;
   @Inject
   /* package */ AntlrCParserService antlrCParserService;
+  @Inject
+  /* package */ AntlrGoParserService goParserService;
   @Inject
   /* package */ AnalysisStatusService analysisStatusService;
   @Inject
@@ -797,6 +800,25 @@ public class AnalysisService {
           LOGGER.atError()
               .addArgument(file.reportedPath)
               .log("❌ ANTLR Python parser returned NULL for file: {}");
+        }
+      } else if (fileName.endsWith(".go")) {
+        LOGGER.atInfo()
+            .addArgument(file.reportedPath)
+            .addArgument(fileContent.length())
+            .log("Parsing Go file with ANTLR: {} (size: {} bytes)");
+
+        fileDataHandler = goParserService.parseFileContent(fileContent, file.reportedPath,
+            file.objectId.getName());
+
+        if (fileDataHandler != null) {
+          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
+          LOGGER.atInfo()
+              .addArgument(file.reportedPath)
+              .log("✅ Successfully parsed Go file with ANTLR: {}");
+        } else {
+          LOGGER.atError()
+              .addArgument(file.reportedPath)
+              .log("❌ ANTLR Go parser returned NULL for file: {}");
         }
       } else if (fileName.endsWith(".c") || fileName.endsWith(".h")) {
         LOGGER.atInfo()

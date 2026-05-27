@@ -79,6 +79,7 @@ def antlrLanguages = [
     'java'       : 'net.explorviz.code.analysis.antlr.generated.java',
     'cpp'        : 'net.explorviz.code.analysis.antlr.generated.cpp',
     'c'          : 'net.explorviz.code.analysis.antlr.generated.c',
+    'golang'     : 'net.explorviz.code.analysis.antlr.generated.golang',
     'python'     : 'net.explorviz.code.analysis.antlr.generated.python',
     'typescript' : 'net.explorviz.code.analysis.antlr.generated.typescript',
 ]

@@ -23,7 +23,7 @@ public class JsonExporter implements DataExporter {
   private static final String JSON_FILE_EXTENSION = ".json";
   private static final String[] SOURCE_FILE_EXTENSIONS = {
       ".java", ".ts", ".tsx", ".js", ".jsx", ".py",
-      ".c", ".cpp", ".cxx", ".cc", ".h", ".hpp", ".hxx"
+      ".c", ".cpp", ".cxx", ".cc", ".h", ".hpp", ".hxx", ".go"
   };
 
   private final String storageDirectory;
