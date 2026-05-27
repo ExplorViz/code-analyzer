@@ -12,19 +12,19 @@ service FileDataService {
 
 enum Language {
   LANGUAGE_UNSPECIFIED = 0;
-  JAVA = 1;
-  JAVASCRIPT = 2;
-  TYPESCRIPT = 3;
-  PYTHON = 4;
-  PLAINTEXT = 5;
-  CPP = 6;
-  C = 7;
-  GO = 8;
-  CSHARP = 9;
-  RUST = 10;
-  KOTLIN = 11;
-  PHP = 12;
-  SWIFT = 13;
+  C = 1;
+  CPP = 2;
+  CSHARP = 3;
+  GO = 4;
+  JAVA = 5;
+  JAVASCRIPT = 6;
+  KOTLIN = 7;
+  PHP = 8;
+  PLAINTEXT = 9;
+  PYTHON = 10;
+  RUST = 11;
+  SWIFT = 12;
+  TYPESCRIPT = 13;
 }
 
 enum ClassType {
