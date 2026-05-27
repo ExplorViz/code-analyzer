@@ -36,6 +36,7 @@ import net.explorviz.code.analysis.handler.CommitReportHandler;
 import net.explorviz.code.analysis.handler.TextFileDataHandler;
 import net.explorviz.code.analysis.listener.CommonFileDataListener;
 import net.explorviz.code.analysis.parser.AntlrCParserService;
+import net.explorviz.code.analysis.parser.AntlrCSharpParserService;
 import net.explorviz.code.analysis.parser.AntlrCppParserService;
 import net.explorviz.code.analysis.parser.AntlrGoParserService;
 import net.explorviz.code.analysis.parser.AntlrParserService;
@@ -110,6 +111,8 @@ public class AnalysisService {
   /* package */ AntlrCParserService antlrCParserService;
   @Inject
   /* package */ AntlrGoParserService goParserService;
+  @Inject
+  /* package */ AntlrCSharpParserService csharpParserService;
   @Inject
   /* package */ AnalysisStatusService analysisStatusService;
   @Inject
@@ -819,6 +822,25 @@ public class AnalysisService {
           LOGGER.atError()
               .addArgument(file.reportedPath)
               .log("❌ ANTLR Go parser returned NULL for file: {}");
+        }
+      } else if (fileName.endsWith(".cs")) {
+        LOGGER.atInfo()
+            .addArgument(file.reportedPath)
+            .addArgument(fileContent.length())
+            .log("Parsing C# file with ANTLR: {} (size: {} bytes)");
+
+        fileDataHandler = csharpParserService.parseFileContent(fileContent, file.reportedPath,
+            file.objectId.getName());
+
+        if (fileDataHandler != null) {
+          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
+          LOGGER.atInfo()
+              .addArgument(file.reportedPath)
+              .log("✅ Successfully parsed C# file with ANTLR: {}");
+        } else {
+          LOGGER.atError()
+              .addArgument(file.reportedPath)
+              .log("❌ ANTLR C# parser returned NULL for file: {}");
         }
       } else if (fileName.endsWith(".c") || fileName.endsWith(".h")) {
         LOGGER.atInfo()

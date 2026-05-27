@@ -20,6 +20,7 @@ enum Language {
   CPP = 6;
   C = 7;
   GO = 8;
+  CSHARP = 9;
 }
 
 enum ClassType {

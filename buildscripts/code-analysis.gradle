@@ -42,4 +42,6 @@ tasks.withType(Checkstyle) {
   exclude '**/SymbolTable.java'
   exclude '**/TypeClassification.java'
   exclude '**/GoParserBase.java'
+  exclude '**/CSharpLexerBase.java'
+  exclude '**/CSharpParserBase.java'
 }
