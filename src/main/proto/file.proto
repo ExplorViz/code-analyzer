@@ -22,6 +22,7 @@ enum Language {
   GO = 8;
   CSHARP = 9;
   RUST = 10;
+  KOTLIN = 11;
 }
 
 enum ClassType {

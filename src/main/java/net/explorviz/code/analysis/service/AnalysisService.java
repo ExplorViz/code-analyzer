@@ -39,6 +39,7 @@ import net.explorviz.code.analysis.parser.AntlrCParserService;
 import net.explorviz.code.analysis.parser.AntlrCSharpParserService;
 import net.explorviz.code.analysis.parser.AntlrCppParserService;
 import net.explorviz.code.analysis.parser.AntlrGoParserService;
+import net.explorviz.code.analysis.parser.AntlrKotlinParserService;
 import net.explorviz.code.analysis.parser.AntlrParserService;
 import net.explorviz.code.analysis.parser.AntlrPythonParserService;
 import net.explorviz.code.analysis.parser.AntlrRustParserService;
@@ -81,7 +82,7 @@ public class AnalysisService {
       "xml",
 
       // Infrastructure / tooling configs
-      "gradle", "kts",
+      "gradle",
       "editorconfig",
       "gitignore", "gitattributes", "gitmodules",
       "dockerignore",
@@ -116,6 +117,8 @@ public class AnalysisService {
   /* package */ AntlrCSharpParserService csharpParserService;
   @Inject
   /* package */ AntlrRustParserService rustParserService;
+  @Inject
+  /* package */ AntlrKotlinParserService kotlinParserService;
   @Inject
   /* package */ AnalysisStatusService analysisStatusService;
   @Inject
@@ -863,6 +866,25 @@ public class AnalysisService {
           LOGGER.atError()
               .addArgument(file.reportedPath)
               .log("❌ ANTLR Rust parser returned NULL for file: {}");
+        }
+      } else if (fileName.endsWith(".kt") || fileName.endsWith(".kts")) {
+        LOGGER.atInfo()
+            .addArgument(file.reportedPath)
+            .addArgument(fileContent.length())
+            .log("Parsing Kotlin file with ANTLR: {} (size: {} bytes)");
+
+        fileDataHandler = kotlinParserService.parseFileContent(fileContent, file.reportedPath,
+            file.objectId.getName());
+
+        if (fileDataHandler != null) {
+          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
+          LOGGER.atInfo()
+              .addArgument(file.reportedPath)
+              .log("✅ Successfully parsed Kotlin file with ANTLR: {}");
+        } else {
+          LOGGER.atError()
+              .addArgument(file.reportedPath)
+              .log("❌ ANTLR Kotlin parser returned NULL for file: {}");
         }
       } else if (fileName.endsWith(".c") || fileName.endsWith(".h")) {
         LOGGER.atInfo()
