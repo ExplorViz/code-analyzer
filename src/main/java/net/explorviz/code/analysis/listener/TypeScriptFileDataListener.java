@@ -1,7 +1,7 @@
 package net.explorviz.code.analysis.listener;
 
-import net.explorviz.code.analysis.antlr.generated.TypeScriptParser;
-import net.explorviz.code.analysis.antlr.generated.TypeScriptParserBaseListener;
+import net.explorviz.code.analysis.antlr.generated.typescript.TypeScriptParser;
+import net.explorviz.code.analysis.antlr.generated.typescript.TypeScriptParserBaseListener;
 import net.explorviz.code.analysis.handler.TypeScriptFileDataHandler;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;

@@ -1,4 +1,4 @@
-package net.explorviz.code.analysis.antlr.generated;
+package net.explorviz.code.analysis.antlr.generated.typescript;
 
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Parser;

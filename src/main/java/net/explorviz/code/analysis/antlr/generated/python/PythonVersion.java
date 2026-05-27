@@ -1,4 +1,4 @@
-package net.explorviz.code.analysis.antlr.generated;
+package net.explorviz.code.analysis.antlr.generated.python;
 
 public enum PythonVersion {
   Autodetect(0),

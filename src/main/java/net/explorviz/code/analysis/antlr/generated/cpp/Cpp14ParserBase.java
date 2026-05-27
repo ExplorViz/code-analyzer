@@ -1,4 +1,4 @@
-package net.explorviz.code.analysis.antlr.generated;
+package net.explorviz.code.analysis.antlr.generated.cpp;
 
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.TokenStream;

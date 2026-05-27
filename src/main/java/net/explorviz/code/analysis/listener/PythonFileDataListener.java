@@ -1,8 +1,8 @@
 package net.explorviz.code.analysis.listener;
 
-import net.explorviz.code.analysis.antlr.generated.PythonLexer;
-import net.explorviz.code.analysis.antlr.generated.PythonParser;
-import net.explorviz.code.analysis.antlr.generated.PythonParserBaseListener;
+import net.explorviz.code.analysis.antlr.generated.python.PythonLexer;
+import net.explorviz.code.analysis.antlr.generated.python.PythonParser;
+import net.explorviz.code.analysis.antlr.generated.python.PythonParserBaseListener;
 import net.explorviz.code.analysis.handler.PythonFileDataHandler;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;

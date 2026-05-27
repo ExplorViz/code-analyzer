@@ -1,4 +1,4 @@
-package net.explorviz.code.analysis.antlr.generated;
+package net.explorviz.code.analysis.antlr.generated.typescript;
 
 import java.util.ArrayDeque;
 import java.util.Deque;

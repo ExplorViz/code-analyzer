@@ -75,14 +75,30 @@ sourceSets {
 }
 
 // ANTLR configuration
-generateGrammarSource {
-    maxHeapSize = "64m"
-    arguments += ['-package', 'net.explorviz.code.analysis.antlr.generated', '-visitor']
-    outputDirectory = file("build/generated-src/antlr/main/net/explorviz/code/analysis/antlr/generated")
+def antlrLanguages = [
+    'java'       : 'net.explorviz.code.analysis.antlr.generated.java',
+    'cpp'        : 'net.explorviz.code.analysis.antlr.generated.cpp',
+    'python'     : 'net.explorviz.code.analysis.antlr.generated.python',
+    'typescript' : 'net.explorviz.code.analysis.antlr.generated.typescript',
+]
+
+tasks.named('generateGrammarSource').configure {
+    enabled = false
+}
+
+def generateGrammarTasks = antlrLanguages.collect { folder, pkg ->
+    def taskName = "generate${folder.capitalize()}GrammarSource"
+    tasks.register(taskName, org.gradle.api.plugins.antlr.AntlrTask) {
+        source = fileTree("src/main/antlr/${folder}")
+        outputDirectory = file("build/generated-src/antlr/main/${pkg.replace('.', '/')}")
+        arguments = ['-visitor', '-package', pkg]
+        antlrClasspath = configurations.antlr
+    }
+    return taskName
 }
 
 // Ensure ANTLR generates before compilation
-compileJava.dependsOn generateGrammarSource
+compileJava.dependsOn generateGrammarTasks
 
 // Regarding jandex dependency for each task
 // https://github.com/kordamp/jandex-gradle-plugin/issues/9

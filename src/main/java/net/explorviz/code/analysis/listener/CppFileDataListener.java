@@ -2,8 +2,8 @@ package net.explorviz.code.analysis.listener;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.explorviz.code.analysis.antlr.generated.CPP14Parser;
-import net.explorviz.code.analysis.antlr.generated.CPP14ParserBaseListener;
+import net.explorviz.code.analysis.antlr.generated.cpp.CPP14Parser;
+import net.explorviz.code.analysis.antlr.generated.cpp.CPP14ParserBaseListener;
 import net.explorviz.code.analysis.handler.CppFileDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import org.antlr.v4.runtime.CommonTokenStream;
