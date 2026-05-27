@@ -44,4 +44,6 @@ tasks.withType(Checkstyle) {
   exclude '**/GoParserBase.java'
   exclude '**/CSharpLexerBase.java'
   exclude '**/CSharpParserBase.java'
+  exclude '**/RustLexerBase.java'
+  exclude '**/RustParserBase.java'
 }

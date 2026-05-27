@@ -41,6 +41,7 @@ import net.explorviz.code.analysis.parser.AntlrCppParserService;
 import net.explorviz.code.analysis.parser.AntlrGoParserService;
 import net.explorviz.code.analysis.parser.AntlrParserService;
 import net.explorviz.code.analysis.parser.AntlrPythonParserService;
+import net.explorviz.code.analysis.parser.AntlrRustParserService;
 import net.explorviz.code.analysis.parser.AntlrTypeScriptParserService;
 import net.explorviz.code.analysis.types.FileDescriptor;
 import net.explorviz.code.analysis.types.Triple;
@@ -113,6 +114,8 @@ public class AnalysisService {
   /* package */ AntlrGoParserService goParserService;
   @Inject
   /* package */ AntlrCSharpParserService csharpParserService;
+  @Inject
+  /* package */ AntlrRustParserService rustParserService;
   @Inject
   /* package */ AnalysisStatusService analysisStatusService;
   @Inject
@@ -841,6 +844,25 @@ public class AnalysisService {
           LOGGER.atError()
               .addArgument(file.reportedPath)
               .log("❌ ANTLR C# parser returned NULL for file: {}");
+        }
+      } else if (fileName.endsWith(".rs")) {
+        LOGGER.atInfo()
+            .addArgument(file.reportedPath)
+            .addArgument(fileContent.length())
+            .log("Parsing Rust file with ANTLR: {} (size: {} bytes)");
+
+        fileDataHandler = rustParserService.parseFileContent(fileContent, file.reportedPath,
+            file.objectId.getName());
+
+        if (fileDataHandler != null) {
+          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
+          LOGGER.atInfo()
+              .addArgument(file.reportedPath)
+              .log("✅ Successfully parsed Rust file with ANTLR: {}");
+        } else {
+          LOGGER.atError()
+              .addArgument(file.reportedPath)
+              .log("❌ ANTLR Rust parser returned NULL for file: {}");
         }
       } else if (fileName.endsWith(".c") || fileName.endsWith(".h")) {
         LOGGER.atInfo()

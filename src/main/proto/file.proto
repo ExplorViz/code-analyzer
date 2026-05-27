@@ -21,6 +21,7 @@ enum Language {
   C = 7;
   GO = 8;
   CSHARP = 9;
+  RUST = 10;
 }
 
 enum ClassType {
