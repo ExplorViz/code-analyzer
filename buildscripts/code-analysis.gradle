@@ -36,4 +36,9 @@ tasks.withType(Checkstyle) {
   exclude '**/PythonLexerBase.java'
   exclude '**/PythonParserBase.java'
   exclude '**/PythonVersion.java'
+  exclude '**/CParserBase.java'
+  exclude '**/CLexerBase.java'
+  exclude '**/Symbol.java'
+  exclude '**/SymbolTable.java'
+  exclude '**/TypeClassification.java'
 }

@@ -35,6 +35,7 @@ import net.explorviz.code.analysis.handler.AbstractFileDataHandler;
 import net.explorviz.code.analysis.handler.CommitReportHandler;
 import net.explorviz.code.analysis.handler.TextFileDataHandler;
 import net.explorviz.code.analysis.listener.CommonFileDataListener;
+import net.explorviz.code.analysis.parser.AntlrCParserService;
 import net.explorviz.code.analysis.parser.AntlrCppParserService;
 import net.explorviz.code.analysis.parser.AntlrParserService;
 import net.explorviz.code.analysis.parser.AntlrPythonParserService;
@@ -104,6 +105,8 @@ public class AnalysisService {
   /* package */ AntlrPythonParserService pythonParserService;
   @Inject
   /* package */ AntlrCppParserService cppParserService;
+  @Inject
+  /* package */ AntlrCParserService antlrCParserService;
   @Inject
   /* package */ AnalysisStatusService analysisStatusService;
   @Inject
@@ -495,8 +498,7 @@ public class AnalysisService {
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           LOGGER.warn("File analysis interrupted for {}", fileDescriptor.reportedPath);
-          final AbstractFileDataHandler minimalHandler =
-              createMinimalFileDataHandler(fileDescriptor, commit);
+          final AbstractFileDataHandler minimalHandler = createMinimalFileDataHandler(fileDescriptor, commit);
           GitMetricCollector.addCommitGitMetrics(minimalHandler, commitAuthor);
           minimalHandler.setLandscapeToken(config.landscapeToken());
           minimalHandler.setRepositoryName(config.getRepositoryName());
@@ -520,7 +522,8 @@ public class AnalysisService {
     final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
     final CountDownLatch analysisFinished = new CountDownLatch(1);
 
-    // Use a dedicated virtual thread so persistence is not starved by analysis tasks
+    // Use a dedicated virtual thread so persistence is not starved by analysis
+    // tasks
     // competing for the same ManagedExecutor worker pool.
     final Thread persistThread = Thread.ofVirtual().name("file-persist-" + commitId).start(() -> {
       LOGGER.atDebug()
@@ -542,7 +545,7 @@ public class AnalysisService {
       });
     }
 
-    CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture[0])).join();
+    CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture<?>[0])).join();
     analysisFinished.countDown();
     try {
       persistThread.join();
@@ -795,15 +798,32 @@ public class AnalysisService {
               .addArgument(file.reportedPath)
               .log("❌ ANTLR Python parser returned NULL for file: {}");
         }
-      } else if (fileName.endsWith(".c") || fileName.endsWith(".cpp")
-          || fileName.endsWith(".cxx") || fileName.endsWith(".cc")
-          || fileName.endsWith(".h") || fileName.endsWith(".hpp")
-          || fileName.endsWith(".hxx")) {
-        // C/C++ file - using ANTLR CPP14 parser
+      } else if (fileName.endsWith(".c") || fileName.endsWith(".h")) {
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
-            .log("Parsing C/C++ file with ANTLR: {} (size: {} bytes)");
+            .log("Parsing C file with ANTLR: {} (size: {} bytes)");
+
+        fileDataHandler = antlrCParserService.parseFileContent(fileContent, file.reportedPath,
+            file.objectId.getName());
+
+        if (fileDataHandler != null) {
+          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
+          LOGGER.atInfo()
+              .addArgument(file.reportedPath)
+              .log("✅ Successfully parsed C file with ANTLR: {}");
+        } else {
+          LOGGER.atError()
+              .addArgument(file.reportedPath)
+              .log("❌ ANTLR C parser returned NULL for file: {}");
+        }
+      } else if (fileName.endsWith(".cpp") || fileName.endsWith(".cxx")
+          || fileName.endsWith(".cc") || fileName.endsWith(".hpp")
+          || fileName.endsWith(".hxx")) {
+        LOGGER.atInfo()
+            .addArgument(file.reportedPath)
+            .addArgument(fileContent.length())
+            .log("Parsing C++ file with ANTLR: {} (size: {} bytes)");
 
         fileDataHandler = cppParserService.parseFileContent(fileContent, file.reportedPath,
             file.objectId.getName());
@@ -812,11 +832,11 @@ public class AnalysisService {
           GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
           LOGGER.atInfo()
               .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed C/C++ file with ANTLR: {}");
+              .log("✅ Successfully parsed C++ file with ANTLR: {}");
         } else {
           LOGGER.atError()
               .addArgument(file.reportedPath)
-              .log("❌ ANTLR C/C++ parser returned NULL for file: {}");
+              .log("❌ ANTLR C++ parser returned NULL for file: {}");
         }
       } else if (isTextFile(file)) {
         LOGGER.atInfo()
@@ -879,8 +899,7 @@ public class AnalysisService {
 
   private AbstractFileDataHandler createMinimalFileDataHandler(
       final FileDescriptor file, final String commitSha) {
-    final TextFileDataHandler handler =
-        new TextFileDataHandler(file.reportedPath, Language.LANGUAGE_UNSPECIFIED);
+    final TextFileDataHandler handler = new TextFileDataHandler(file.reportedPath, Language.LANGUAGE_UNSPECIFIED);
     handler.setFileHash(file.objectId.getName());
     GitMetricCollector.addFileGitMetrics(handler, file);
     return handler;

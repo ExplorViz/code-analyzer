@@ -18,6 +18,7 @@ enum Language {
   PYTHON = 4;
   PLAINTEXT = 5;
   CPP = 6;
+  C = 7;
 }
 
 enum ClassType {

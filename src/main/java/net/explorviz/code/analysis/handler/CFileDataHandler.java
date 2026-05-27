@@ -9,47 +9,22 @@ import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
 
 /**
- * FileData handler for C++ files.
+ * FileData handler for C source files.
  */
-public class CppFileDataHandler extends AbstractFileDataHandler
+public class CFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 
   private final Stack<String> classStack;
-  private final Stack<String> namespaceStack;
   private final Map<String, ClassDataHandler> classDataMap;
   private final List<MethodDataHandler> globalFunctionHandlers;
   private final List<String> rootClasses;
-  private final boolean isCppFile;
 
-  public CppFileDataHandler(final String fileName) {
+  public CFileDataHandler(final String fileName) {
     super(fileName);
     this.classStack = new Stack<>();
-    this.namespaceStack = new Stack<>();
     this.classDataMap = new HashMap<>();
     this.globalFunctionHandlers = new ArrayList<>();
     this.rootClasses = new ArrayList<>();
-    this.isCppFile = fileName.endsWith(".cpp") || fileName.endsWith(".cxx")
-        || fileName.endsWith(".cc") || fileName.endsWith(".hpp") || fileName.endsWith(".hxx");
-  }
-
-  public void enterNamespace(final String name) {
-    namespaceStack.push(name);
-  }
-
-  public void leaveNamespace() {
-    if (!namespaceStack.isEmpty()) {
-      namespaceStack.pop();
-    }
-  }
-
-  /**
-   * Returns the current namespace as a '::' separated string.
-   */
-  public String getCurrentNamespace() {
-    if (namespaceStack.isEmpty()) {
-      return "";
-    }
-    return String.join("::", namespaceStack);
   }
 
   public void enterClass(final String name, final String fqn) {
@@ -95,22 +70,6 @@ public class CppFileDataHandler extends AbstractFileDataHandler
     return handler;
   }
 
-  public int getGlobalFunctionCount() {
-    return globalFunctionHandlers.size();
-  }
-
-  public int getClassCount() {
-    return classDataMap.size();
-  }
-
-  public int getTotalFunctionCount() {
-    int count = globalFunctionHandlers.size();
-    for (final ClassDataHandler classData : classDataMap.values()) {
-      count += classData.getMethodCount();
-    }
-    return count;
-  }
-
   @Override
   public FileData getProtoBufObject() {
     builder.clearClasses();
@@ -126,12 +85,7 @@ public class CppFileDataHandler extends AbstractFileDataHandler
       builder.addFunctions(handler.getProtoBufObject());
     }
 
-    // Set namespace as package name
-    if (builder.getPackageName().isEmpty() && !namespaceStack.isEmpty()) {
-      builder.setPackageName(getCurrentNamespace());
-    }
-
-    builder.setLanguage(Language.CPP);
+    builder.setLanguage(Language.C);
 
     return builder.build();
   }
@@ -141,14 +95,13 @@ public class CppFileDataHandler extends AbstractFileDataHandler
     final int INITIAL_STRING_CAPACITY = 500;
     final StringBuilder result = new StringBuilder(INITIAL_STRING_CAPACITY);
 
-    result.append("Language: C/C++\n");
-    result.append("Namespace: ").append(builder.getPackageName()).append("\n");
+    result.append("Language: C\n");
     result.append("Includes: ").append(builder.getImportNamesList()).append("\n");
-    result.append("Classes: ").append(classDataMap.size()).append("\n");
+    result.append("Structs/Enums: ").append(classDataMap.size()).append("\n");
     result.append("Global Functions: ").append(globalFunctionHandlers.size()).append("\n");
 
     for (final Map.Entry<String, ClassDataHandler> entry : classDataMap.entrySet()) {
-      result.append("  Class ").append(entry.getKey()).append(":\n");
+      result.append("  Type ").append(entry.getKey()).append(":\n");
       result.append(entry.getValue().toString()).append("\n");
     }
 
