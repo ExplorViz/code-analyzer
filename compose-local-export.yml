@@ -1,6 +1,6 @@
 services:
-  code-agent:
-    image: explorviz/code-agent-jvm:latest
+  code-analyzer:
+    image: explorviz/code-analyzer:latest
     volumes:
       - ./.analysis-data:/home/jboss/analysis-data
     environment:
@@ -12,7 +12,7 @@ services:
       - ANALYSIS_SOURCE_DIRS=src/main/java
       - ANALYSIS_RESTRICT_DIRS=src/main/java
       - ANALYSIS_END_COMMIT=f48227aea0e4056e1b9105494ea2f6360f3975f3
-# Explanation: This compose file starts the code agent and exports the file reports and
+# Explanation: This compose file starts the code analyzer and exports the file reports and
 # commit reports as JSON file in the hidden folder ./.analysis-folder. The end commit is the
 # first commit of the PetClinic that includes the package structure src/main/java, since there
 # it was first refactored.

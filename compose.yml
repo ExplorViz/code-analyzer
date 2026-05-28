@@ -1,6 +1,6 @@
 services:
-  code-agent:
-    image: explorviz/code-agent-jvm:latest
+  code-analyzer:
+    image: explorviz/code-analyzer:latest
     networks:
       - explorviz
     environment:

@@ -143,13 +143,13 @@ public class GitRepositoryHandlerTest {
 
     // GitHub SSH URL with .git suffix
     Assertions.assertEquals(
-        Map.entry(true, "https://github.com/ExplorViz/code-agent.git"),
-        GitRepositoryHandler.convertSshToHttps("git@github.com:ExplorViz/code-agent.git"));
+        Map.entry(true, "https://github.com/ExplorViz/code-analyzer.git"),
+        GitRepositoryHandler.convertSshToHttps("git@github.com:ExplorViz/code-analyzer.git"));
 
     // GitHub SSH URL without .git suffix
     Assertions.assertEquals(
-        Map.entry(true, "https://github.com/ExplorViz/code-agent"),
-        GitRepositoryHandler.convertSshToHttps("git@github.com:ExplorViz/code-agent"));
+        Map.entry(true, "https://github.com/ExplorViz/code-analyzer"),
+        GitRepositoryHandler.convertSshToHttps("git@github.com:ExplorViz/code-analyzer"));
 
     // GitHub SSH URL with hyphenated org/repo names
     Assertions.assertEquals(
@@ -159,8 +159,8 @@ public class GitRepositoryHandlerTest {
 
     // ssh:// style GitHub URL
     Assertions.assertEquals(
-        Map.entry(true, "https://github.com/ExplorViz/code-agent.git"),
-        GitRepositoryHandler.convertSshToHttps("ssh://git@github.com/ExplorViz/code-agent.git"));
+        Map.entry(true, "https://github.com/ExplorViz/code-analyzer.git"),
+        GitRepositoryHandler.convertSshToHttps("ssh://git@github.com/ExplorViz/code-analyzer.git"));
 
     // if the url looks off, assume the user wants it that way
     final String urlUnderTest2 = "abc.xyz";

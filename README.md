@@ -1,10 +1,10 @@
-# code-agent
+# code-analyzer
 
 This project is a tool that analyzes a Git repository containing a java project.
 
 ## Usage and Run Modes
 
-The property `explorviz.gitanalysis.run-mode` determines if the code-agent runs continuously with REST APIs or in a non-interactive mode for CI environments.
+The property `explorviz.gitanalysis.run-mode` determines if the code-analyzer runs continuously with REST APIs or in a non-interactive mode for CI environments.
 
 ### Launching The Web Interface for Development
 
@@ -29,7 +29,7 @@ Legacy fields `applicationName` and `applicationRoot` still work when `applicati
 
 ### CI / Non-Interactive Mode
 
-By changing some settings in the `application.properties` file, it is possible to run the code-agent as CI job.
+By changing some settings in the `application.properties` file, it is possible to run the code-analyzer as CI job.
 
 | property name                           | property value           |
 | --------------------------------------- | ------------------------ |
@@ -45,7 +45,7 @@ The CI-Pipeline normally runs on the latest commit so the value of the property 
 
 ## Settings
 
-As the code-agent is made to run against your specific repository, you have to change some settings before it is able to analyze it.
+As the code-analyzer is made to run against your specific repository, you have to change some settings before it is able to analyze it.
 All settings can be manipulated via the `application.properties` file.
 
 ### Selecting the Repository Source
