@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.listener.GoFileDataListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,10 +54,12 @@ public class AntlrGoParserService {
   private GoFileDataHandler parse(final CharStream charStream, final String fileName,
       final String fileHash) {
     final GoLexer lexer = new GoLexer(charStream);
+    AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final GoParser parser = new GoParser(tokens);
 
-    final GoParser.SourceFileContext sourceFile = parser.sourceFile();
+    final ParseTree sourceFile =
+        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::sourceFile);
 
     final GoFileDataHandler fileDataHandler = new GoFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

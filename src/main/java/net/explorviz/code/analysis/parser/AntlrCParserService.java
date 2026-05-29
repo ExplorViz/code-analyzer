@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.listener.CFileDataListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,10 +54,12 @@ public class AntlrCParserService {
   private CFileDataHandler parse(final CharStream charStream, final String fileName,
       final String fileHash) {
     final CLexer lexer = new CLexer(charStream);
+    AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final CParser parser = new CParser(tokens);
 
-    final CParser.CompilationUnitContext compilationUnit = parser.compilationUnit();
+    final ParseTree compilationUnit =
+        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::compilationUnit);
 
     final CFileDataHandler fileDataHandler = new CFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

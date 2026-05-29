@@ -1,5 +1,7 @@
 package net.explorviz.code.analysis.export;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -17,14 +19,61 @@ import net.explorviz.code.proto.TrackableResourceEvent;
  */
 public interface DataExporter {
 
+  /**
+   * Number of files collected before a single {@code PersistFiles} streaming call
+   * is made.
+   */
+  int FILE_PERSIST_BATCH_SIZE = 250;
+
   StateData getStateData(final String repositoryName, final String branchName, final String token,
       final Map<String, String> applicationPaths);
 
   void persistFile(final FileData fileData);
 
   /**
+   * Persists a batch of files in a single operation. The default implementation
+   * calls {@link #persistFile} for each file sequentially; exporters that support
+   * client-streaming gRPC should override this to use {@code PersistFiles}.
+   */
+  default void persistFilesBatch(final List<FileData> files) {
+    files.forEach(this::persistFile);
+  }
+
+  /**
+   * Drains {@code completedFiles} as files arrive and dispatches them to
+   * {@link #persistFilesBatch} in chunks of {@link #FILE_PERSIST_BATCH_SIZE}.
+   * Runs
+   * concurrently with the analysis pipeline; call
+   * {@code analysisFinished.countDown()}
+   * once all producers have finished to signal the final flush.
+   */
+  default void persistFilesFromQueueInBatches(final BlockingQueue<FileData> completedFiles,
+      final CountDownLatch analysisFinished) {
+    final List<FileData> batch = new ArrayList<>(FILE_PERSIST_BATCH_SIZE);
+    try {
+      while (analysisFinished.getCount() > 0 || !completedFiles.isEmpty()) {
+        final FileData fileData = completedFiles.poll(100, TimeUnit.MILLISECONDS);
+        if (fileData == null) {
+          continue;
+        }
+        batch.add(fileData);
+        if (batch.size() >= FILE_PERSIST_BATCH_SIZE) {
+          persistFilesBatch(List.copyOf(batch));
+          batch.clear();
+        }
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    if (!batch.isEmpty()) {
+      persistFilesBatch(List.copyOf(batch));
+    }
+  }
+
+  /**
    * Persists files as they become available on the queue, while analysis is still
-   * running. Uses {@link Runtime#availableProcessors()} minus one when parallelism
+   * running. Uses {@link Runtime#availableProcessors()} minus one when
+   * parallelism
    * is not positive.
    */
   default void persistFilesFromQueue(final BlockingQueue<FileData> completedFiles,

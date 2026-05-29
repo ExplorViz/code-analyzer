@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.listener.TypeScriptFileDataListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,13 +56,13 @@ public class AntlrTypeScriptParserService {
 
   private TypeScriptFileDataHandler parse(final CharStream charStream, final String fileName,
       final String fileHash, final String extension) {
-    // Create lexer and parser
     final TypeScriptLexer lexer = new TypeScriptLexer(charStream);
+    AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final TypeScriptParser parser = new TypeScriptParser(tokens);
 
-    // Parse the program (entry point for TS/JS)
-    final TypeScriptParser.ProgramContext program = parser.program();
+    final ParseTree program =
+        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::program);
 
     // Create TypeScript file data handler
     final TypeScriptFileDataHandler fileDataHandler = new TypeScriptFileDataHandler(fileName);

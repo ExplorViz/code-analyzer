@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.listener.CppFileDataListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,19 +53,17 @@ public class AntlrCppParserService {
 
   private CppFileDataHandler parse(final CharStream charStream, final String fileName,
       final String fileHash) {
-    // Create lexer and parser
     final CPP14Lexer lexer = new CPP14Lexer(charStream);
+    AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final CPP14Parser parser = new CPP14Parser(tokens);
 
-    // Parse the translation unit (entry point for C/C++)
-    final CPP14Parser.TranslationUnitContext translationUnit = parser.translationUnit();
+    final ParseTree translationUnit =
+        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::translationUnit);
 
-    // Create C/C++ file data handler
     final CppFileDataHandler fileDataHandler = new CppFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);
 
-    // Create and execute the listener
     final CppFileDataListener listener = new CppFileDataListener(fileDataHandler, tokens);
     final ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(listener, translationUnit);

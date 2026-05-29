@@ -135,8 +135,8 @@ public class AnalysisService {
   /* default */ boolean saveCrashedFilesProperty;
   @ConfigProperty(name = "explorviz.gitanalysis.file-analysis-parallelism", defaultValue = "0")
   /* default */ int fileAnalysisParallelismProperty;
-  @ConfigProperty(name = "explorviz.gitanalysis.file-persist-parallelism", defaultValue = "0")
-  /* default */ int filePersistParallelismProperty;
+  @ConfigProperty(name = "explorviz.gitanalysis.file-persist-concurrency", defaultValue = "8")
+  /* default */ int filePersistConcurrencyProperty;
 
   private static String toErrorText(final String position, final String commitId,
       final String branchName) {
@@ -537,19 +537,20 @@ public class AnalysisService {
       return;
     }
 
+    // Pipeline: analysis and persistence run concurrently.
+    // Multiple persist threads drain the shared queue in batches and send them
+    // as independent gRPC streaming calls, so Neo4j processes several transactions
+    // in parallel. Each FileRevision subtree is owned by exactly one file, so
+    // concurrent transactions never conflict.
     final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
     final CountDownLatch analysisFinished = new CountDownLatch(1);
 
-    // Use a dedicated virtual thread so persistence is not starved by analysis
-    // tasks
-    // competing for the same ManagedExecutor worker pool.
-    final Thread persistThread = Thread.ofVirtual().name("file-persist-" + commitId).start(() -> {
-      LOGGER.atDebug()
-          .addArgument(commitId)
-          .log("Starting pipelined persistence for commit {}");
-      exporter.persistFilesFromQueue(completedFiles, analysisFinished,
-          resolveFilePersistParallelism());
-    });
+    final int concurrency = filePersistConcurrencyProperty;
+    final List<Thread> persistThreads = new ArrayList<>(concurrency);
+    for (int i = 0; i < concurrency; i++) {
+      persistThreads.add(Thread.ofVirtual().name("file-persist-" + commitId + "-" + i)
+          .start(() -> exporter.persistFilesFromQueueInBatches(completedFiles, analysisFinished)));
+    }
 
     for (final CompletableFuture<FileData> analysisTask : analysisTasks) {
       analysisTask.whenComplete((fileData, error) -> {
@@ -565,9 +566,15 @@ public class AnalysisService {
 
     CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture<?>[0])).join();
     analysisFinished.countDown();
-    try {
-      persistThread.join();
-    } catch (InterruptedException e) {
+    boolean interrupted = false;
+    for (final Thread persistThread : persistThreads) {
+      try {
+        persistThread.join();
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    if (interrupted) {
       Thread.currentThread().interrupt();
     }
   }
@@ -609,13 +616,6 @@ public class AnalysisService {
       return fileAnalysisParallelismProperty;
     }
     return Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
-  }
-
-  private int resolveFilePersistParallelism() {
-    if (filePersistParallelismProperty > 0) {
-      return filePersistParallelismProperty;
-    }
-    return resolveFileAnalysisParallelism();
   }
 
   private RevCommit advanceLastCheckedCommit(final RevCommit commit,

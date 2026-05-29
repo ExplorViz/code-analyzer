@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.listener.JavaFileDataListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -56,19 +57,17 @@ public class AntlrParserService {
 
   private JavaFileDataHandler parse(final CharStream charStream, final String fileName,
       final String fileHash) {
-    // Create lexer and parser
     final JavaLexer lexer = new JavaLexer(charStream);
+    AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final JavaParser parser = new JavaParser(tokens);
 
-    // Parse the compilation unit
-    final JavaParser.CompilationUnitContext compilationUnit = parser.compilationUnit();
+    final ParseTree compilationUnit =
+        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::compilationUnit);
 
-    // Create Java file data handler
     final JavaFileDataHandler fileDataHandler = new JavaFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);
 
-    // Create and execute the listener
     final JavaFileDataListener listener = new JavaFileDataListener(fileDataHandler,
         wildcardImportProperty, tokens);
     final ParseTreeWalker walker = new ParseTreeWalker();

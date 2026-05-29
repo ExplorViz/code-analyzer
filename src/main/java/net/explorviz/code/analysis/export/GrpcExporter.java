@@ -1,13 +1,16 @@
 package net.explorviz.code.analysis.export;
 
 import io.quarkus.grpc.GrpcClient;
+import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
+import java.util.List;
 import java.util.Map;
 import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.CommitServiceGrpc;
 import net.explorviz.code.proto.ContributorServiceGrpc;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.FileDataServiceGrpc;
+import net.explorviz.code.proto.MutinyFileDataServiceGrpc;
 import net.explorviz.code.proto.StateData;
 import net.explorviz.code.proto.StateDataRequest;
 import net.explorviz.code.proto.StateDataServiceGrpc;
@@ -29,6 +32,9 @@ public final class GrpcExporter implements DataExporter {
 
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ FileDataServiceGrpc.FileDataServiceBlockingStub fileDataGrpcClient;
+
+  @GrpcClient(GRPC_CLIENT_NAME)
+  /* package */ MutinyFileDataServiceGrpc.MutinyFileDataServiceStub fileDataMutinyGrpcClient;
 
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ CommitServiceGrpc.CommitServiceBlockingStub commitDataGrpcClient;
@@ -87,6 +93,23 @@ public final class GrpcExporter implements DataExporter {
         LOGGER.error("Failed to send file data {}", fileData);
         LOGGER.info(e.getMessage());
       }
+    }
+  }
+
+  @Override
+  public void persistFilesBatch(final List<FileData> files) {
+    if (files.isEmpty()) {
+      return;
+    }
+    LOGGER.info("Sending batch of {} files via streaming RPC", files.size());
+    try {
+      fileDataMutinyGrpcClient
+          .persistFiles(Multi.createFrom().items(files.stream()))
+          .await()
+          .indefinitely();
+    } catch (final Exception e) {
+      LOGGER.error("Failed to send batch of {} files: {}", files.size(), e.getMessage());
+      throw new RuntimeException("Failed to send file batch to landscape-service", e);
     }
   }
 

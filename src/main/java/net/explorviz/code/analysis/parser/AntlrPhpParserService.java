@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.listener.PhpFileDataListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,10 +54,12 @@ public class AntlrPhpParserService {
   private PhpFileDataHandler parse(final CharStream charStream, final String fileName,
       final String fileHash) {
     final PhpLexer lexer = new PhpLexer(charStream);
+    AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final PhpParser parser = new PhpParser(tokens);
 
-    final PhpParser.HtmlDocumentContext document = parser.htmlDocument();
+    final ParseTree document =
+        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::htmlDocument);
 
     final PhpFileDataHandler fileDataHandler = new PhpFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

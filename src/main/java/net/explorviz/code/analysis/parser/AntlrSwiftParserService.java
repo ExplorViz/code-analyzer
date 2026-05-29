@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.listener.SwiftFileDataListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,10 +54,12 @@ public class AntlrSwiftParserService {
   private SwiftFileDataHandler parse(final CharStream charStream, final String fileName,
       final String fileHash) {
     final Swift5Lexer lexer = new Swift5Lexer(charStream);
+    AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final Swift5Parser parser = new Swift5Parser(tokens);
 
-    final Swift5Parser.Top_levelContext topLevel = parser.top_level();
+    final ParseTree topLevel =
+        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::top_level);
 
     final SwiftFileDataHandler fileDataHandler = new SwiftFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

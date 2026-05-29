@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.listener.PythonFileDataListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -56,19 +57,17 @@ public class AntlrPythonParserService {
 
   private PythonFileDataHandler parse(final CharStream charStream, final String fileName,
       final String fileHash) {
-    // Create lexer and parser
     final PythonLexer lexer = new PythonLexer(charStream);
+    AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final PythonParser parser = new PythonParser(tokens);
 
-    // Parse the file
-    final PythonParser.File_inputContext fileInput = parser.file_input();
+    final ParseTree fileInput =
+        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::file_input);
 
-    // Create Python file data handler
     final PythonFileDataHandler fileDataHandler = new PythonFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);
 
-    // Create and execute the listener (pass token stream for DEDENT detection)
     final PythonFileDataListener listener = new PythonFileDataListener(fileDataHandler, tokens);
     final ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(listener, fileInput);

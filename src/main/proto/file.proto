@@ -8,6 +8,7 @@ import "google/protobuf/empty.proto";
 
 service FileDataService {
   rpc PersistFile (FileData) returns (google.protobuf.Empty) {}
+  rpc PersistFiles (stream FileData) returns (google.protobuf.Empty) {}
 }
 
 enum Language {

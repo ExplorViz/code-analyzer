@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.listener.RustFileDataListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,10 +54,12 @@ public class AntlrRustParserService {
   private RustFileDataHandler parse(final CharStream charStream, final String fileName,
       final String fileHash) {
     final RustLexer lexer = new RustLexer(charStream);
+    AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final RustParser parser = new RustParser(tokens);
 
-    final RustParser.CrateContext crate = parser.crate();
+    final ParseTree crate =
+        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::crate);
 
     final RustFileDataHandler fileDataHandler = new RustFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

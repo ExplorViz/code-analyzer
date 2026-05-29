@@ -54,11 +54,13 @@ public class AntlrKotlinParserService {
   private KotlinFileDataHandler parse(final CharStream charStream, final String fileName,
       final String fileHash) {
     final KotlinLexer lexer = new KotlinLexer(charStream);
+    AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final KotlinParser parser = new KotlinParser(tokens);
 
     final boolean isScript = fileName.toLowerCase().endsWith(".kts");
-    final ParseTree tree = isScript ? parser.script() : parser.kotlinFile();
+    final ParseTree tree = AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName,
+        () -> isScript ? parser.script() : parser.kotlinFile());
 
     final KotlinFileDataHandler fileDataHandler = new KotlinFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);
