@@ -30,7 +30,7 @@ public class AntlrCParserService {
       final CharStream charStream = CharStreams.fromString(fileContent, fileName);
       return parse(charStream, fileName, fileHash);
     } catch (Exception e) {
-      LOGGER.error("Failed to parse C file content for {}: {}", fileName, e.getMessage(), e);
+      LOGGER.warn("Failed to parse C file content for {}: {}", fileName, e.getMessage());
       return null;
     }
   }
@@ -46,7 +46,7 @@ public class AntlrCParserService {
       LOGGER.error("Failed to read C file {}: {}", pathToFile, e.getMessage());
       throw e;
     } catch (Exception e) {
-      LOGGER.error("Failed to parse C file {}: {}", pathToFile, e.getMessage(), e);
+      LOGGER.warn("Failed to parse C file {}: {}", pathToFile, e.getMessage());
       return null;
     }
   }
@@ -56,17 +56,31 @@ public class AntlrCParserService {
     final CLexer lexer = new CLexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
+    tokens.fill();
     final CParser parser = new CParser(tokens);
-
-    final ParseTree compilationUnit =
-        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::compilationUnit);
 
     final CFileDataHandler fileDataHandler = new CFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);
-
     final CFileDataListener listener = new CFileDataListener(fileDataHandler, tokens);
-    final ParseTreeWalker walker = new ParseTreeWalker();
-    walker.walk(listener, compilationUnit);
+
+    listener.populateLexerMetrics();
+
+    ParseTree compilationUnit = null;
+    try {
+      compilationUnit = AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName,
+          parser::compilationUnit);
+    } catch (Exception e) {
+      LOGGER.warn("Could not build parse tree for {}: {}", fileName, e.getMessage());
+    }
+
+    if (compilationUnit != null) {
+      try {
+        final ParseTreeWalker walker = new ParseTreeWalker();
+        walker.walk(listener, compilationUnit);
+      } catch (RuntimeException e) {
+        LOGGER.warn("Parse tree walk failed for {}: {}", fileName, e.getMessage());
+      }
+    }
 
     return fileDataHandler;
   }

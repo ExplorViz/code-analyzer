@@ -30,7 +30,7 @@ public class AntlrGoParserService {
       final CharStream charStream = CharStreams.fromString(fileContent, fileName);
       return parse(charStream, fileName, fileHash);
     } catch (Exception e) {
-      LOGGER.error("Failed to parse Go file content for {}: {}", fileName, e.getMessage(), e);
+      LOGGER.warn("Failed to parse Go file content for {}: {}", fileName, e.getMessage());
       return null;
     }
   }
@@ -46,7 +46,7 @@ public class AntlrGoParserService {
       LOGGER.error("Failed to read Go file {}: {}", pathToFile, e.getMessage());
       throw e;
     } catch (Exception e) {
-      LOGGER.error("Failed to parse Go file {}: {}", pathToFile, e.getMessage(), e);
+      LOGGER.warn("Failed to parse Go file {}: {}", pathToFile, e.getMessage());
       return null;
     }
   }

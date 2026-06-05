@@ -143,6 +143,18 @@ public abstract class CParserBase extends Parser {
         return result;
     }
 
+    public boolean IsGnuExtensionSpecifier() {
+        if (noSemantics.contains("IsGnuExtensionSpecifier")) {
+            return true;
+        }
+        final Token token = ((CommonTokenStream) this.getInputStream()).LT(1);
+        if (token.getType() != CLexer.Identifier) {
+            return false;
+        }
+        final String text = token.getText();
+        return text != null && text.startsWith("__") && !"__extension__".equals(text);
+    }
+
     public boolean IsDeclarationSpecifier() {
         if (noSemantics.contains("IsDeclarationSpecifier")) return true;
         Token lt1 = ((CommonTokenStream) this.getInputStream()).LT(1);
@@ -152,7 +164,8 @@ public abstract class CParserBase extends Parser {
                 || IsTypeSpecifier()
                 || IsTypeQualifier()
                 || (IsFunctionSpecifier() && !IsGnuAttributeBeforeDeclarator())
-                || IsAlignmentSpecifier();
+                || IsAlignmentSpecifier()
+                || IsGnuExtensionSpecifier();
         if (debug) System.out.println("IsDeclarationSpecifier " + result + " for " + lt1);
         return result;
     }
@@ -283,7 +296,9 @@ public abstract class CParserBase extends Parser {
         Symbol resolved = resolveWithOutput(lt1);
         boolean result = false;
         if (resolved == null) {
-            result = false;
+            // Without preprocessor output, unknown identifiers are treated as typedef
+            // names so that header-defined types (e.g. size_t, arch_spinlock_t) parse.
+            result = true;
         } else if (resolved.getClassification().contains(TypeClassification.Variable_)) {
             result = false;
         } else if (resolved.getClassification().contains(TypeClassification.Function_)) {

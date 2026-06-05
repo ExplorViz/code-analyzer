@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.function.Supplier;
 import net.explorviz.code.analysis.exceptions.DebugFileWriter;
 import net.explorviz.code.analysis.exceptions.NotFoundException;
 import net.explorviz.code.analysis.exceptions.PropertyNotDefinedException;
@@ -33,6 +34,7 @@ import net.explorviz.code.analysis.git.GitMetricCollector;
 import net.explorviz.code.analysis.git.GitRepositoryHandler;
 import net.explorviz.code.analysis.handler.AbstractFileDataHandler;
 import net.explorviz.code.analysis.handler.CommitReportHandler;
+import net.explorviz.code.analysis.handler.FallbackFileDataHandlerFactory;
 import net.explorviz.code.analysis.handler.TextFileDataHandler;
 import net.explorviz.code.analysis.listener.CommonFileDataListener;
 import net.explorviz.code.analysis.parser.AntlrCParserService;
@@ -752,203 +754,108 @@ public class AnalysisService {
       // Route to appropriate parser based on file extension
       if (fileName.endsWith(".ts") || fileName.endsWith(".tsx")
           || fileName.endsWith(".js") || fileName.endsWith(".jsx")) {
-        // TypeScript/JavaScript file
+        final Language tsJsLanguage = fileName.endsWith(".ts") || fileName.endsWith(".tsx")
+            ? Language.TYPESCRIPT
+            : Language.JAVASCRIPT;
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing TypeScript/JavaScript file: {} (size: {} bytes)");
 
-        fileDataHandler = tsParserService.parseFileContent(fileContent,
-            file.reportedPath, file.objectId.getName());
-
-        if (fileDataHandler != null) {
-          // Add git metrics to the TypeScript/JavaScript file handler
-          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
-          LOGGER.atInfo()
-              .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed TypeScript/JavaScript file: {}");
-        } else {
-          LOGGER.atError()
-              .addArgument(file.reportedPath)
-              .log("❌ TypeScript parser returned NULL for file: {}");
-        }
+        fileDataHandler = parseOrFallback(
+            () -> tsParserService.parseFileContent(fileContent, file.reportedPath,
+                file.objectId.getName()),
+            file, fileContent, tsJsLanguage);
       } else if (fileName.endsWith(".java")) {
-        // Java file - using ANTLR parser
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Java file with ANTLR: {} (size: {} bytes)");
 
-        // Pass reportedPath instead of fileName to preserve directory structure
-        fileDataHandler = antlrParserService.parseFileContent(fileContent, file.reportedPath,
-            file.objectId.getName());
-
-        if (fileDataHandler != null) {
-          // Add git metrics to the Java file handler
-          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
-          LOGGER.atInfo()
-              .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed Java file with ANTLR: {}");
-        } else {
-          LOGGER.atError()
-              .addArgument(file.reportedPath)
-              .log("❌ ANTLR Java parser returned NULL for file: {}");
-        }
+        fileDataHandler = parseOrFallback(
+            () -> antlrParserService.parseFileContent(fileContent, file.reportedPath,
+                file.objectId.getName()),
+            file, fileContent, Language.JAVA);
       } else if (fileName.endsWith(".py")) {
-        // Python file - using ANTLR parser
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Python file with ANTLR: {} (size: {} bytes)");
 
-        // Pass reportedPath instead of fileName to preserve directory structure
-        fileDataHandler = pythonParserService.parseFileContent(fileContent, file.reportedPath,
-            file.objectId.getName());
-
-        if (fileDataHandler != null) {
-          // Add git metrics to the Python file handler
-          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
-          LOGGER.atInfo()
-              .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed Python file with ANTLR: {}");
-        } else {
-          LOGGER.atError()
-              .addArgument(file.reportedPath)
-              .log("❌ ANTLR Python parser returned NULL for file: {}");
-        }
+        fileDataHandler = parseOrFallback(
+            () -> pythonParserService.parseFileContent(fileContent, file.reportedPath,
+                file.objectId.getName()),
+            file, fileContent, Language.PYTHON);
       } else if (fileName.endsWith(".go")) {
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Go file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = goParserService.parseFileContent(fileContent, file.reportedPath,
-            file.objectId.getName());
-
-        if (fileDataHandler != null) {
-          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
-          LOGGER.atInfo()
-              .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed Go file with ANTLR: {}");
-        } else {
-          LOGGER.atError()
-              .addArgument(file.reportedPath)
-              .log("❌ ANTLR Go parser returned NULL for file: {}");
-        }
+        fileDataHandler = parseOrFallback(
+            () -> goParserService.parseFileContent(fileContent, file.reportedPath,
+                file.objectId.getName()),
+            file, fileContent, Language.GO);
       } else if (fileName.endsWith(".cs")) {
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing C# file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = csharpParserService.parseFileContent(fileContent, file.reportedPath,
-            file.objectId.getName());
-
-        if (fileDataHandler != null) {
-          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
-          LOGGER.atInfo()
-              .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed C# file with ANTLR: {}");
-        } else {
-          LOGGER.atError()
-              .addArgument(file.reportedPath)
-              .log("❌ ANTLR C# parser returned NULL for file: {}");
-        }
+        fileDataHandler = parseOrFallback(
+            () -> csharpParserService.parseFileContent(fileContent, file.reportedPath,
+                file.objectId.getName()),
+            file, fileContent, Language.CSHARP);
       } else if (fileName.endsWith(".rs")) {
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Rust file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = rustParserService.parseFileContent(fileContent, file.reportedPath,
-            file.objectId.getName());
-
-        if (fileDataHandler != null) {
-          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
-          LOGGER.atInfo()
-              .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed Rust file with ANTLR: {}");
-        } else {
-          LOGGER.atError()
-              .addArgument(file.reportedPath)
-              .log("❌ ANTLR Rust parser returned NULL for file: {}");
-        }
+        fileDataHandler = parseOrFallback(
+            () -> rustParserService.parseFileContent(fileContent, file.reportedPath,
+                file.objectId.getName()),
+            file, fileContent, Language.RUST);
       } else if (fileName.endsWith(".kt") || fileName.endsWith(".kts")) {
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Kotlin file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = kotlinParserService.parseFileContent(fileContent, file.reportedPath,
-            file.objectId.getName());
-
-        if (fileDataHandler != null) {
-          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
-          LOGGER.atInfo()
-              .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed Kotlin file with ANTLR: {}");
-        } else {
-          LOGGER.atError()
-              .addArgument(file.reportedPath)
-              .log("❌ ANTLR Kotlin parser returned NULL for file: {}");
-        }
+        fileDataHandler = parseOrFallback(
+            () -> kotlinParserService.parseFileContent(fileContent, file.reportedPath,
+                file.objectId.getName()),
+            file, fileContent, Language.KOTLIN);
       } else if (fileName.endsWith(".php")) {
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing PHP file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = phpParserService.parseFileContent(fileContent, file.reportedPath,
-            file.objectId.getName());
-
-        if (fileDataHandler != null) {
-          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
-          LOGGER.atInfo()
-              .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed PHP file with ANTLR: {}");
-        } else {
-          LOGGER.atError()
-              .addArgument(file.reportedPath)
-              .log("❌ ANTLR PHP parser returned NULL for file: {}");
-        }
+        fileDataHandler = parseOrFallback(
+            () -> phpParserService.parseFileContent(fileContent, file.reportedPath,
+                file.objectId.getName()),
+            file, fileContent, Language.PHP);
       } else if (fileName.endsWith(".swift")) {
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Swift file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = swiftParserService.parseFileContent(fileContent, file.reportedPath,
-            file.objectId.getName());
-
-        if (fileDataHandler != null) {
-          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
-          LOGGER.atInfo()
-              .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed Swift file with ANTLR: {}");
-        } else {
-          LOGGER.atError()
-              .addArgument(file.reportedPath)
-              .log("❌ ANTLR Swift parser returned NULL for file: {}");
-        }
+        fileDataHandler = parseOrFallback(
+            () -> swiftParserService.parseFileContent(fileContent, file.reportedPath,
+                file.objectId.getName()),
+            file, fileContent, Language.SWIFT);
       } else if (fileName.endsWith(".c") || fileName.endsWith(".h")) {
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing C file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = antlrCParserService.parseFileContent(fileContent, file.reportedPath,
-            file.objectId.getName());
-
-        if (fileDataHandler != null) {
-          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
-          LOGGER.atInfo()
-              .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed C file with ANTLR: {}");
-        } else {
-          LOGGER.atError()
-              .addArgument(file.reportedPath)
-              .log("❌ ANTLR C parser returned NULL for file: {}");
-        }
+        fileDataHandler = parseOrFallback(
+            () -> antlrCParserService.parseFileContent(fileContent, file.reportedPath,
+                file.objectId.getName()),
+            file, fileContent, Language.C);
       } else if (fileName.endsWith(".cpp") || fileName.endsWith(".cxx")
           || fileName.endsWith(".cc") || fileName.endsWith(".hpp")
           || fileName.endsWith(".hxx")) {
@@ -957,19 +864,10 @@ public class AnalysisService {
             .addArgument(fileContent.length())
             .log("Parsing C++ file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = cppParserService.parseFileContent(fileContent, file.reportedPath,
-            file.objectId.getName());
-
-        if (fileDataHandler != null) {
-          GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
-          LOGGER.atInfo()
-              .addArgument(file.reportedPath)
-              .log("✅ Successfully parsed C++ file with ANTLR: {}");
-        } else {
-          LOGGER.atError()
-              .addArgument(file.reportedPath)
-              .log("❌ ANTLR C++ parser returned NULL for file: {}");
-        }
+        fileDataHandler = parseOrFallback(
+            () -> cppParserService.parseFileContent(fileContent, file.reportedPath,
+                file.objectId.getName()),
+            file, fileContent, Language.CPP);
       } else if (isTextFile(file)) {
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
@@ -1003,13 +901,7 @@ public class AnalysisService {
         fileDataHandler = genericHandler;
       }
 
-      if (fileDataHandler == null) {
-        if (saveCrashedFilesProperty) {
-          DebugFileWriter.saveDebugFile("/logs/crashedfiles/", fileContent,
-              file.fileName);
-        }
-        fileDataHandler = createMinimalFileDataHandler(file, commitSha);
-      } else {
+      if (fileDataHandler != null) {
         final long loc = fileContent.lines().count();
         fileDataHandler.addMetric(CommonFileDataListener.LOC, String.valueOf(loc));
       }
@@ -1020,21 +912,44 @@ public class AnalysisService {
       if (LOGGER.isWarnEnabled()) {
         LOGGER.warn(e.toString());
       }
-      return createMinimalFileDataHandler(file, commitSha);
+      return createMinimalFileDataHandler(file, commitSha, fileContent);
     }
   }
 
   private AbstractFileDataHandler createMinimalFileDataHandler(
       final FileDescriptor file, final RevCommit commit) {
-    return createMinimalFileDataHandler(file, commit.getName());
+    return createMinimalFileDataHandler(file, commit.getName(), null);
   }
 
   private AbstractFileDataHandler createMinimalFileDataHandler(
       final FileDescriptor file, final String commitSha) {
-    final TextFileDataHandler handler = new TextFileDataHandler(file.reportedPath, Language.LANGUAGE_UNSPECIFIED);
-    handler.setFileHash(file.objectId.getName());
-    GitMetricCollector.addFileGitMetrics(handler, file);
-    return handler;
+    return createMinimalFileDataHandler(file, commitSha, null);
+  }
+
+  private AbstractFileDataHandler createMinimalFileDataHandler(
+      final FileDescriptor file, final String commitSha, final String fileContent) {
+    return FallbackFileDataHandlerFactory.create(file, fileContent);
+  }
+
+  private AbstractFileDataHandler parseOrFallback(
+      final Supplier<AbstractFileDataHandler> parseCall,
+      final FileDescriptor file,
+      final String fileContent,
+      final Language language) {
+    final AbstractFileDataHandler handler = parseCall.get();
+    if (handler != null) {
+      GitMetricCollector.addFileGitMetrics(handler, file);
+      return handler;
+    }
+
+    if (saveCrashedFilesProperty) {
+      DebugFileWriter.saveDebugFile("/logs/crashedfiles/", fileContent, file.fileName);
+    }
+    LOGGER.atWarn()
+        .addArgument(file.reportedPath)
+        .addArgument(language)
+        .log("Parser failed for {}, using fallback metrics (language={}, loc, size)");
+    return FallbackFileDataHandlerFactory.create(file, fileContent, language);
   }
 
   void applyGlobFiltering(final List<FileDescriptor> descriptors,

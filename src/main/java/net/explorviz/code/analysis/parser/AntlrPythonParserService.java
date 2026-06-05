@@ -34,7 +34,7 @@ public class AntlrPythonParserService {
       final CharStream charStream = CharStreams.fromString(fileContent);
       return parse(charStream, fileName, fileHash);
     } catch (Exception e) {
-      LOGGER.error("Failed to parse Python file content for {}: {}", fileName, e.getMessage(), e);
+      LOGGER.warn("Failed to parse Python file content for {}: {}", fileName, e.getMessage());
       return null;
     }
   }
@@ -50,7 +50,7 @@ public class AntlrPythonParserService {
       LOGGER.error("Failed to read Python file {}: {}", pathToFile, e.getMessage());
       throw e;
     } catch (Exception e) {
-      LOGGER.error("Failed to parse Python file {}: {}", pathToFile, e.getMessage(), e);
+      LOGGER.warn("Failed to parse Python file {}: {}", pathToFile, e.getMessage());
       return null;
     }
   }

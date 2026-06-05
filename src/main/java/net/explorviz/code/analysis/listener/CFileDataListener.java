@@ -30,7 +30,14 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
 
   @Override
   public void enterTranslationUnit(final CParser.TranslationUnitContext ctx) {
-    final int sloc = getSloc(tokens);
+    populateLexerMetrics();
+  }
+
+  /**
+   * Populates file-level metrics from lexer tokens when a full parse tree is unavailable.
+   */
+  public void populateLexerMetrics() {
+    final int sloc = getSlocIncludingPreprocessor();
     final int cloc = getCloc();
 
     fileDataHandler.addMetric(SLOC, String.valueOf(sloc));
@@ -47,6 +54,33 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
   public void exitTranslationUnit(final CParser.TranslationUnitContext ctx) {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+  }
+
+  private int getSlocIncludingPreprocessor() {
+    if (tokens == null) {
+      return 0;
+    }
+
+    final java.util.Set<Integer> codeLines = new java.util.HashSet<>();
+    for (int i = 0; i < tokens.size(); i++) {
+      final var token = tokens.get(i);
+      final String text = token.getText();
+      if (text == null || text.trim().isEmpty()) {
+        continue;
+      }
+
+      if (token.getChannel() == 0) {
+        codeLines.add(token.getLine());
+        continue;
+      }
+
+      final String trimmed = text.trim();
+      if (trimmed.startsWith("#include") || trimmed.startsWith("#define")
+          || trimmed.startsWith("#if")) {
+        codeLines.add(token.getLine());
+      }
+    }
+    return codeLines.size();
   }
 
   private void extractIncludes() {

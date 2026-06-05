@@ -76,6 +76,26 @@ public final class AntlrParserUtils {
     parser.setErrorHandler(new ThresholdBailErrorStrategy(MAX_ERRORS));
     parser.removeErrorListeners();
     parser.addErrorListener(new LoggingErrorListener(logger, fileName));
+    try {
+      return parseCall.get();
+    } catch (ParseCancellationException e) {
+      logger.warn("Strict parse failed for {}, retrying with lenient error recovery", fileName);
+      return parseLenient(parser, tokens, logger, fileName, parseCall);
+    }
+  }
+
+  /**
+   * Parses with full LL prediction and default error recovery, returning the best-effort parse
+   * tree even when the source contains unexpanded macros or other non-standard constructs.
+   */
+  public static <T> T parseLenient(final Parser parser, final CommonTokenStream tokens,
+      final Logger logger, final String fileName, final Supplier<T> parseCall) {
+    tokens.seek(0);
+    parser.reset();
+    parser.getInterpreter().setPredictionMode(PredictionMode.LL);
+    parser.setErrorHandler(new DefaultErrorStrategy());
+    parser.removeErrorListeners();
+    parser.addErrorListener(new LoggingErrorListener(logger, fileName));
     return parseCall.get();
   }
 

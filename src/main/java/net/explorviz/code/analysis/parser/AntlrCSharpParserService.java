@@ -30,7 +30,7 @@ public class AntlrCSharpParserService {
       final CharStream charStream = CharStreams.fromString(fileContent, fileName);
       return parse(charStream, fileName, fileHash);
     } catch (Exception e) {
-      LOGGER.error("Failed to parse C# file content for {}: {}", fileName, e.getMessage(), e);
+      LOGGER.warn("Failed to parse C# file content for {}: {}", fileName, e.getMessage());
       return null;
     }
   }
@@ -46,7 +46,7 @@ public class AntlrCSharpParserService {
       LOGGER.error("Failed to read C# file {}: {}", pathToFile, e.getMessage());
       throw e;
     } catch (Exception e) {
-      LOGGER.error("Failed to parse C# file {}: {}", pathToFile, e.getMessage(), e);
+      LOGGER.warn("Failed to parse C# file {}: {}", pathToFile, e.getMessage());
       return null;
     }
   }

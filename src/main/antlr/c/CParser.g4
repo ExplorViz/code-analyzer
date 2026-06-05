@@ -314,6 +314,7 @@ declarationSpecifier
     | typeQualifier
     | functionSpecifier
     | alignmentSpecifier
+    | gnuExtensionSpecifier
     ;
 
 // ISO C: init-declarator-list (6.7.1)
@@ -459,6 +460,7 @@ typeQualifier
     | Restrict
     | volatile_
     | '_Atomic'
+    | gnuExtensionSpecifier
     ;
 
 // ISO C: function-specifier (6.7.5)
@@ -748,7 +750,7 @@ jumpStatement
 
 // ISO C: translation-unit (6.9.1)
 translationUnit
-    : externalDeclaration+
+    : externalDeclaration*
     ;
 
 // ISO C: external-declaration (6.9.1)
@@ -756,6 +758,7 @@ externalDeclaration
     : '__extension__'? (
 	functionDefinition
 	| declaration
+	| macroStatement
 	| ';' // stray ;
 	| asmDefinition // GCC
 	)
@@ -938,4 +941,45 @@ vcSpecificModifer
     | '__fastcall'
     | '__thiscall'
     | '__vectorcall'
+    ;
+
+// Compiler/vendor extension identifiers used as declaration qualifiers (e.g. __init, __user).
+gnuExtensionSpecifier
+    : {this.IsGnuExtensionSpecifier()}? Identifier
+    ;
+
+// Unexpanded function-like macro invocation at file scope.
+macroStatement
+    : Identifier '(' macroArgumentList? ')' ';'
+    ;
+
+macroArgumentList
+    : macroArgument (',' macroArgument)*
+    ;
+
+macroArgument
+    : macroArgumentToken+
+    ;
+
+macroArgumentToken
+    : '(' macroArgumentList? ')'
+    | '{' macroArgumentList? '}'
+    | '[' macroArgumentList? ']'
+    | StringLiteral
+    | IntegerConstant
+    | FloatingConstant
+    | DigitSequence
+    | CharacterConstant
+    | Identifier
+    | KW__extension__
+    | 'void' | 'char' | 'short' | 'int' | 'long' | 'float' | 'double' | 'signed' | 'unsigned'
+    | 'static' | 'const' | 'extern' | 'register' | volatile_ | Inline | 'struct' | 'union' | 'enum'
+    | Bool | '_Complex' | '_Atomic' | ThreadLocal | Restrict | Alignas | Typeof | Typeof_unqual
+    | '&' | '*' | '+' | '-' | '/' | '%' | '|' | '^' | '~' | '!' | '?' | ':' | '<' | '>'
+    | LeftShift | RightShift
+    | '==' | '!=' | '<=' | '>='
+    | '&&' | '||'
+    | '->' | '.'
+    | Assign | StarAssign | DivAssign | ModAssign | PlusAssign | MinusAssign
+    | LeftShiftAssign | RightShiftAssign | AndAssign | XorAssign | OrAssign
     ;

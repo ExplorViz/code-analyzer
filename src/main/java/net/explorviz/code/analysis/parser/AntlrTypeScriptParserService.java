@@ -31,7 +31,7 @@ public class AntlrTypeScriptParserService {
       final String extension = getFileExtension(fileName);
       return parse(charStream, fileName, fileHash, extension);
     } catch (Exception e) {
-      LOGGER.error("Failed to parse TS/JS file content for {}: {}", fileName, e.getMessage(), e);
+      LOGGER.warn("Failed to parse TS/JS file content for {}: {}", fileName, e.getMessage());
       return null;
     }
   }
@@ -49,7 +49,7 @@ public class AntlrTypeScriptParserService {
       LOGGER.error("Failed to read TS/JS file {}: {}", pathToFile, e.getMessage());
       throw e;
     } catch (Exception e) {
-      LOGGER.error("Failed to parse TS/JS file {}: {}", pathToFile, e.getMessage(), e);
+      LOGGER.warn("Failed to parse TS/JS file {}: {}", pathToFile, e.getMessage());
       return null;
     }
   }
