@@ -6,8 +6,8 @@ on:
       - "*"
   workflow_dispatch:
     inputs:
-      image-tag:
-        description: Docker image tag to publish
+      image_tag:
+        description: Docker image tag to publish (e.g. v1.2.3)
         required: true
         type: string
       ref:
@@ -32,4 +32,4 @@ jobs:
           docker-username: ${{ secrets.DOCKER_USERNAME }}
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
           image-name: ${{ vars.DOCKER_JVM_IMAGE_NAME }}
-          image-tag: ${{ github.event_name == 'workflow_dispatch' && inputs.image-tag || github.ref_name }}
+          image-tag: ${{ github.event_name == 'workflow_dispatch' && inputs.image_tag || github.ref_name }}
