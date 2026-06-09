@@ -11,9 +11,10 @@ on:
         required: true
         type: string
       ref:
-        description: Git ref to build (branch, tag, or commit SHA)
-        required: true
+        description: Git ref to build (branch, tag, or commit SHA). Defaults to main.
+        required: false
         type: string
+        default: main
 
 jobs:
   release-docker-image-jvm:
