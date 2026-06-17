@@ -125,6 +125,9 @@ function collectPayload(formData) {
   if (payload.commitAnalysisLimit) {
     payload.commitAnalysisLimit = parseInt(payload.commitAnalysisLimit);
   }
+  if (payload.maxLocForFullAnalysis) {
+    payload.maxLocForFullAnalysis = parseInt(payload.maxLocForFullAnalysis);
+  }
   if (payload.socialDataTimeFrameDays) {
     payload.socialDataTimeFrameDays = parseInt(payload.socialDataTimeFrameDays);
   }

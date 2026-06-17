@@ -26,6 +26,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.function.Supplier;
+import net.explorviz.code.analysis.FileLanguageResolver;
 import net.explorviz.code.analysis.exceptions.DebugFileWriter;
 import net.explorviz.code.analysis.exceptions.NotFoundException;
 import net.explorviz.code.analysis.exceptions.PropertyNotDefinedException;
@@ -743,6 +744,7 @@ public class AnalysisService {
     }
 
     final String fileName = file.fileName.toLowerCase();
+    final long loc = fileContent.lines().count();
 
     try {
       AbstractFileDataHandler fileDataHandler = null;
@@ -750,6 +752,15 @@ public class AnalysisService {
       LOGGER.atDebug()
           .addArgument(file.reportedPath)
           .log("Analyzing file {} with size {} bytes", file.reportedPath, fileContent.length());
+
+      if (shouldUseMinimalSourceAnalysis(config, fileName, loc)) {
+        LOGGER.atInfo()
+            .addArgument(file.reportedPath)
+            .addArgument(loc)
+            .addArgument(config.maxLocForFullAnalysis().get())
+            .log("Skipping full analysis for {} ({} LOC exceeds limit of {})");
+        return FallbackFileDataHandlerFactory.create(file, fileContent);
+      }
 
       // Route to appropriate parser based on file extension
       if (fileName.endsWith(".ts") || fileName.endsWith(".tsx")
@@ -902,7 +913,6 @@ public class AnalysisService {
       }
 
       if (fileDataHandler != null) {
-        final long loc = fileContent.lines().count();
         fileDataHandler.addMetric(CommonFileDataListener.LOC, String.valueOf(loc));
       }
 
@@ -929,6 +939,17 @@ public class AnalysisService {
   private AbstractFileDataHandler createMinimalFileDataHandler(
       final FileDescriptor file, final String commitSha, final String fileContent) {
     return FallbackFileDataHandlerFactory.create(file, fileContent);
+  }
+
+  /* package */ boolean shouldUseMinimalSourceAnalysis(final AnalysisConfig config,
+      final String fileName, final long loc) {
+    if (config.maxLocForFullAnalysis().isEmpty()) {
+      return false;
+    }
+    if (loc <= config.maxLocForFullAnalysis().get()) {
+      return false;
+    }
+    return FileLanguageResolver.resolveFromFileName(fileName) != Language.LANGUAGE_UNSPECIFIED;
   }
 
   private AbstractFileDataHandler parseOrFallback(

@@ -20,6 +20,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     boolean calculateMetrics,
     Optional<String> startCommit, Optional<String> endCommit,
     Optional<Integer> commitAnalysisLimit,
+    Optional<Integer> maxLocForFullAnalysis,
     String landscapeToken,
     boolean fetchSocialData, Optional<String> fetchEndDate, Optional<Integer> socialDataTimeFrameDays) {
 
@@ -91,6 +92,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     private Optional<String> startCommit = Optional.empty();
     private Optional<String> endCommit = Optional.empty();
     private Optional<Integer> commitAnalysisLimit = Optional.empty();
+    private Optional<Integer> maxLocForFullAnalysis = Optional.empty();
     private String landscapeToken = "";
     private String applicationName = "";
     private List<ApplicationPath> explicitApplicationPaths;
@@ -160,6 +162,11 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       return this;
     }
 
+    public Builder maxLocForFullAnalysis(final Optional<Integer> maxLocForFullAnalysis) {
+      this.maxLocForFullAnalysis = maxLocForFullAnalysis;
+      return this;
+    }
+
     public Builder landscapeToken(final String landscapeToken) {
       this.landscapeToken = landscapeToken;
       return this;
@@ -212,6 +219,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
           startCommit,
           endCommit,
           commitAnalysisLimit,
+          maxLocForFullAnalysis,
           landscapeToken,
           fetchSocialData,
           fetchEndDate,

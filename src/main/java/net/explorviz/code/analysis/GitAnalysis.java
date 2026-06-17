@@ -73,6 +73,9 @@ public class GitAnalysis { // NOPMD
   @ConfigProperty(name = "explorviz.gitanalysis.commit-analysis-limit")
   /* default */ Optional<Integer> commitAnalysisLimitProperty; // NOCS
 
+  @ConfigProperty(name = "explorviz.gitanalysis.max-loc-for-full-analysis")
+  /* default */ Optional<Integer> maxLocForFullAnalysisProperty; // NOCS
+
   @ConfigProperty(name = "explorviz.landscape.token", defaultValue = "mytokenvalue")
   /* default */ String landscapeTokenProperty; // NOCS
 
@@ -104,6 +107,7 @@ public class GitAnalysis { // NOPMD
         .startCommit(startCommitProperty)
         .endCommit(endCommitProperty)
         .commitAnalysisLimit(commitAnalysisLimitProperty)
+        .maxLocForFullAnalysis(maxLocForFullAnalysisProperty)
         .landscapeToken(landscapeTokenProperty)
         .applicationName(applicationNameProperty)
         .build();

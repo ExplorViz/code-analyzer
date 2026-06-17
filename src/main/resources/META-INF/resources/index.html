@@ -120,6 +120,21 @@
               <input min="1" name="commitAnalysisLimit" placeholder="all" type="number" value="1" />
             </label>
 
+            <label style="grid-column: 1 / -1">
+              <span class="label-header">
+                Max LOC for Full Analysis
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text"
+                    >Optional limit on lines of code for full source analysis. Files with more lines are still included,
+                    but only programming language, LOC, and size are computed. Leave empty to analyze all files
+                    fully.</span
+                  >
+                </span>
+              </span>
+              <input min="1" name="maxLocForFullAnalysis" placeholder="all" type="number" />
+            </label>
+
             <label class="remote-branch-field">
               <span class="label-header">
                 Branch
@@ -270,13 +285,15 @@
               <input name="landscapeToken" placeholder="mytokenvalue" type="password" />
             </label>
           </div>
-          <div class="field-grid" style="margin-top: 1rem;">
+          <div class="field-grid" style="margin-top: 1rem">
             <label>
               <span class="label-header">
                 Social Fetch End Date
                 <span class="tooltip-container">
                   <span class="tooltip-icon">?</span>
-                  <span class="tooltip-text">Optional: Date to end fetching social data (e.g. 2026-05-10 or ISO timestamp).</span>
+                  <span class="tooltip-text"
+                    >Optional: Date to end fetching social data (e.g. 2026-05-10 or ISO timestamp).</span
+                  >
                 </span>
               </span>
               <input name="fetchEndDate" placeholder="current date" type="text" />

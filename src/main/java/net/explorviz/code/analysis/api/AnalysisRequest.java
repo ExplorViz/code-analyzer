@@ -49,6 +49,7 @@ public class AnalysisRequest {
   private String startCommit;
   private String endCommit;
   private Integer commitAnalysisLimit;
+  private Integer maxLocForFullAnalysis;
   private String landscapeToken = "mytokenvalue";
   private String applicationName = "";
   private String applicationRoot;
@@ -189,6 +190,14 @@ public class AnalysisRequest {
     this.commitAnalysisLimit = commitAnalysisLimit;
   }
 
+  public Integer getMaxLocForFullAnalysis() {
+    return maxLocForFullAnalysis;
+  }
+
+  public void setMaxLocForFullAnalysis(final Integer maxLocForFullAnalysis) {
+    this.maxLocForFullAnalysis = maxLocForFullAnalysis;
+  }
+
   public boolean isFetchSocialData() {
     return fetchSocialData;
   }
@@ -242,6 +251,7 @@ public class AnalysisRequest {
         .startCommit(Optional.ofNullable(startCommit))
         .endCommit(Optional.ofNullable(endCommit))
         .commitAnalysisLimit(Optional.ofNullable(commitAnalysisLimit))
+        .maxLocForFullAnalysis(Optional.ofNullable(maxLocForFullAnalysis))
         .landscapeToken((landscapeToken != null && !landscapeToken.isBlank()) ? landscapeToken : "mytokenvalue")
         .applicationRoot(Optional.ofNullable(applicationRoot))
         .fetchSocialData(fetchSocialData)
