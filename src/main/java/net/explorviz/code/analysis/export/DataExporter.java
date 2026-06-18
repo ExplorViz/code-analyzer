@@ -23,7 +23,7 @@ public interface DataExporter {
    * Number of files collected before a single {@code PersistFiles} streaming call
    * is made.
    */
-  int FILE_PERSIST_BATCH_SIZE = 250;
+  int FILE_PERSIST_BATCH_SIZE = 50;
 
   StateData getStateData(final String repositoryName, final String branchName, final String token,
       final Map<String, String> applicationPaths, final String repositoryUrl,
