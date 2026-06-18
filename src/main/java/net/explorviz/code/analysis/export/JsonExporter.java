@@ -71,7 +71,8 @@ public class JsonExporter implements DataExporter {
   @Override
   public StateData getStateData(final String repositoryName, final String branchName,
       final String token,
-      final Map<String, String> applicationPaths, final String repositoryUrl) {
+      final Map<String, String> applicationPaths, final String repositoryUrl,
+      final boolean skipLatestCommitLookup) {
     LOGGER.atInfo()
         .addArgument(repositoryName)
         .addArgument(branchName)

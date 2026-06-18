@@ -26,7 +26,8 @@ public interface DataExporter {
   int FILE_PERSIST_BATCH_SIZE = 250;
 
   StateData getStateData(final String repositoryName, final String branchName, final String token,
-      final Map<String, String> applicationPaths, final String repositoryUrl);
+      final Map<String, String> applicationPaths, final String repositoryUrl,
+      final boolean skipLatestCommitLookup);
 
   void persistFile(final FileData fileData);
 

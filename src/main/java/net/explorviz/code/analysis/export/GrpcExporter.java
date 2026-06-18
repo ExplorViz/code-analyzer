@@ -63,11 +63,13 @@ public final class GrpcExporter implements DataExporter {
   @Override
   public StateData getStateData(final String repositoryName, final String branchName,
       final String token,
-      final Map<String, String> applicationPaths, final String repositoryUrl) {
+      final Map<String, String> applicationPaths, final String repositoryUrl,
+      final boolean skipLatestCommitLookup) {
     final StateDataRequest.Builder requestBuilder = StateDataRequest.newBuilder();
     requestBuilder.setBranchName(branchName);
     requestBuilder.setRepositoryName(repositoryName);
     requestBuilder.setLandscapeToken("".equals(token) ? landscapeTokenProperty : token);
+    requestBuilder.setSkipLatestCommitLookup(skipLatestCommitLookup);
     if (repositoryUrl != null && !repositoryUrl.isBlank()) {
       requestBuilder.setRepositoryUrl(repositoryUrl);
     }

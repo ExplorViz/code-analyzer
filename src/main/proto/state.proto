@@ -19,6 +19,11 @@ message StateDataRequest {
 
   // Remote clone URL of the repository (e.g. https://github.com/org/project.git)
   string repository_url = 5;
+
+  // When true, only persist landscape metadata and skip the expensive lookup of the
+  // latest fully persisted commit. Used for API-triggered analyses where filters may
+  // differ and all requested commits should be analyzed.
+  bool skip_latest_commit_lookup = 6;
 }
 
 message StateData {

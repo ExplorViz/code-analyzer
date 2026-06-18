@@ -141,6 +141,8 @@ public class AnalysisService {
   /* default */ int fileAnalysisParallelismProperty;
   @ConfigProperty(name = "explorviz.gitanalysis.file-persist-concurrency", defaultValue = "8")
   /* default */ int filePersistConcurrencyProperty;
+  @ConfigProperty(name = "explorviz.gitanalysis.run-mode", defaultValue = "api")
+  /* default */ String runModeProperty;
 
   private static String toErrorText(final String position, final String commitId,
       final String branchName) {
@@ -385,7 +387,8 @@ public class AnalysisService {
             config.branch().orElse("main"),
             config.landscapeToken(),
             config.applicationPathsMap(),
-            repositoryUrl);
+            repositoryUrl,
+            true);
       } catch (final Exception e) {
         LOGGER.warn("Could not pre-initialize remote state for social fetch: {}", e.getMessage());
       }
@@ -404,10 +407,12 @@ public class AnalysisService {
 
   private Optional<String> findStartCommit(final AnalysisConfig config,
       final DataExporter exporter, final String branch, final String repositoryUrl) {
+    final boolean ciMode = isCiMode();
     final StateData remoteState = exporter.getStateData(
         config.getRepositoryName(), branch,
-        config.landscapeToken(), config.applicationPathsMap(), repositoryUrl);
-    if (exporter.isRemote()) {
+        config.landscapeToken(), config.applicationPathsMap(), repositoryUrl,
+        !ciMode);
+    if (exporter.isRemote() && ciMode) {
 
       if (remoteState.getCommitId().isEmpty() || remoteState.getCommitId().isBlank()) {
         LOGGER.info("No remote state found for branch {}. Starting analysis from the beginning.",
@@ -425,6 +430,10 @@ public class AnalysisService {
       }
       return config.startCommit();
     }
+  }
+
+  private boolean isCiMode() {
+    return !"api".equals(runModeProperty);
   }
 
   private int countCommitsInRange(final Repository repository, final String fullBranch,
