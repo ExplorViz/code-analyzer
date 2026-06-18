@@ -86,7 +86,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
     if (classData != null) {
       classData.setIsStruct();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
   }
 
@@ -111,7 +111,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
     if (classData != null) {
       classData.setIsStruct();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
   }
 
@@ -136,7 +136,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
     if (classData != null) {
       classData.setIsEnum();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
   }
 
@@ -171,7 +171,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
     if (classData != null) {
       classData.setIsInterface();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
   }
 
@@ -196,7 +196,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
     if (classData != null) {
       classData.setIsStruct();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
   }
 
@@ -267,7 +267,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
       methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
   }
 
   @Override

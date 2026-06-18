@@ -98,7 +98,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
       final var classData = fileDataHandler.getCurrentClassData();
       if (classData != null) {
         classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        classData.addMetric(LOC, String.valueOf(classLoc));
+        classData.addMetric(LINE_COUNT, String.valueOf(classLoc));
 
         if (ctx.classHeritage() != null && ctx.classHeritage().classExtendsClause() != null) {
           final String superClassFqn = ctx.classHeritage().classExtendsClause().typeReference().getText();
@@ -127,7 +127,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
 
         final int interfaceLoc = calculateLoc(ctx);
         classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        classData.addMetric(LOC, String.valueOf(interfaceLoc));
+        classData.addMetric(LINE_COUNT, String.valueOf(interfaceLoc));
 
         if (ctx.interfaceExtendsClause() != null) {
           for (final TypeScriptParser.TypeReferenceContext typeRef : ctx.interfaceExtendsClause()
@@ -283,7 +283,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     }
     final int methodLoc = calculateLoc(ctx);
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodData.addMetric(LOC, String.valueOf(methodLoc));
+    methodData.addMetric(LINE_COUNT, String.valueOf(methodLoc));
   }
 
   private List<ParameterInfo> extractParameters(final TypeScriptParser.CallSignatureContext callSignature) {

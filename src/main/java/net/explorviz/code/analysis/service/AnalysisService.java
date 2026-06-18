@@ -918,7 +918,7 @@ public class AnalysisService {
       }
 
       if (fileDataHandler != null) {
-        fileDataHandler.addMetric(CommonFileDataListener.LOC, String.valueOf(loc));
+        fileDataHandler.addMetric(CommonFileDataListener.LINE_COUNT, String.valueOf(loc));
       }
 
       return fileDataHandler;

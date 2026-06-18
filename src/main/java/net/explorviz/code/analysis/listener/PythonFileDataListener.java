@@ -79,7 +79,7 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
       final var classData = fileDataHandler.getCurrentClassData();
       if (classData != null) {
         classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        classData.addMetric(LOC, String.valueOf(classLoc));
+        classData.addMetric(LINE_COUNT, String.valueOf(classLoc));
 
         // Extract superclasses
         if (ctx.arglist() != null) {
@@ -127,7 +127,7 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
       // Calculate function SLOC and LOC
       final int functionLoc = calculateLoc(ctx);
       methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      methodData.addMetric(LOC, String.valueOf(functionLoc));
+      methodData.addMetric(LINE_COUNT, String.valueOf(functionLoc));
 
       // Check for async - commented out for now
       // TODO: Add async support to MethodDataHandler if needed
@@ -180,7 +180,7 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
       // Calculate function SLOC and LOC using actual start and end lines
       final int functionLoc = (endLine >= startLine) ? (endLine - startLine + 1) : 0;
       funcBuilder.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      funcBuilder.addMetric(LOC, String.valueOf(functionLoc));
+      funcBuilder.addMetric(LINE_COUNT, String.valueOf(functionLoc));
 
       LOGGER.atTrace()
           .addArgument(functionName)

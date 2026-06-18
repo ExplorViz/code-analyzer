@@ -10,7 +10,7 @@ import org.antlr.v4.runtime.Token;
 public interface CommonFileDataListener {
   String FILE_SIZE = "size";
   String SLOC = "sloc";
-  String LOC = "loc";
+  String LINE_COUNT = "lineCount";
   String CLOC = "cloc";
   String FUNCTION_COUNT = "functionCount";
   String VARIABLE_COUNT = "variableCount";

@@ -171,7 +171,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
       // Calculate class SLOC and LOC
       final int classLoc = calculateLoc(ctx);
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(classLoc));
+      classData.addMetric(LINE_COUNT, String.valueOf(classLoc));
 
       // Handle base classes
       if (classHead.baseClause() != null) {
@@ -213,7 +213,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
       if (classData != null) {
         classData.setIsEnum();
         classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+        classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
       }
 
       LOGGER.atTrace()
@@ -304,7 +304,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
         }
 
         methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodData.addMetric(LOC, String.valueOf(functionLoc));
+        methodData.addMetric(LINE_COUNT, String.valueOf(functionLoc));
 
         LOGGER.atTrace()
             .addArgument(functionName)
@@ -324,7 +324,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
           methodHandler.setLines(ctx.start.getLine(), ctx.stop.getLine());
         }
         methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodHandler.addMetric(LOC, String.valueOf(functionLoc));
+        methodHandler.addMetric(LINE_COUNT, String.valueOf(functionLoc));
 
         addFunctionParameters(methodHandler, ctx.declarator());
 
@@ -338,7 +338,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
           methodHandler.setLines(ctx.start.getLine(), ctx.stop.getLine());
         }
         methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodHandler.addMetric(LOC, String.valueOf(functionLoc));
+        methodHandler.addMetric(LINE_COUNT, String.valueOf(functionLoc));
 
         addFunctionParameters(methodHandler, ctx.declarator());
 

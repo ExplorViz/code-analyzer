@@ -98,7 +98,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     if (classData != null) {
       classData.setIsClass();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
 
       addClassBaseRelations(classData, ctx.class_base());
     }
@@ -148,7 +148,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     if (classData != null) {
       classData.setIsStruct();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
 
       if (ctx.struct_interfaces() != null && ctx.struct_interfaces().interface_type_list() != null) {
         for (final CSharpParser.Interface_typeContext interfaceType : ctx.struct_interfaces()
@@ -180,7 +180,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     if (classData != null) {
       classData.setIsInterface();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
   }
 
@@ -205,7 +205,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     if (classData != null) {
       classData.setIsEnum();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
   }
 
@@ -264,7 +264,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
       methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
   }
 
   @Override
@@ -288,7 +288,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
       methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
   }
 
   @Override

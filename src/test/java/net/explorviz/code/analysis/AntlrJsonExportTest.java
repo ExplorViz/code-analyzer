@@ -55,7 +55,7 @@ public class AntlrJsonExportTest {
     System.out.println("   Package: " + fileData.getPackageName());
     System.out.println("   Imports: " + fileData.getImportNamesCount());
     System.out.println("   Classes: " + fileData.getClassesCount());
-    System.out.println("   LOC: " + fileData.getMetricsOrDefault("loc", 0.0));
+    System.out.println("   lineCount: " + fileData.getMetricsOrDefault("lineCount", 0.0));
     System.out.println("   CLOC: " + fileData.getMetricsOrDefault("cloc", 0.0));
 
     if (fileData.getClassesCount() > 0) {

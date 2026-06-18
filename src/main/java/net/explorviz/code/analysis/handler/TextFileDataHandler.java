@@ -1,5 +1,6 @@
 package net.explorviz.code.analysis.handler;
 
+import net.explorviz.code.analysis.listener.CommonFileDataListener;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
 
@@ -22,13 +23,13 @@ public class TextFileDataHandler extends AbstractFileDataHandler {
    */
   public void calculateMetrics(final String content) {
     if (content == null || content.isEmpty()) {
-      addMetric("loc", "0");
+      addMetric(CommonFileDataListener.LINE_COUNT, "0");
       addMetric("size", "0");
       return;
     }
 
     final long loc = content.lines().count();
-    addMetric("loc", String.valueOf(loc));
+    addMetric(CommonFileDataListener.LINE_COUNT, String.valueOf(loc));
 
     // Add file size in bytes
     addMetric("size", String.valueOf(content.length()));

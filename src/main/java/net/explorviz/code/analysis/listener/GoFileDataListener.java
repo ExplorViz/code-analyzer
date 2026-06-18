@@ -94,7 +94,7 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
     }
 
     classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
   }
 
   @Override
@@ -138,7 +138,7 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
       methodHandler.setLines(ctx.start.getLine(), ctx.stop.getLine());
     }
     methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodHandler.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    methodHandler.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
 
     LOGGER.atTrace()
         .addArgument(functionName)
@@ -175,7 +175,7 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
       methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
   }
 
   @Override

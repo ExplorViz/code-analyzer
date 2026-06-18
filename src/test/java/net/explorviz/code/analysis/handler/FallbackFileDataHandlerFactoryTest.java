@@ -47,7 +47,7 @@ class FallbackFileDataHandlerFactoryTest {
         language);
 
     Assertions.assertEquals(language, handler.getProtoBufObject().getLanguage());
-    Assertions.assertEquals("2.0", handler.getMetricValue("loc"));
+    Assertions.assertEquals("2.0", handler.getMetricValue("lineCount"));
     Assertions.assertEquals(String.valueOf((double) CONTENT.length()), handler.getMetricValue("size"));
   }
 
@@ -60,7 +60,7 @@ class FallbackFileDataHandlerFactoryTest {
     final TextFileDataHandler handler = FallbackFileDataHandlerFactory.create(file, CONTENT);
 
     Assertions.assertEquals(language, handler.getProtoBufObject().getLanguage());
-    Assertions.assertEquals("2.0", handler.getMetricValue("loc"));
+    Assertions.assertEquals("2.0", handler.getMetricValue("lineCount"));
     Assertions.assertEquals(String.valueOf((double) CONTENT.length()), handler.getMetricValue("size"));
   }
 }

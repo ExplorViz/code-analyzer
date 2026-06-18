@@ -104,7 +104,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     }
 
     classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
 
     if (ctx.INTERFACE() != null) {
       classData.setIsInterface();
@@ -178,7 +178,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     if (classData != null) {
       classData.setIsClass();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
       addObjectDelegationRelations(classData, ctx);
     }
   }
@@ -225,7 +225,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     if (classData != null) {
       classData.setIsClass();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
   }
 
@@ -318,7 +318,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
       methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
   }
 
   @Override
@@ -339,7 +339,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
       methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
   }
 
   private String extractReturnType(final KotlinParser.FunctionDeclarationContext ctx) {

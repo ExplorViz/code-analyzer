@@ -104,7 +104,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
     addModifiers(typeModifiers);
     fileDataHandler.getCurrentClassData().addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    fileDataHandler.getCurrentClassData().addMetric(LOC, String.valueOf(getLoc(ctx)));
+    fileDataHandler.getCurrentClassData().addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
 
     if (ctx.typeType() != null) {
       final String superClassFqn = resolveTypeName(ctx.typeType().getText());
@@ -135,7 +135,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
     addModifiers(getTypeModifiers(ctx));
     fileDataHandler.getCurrentClassData().addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    fileDataHandler.getCurrentClassData().addMetric(LOC, String.valueOf(getLoc(ctx)));
+    fileDataHandler.getCurrentClassData().addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
 
     if (ctx.EXTENDS() != null && !ctx.typeList().isEmpty()) {
       for (final JavaParser.TypeTypeContext typeCtx : ctx.typeList(0).typeType()) {
@@ -159,7 +159,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
     addModifiers(getTypeModifiers(ctx));
     fileDataHandler.getCurrentClassData().addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    fileDataHandler.getCurrentClassData().addMetric(LOC, String.valueOf(getLoc(ctx)));
+    fileDataHandler.getCurrentClassData().addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
   }
 
   @Override
@@ -227,7 +227,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     }
 
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodData.addMetric(LOC, String.valueOf(getLoc(ctx)));
+    methodData.addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
   }
 
   @Override
@@ -275,7 +275,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     }
 
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodData.addMetric(LOC, String.valueOf(getLoc(ctx)));
+    methodData.addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
   }
 
   @Override
@@ -313,7 +313,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     }
 
     constructor.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    constructor.addMetric(LOC, String.valueOf(getLoc(ctx)));
+    constructor.addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
   }
 
   @Override

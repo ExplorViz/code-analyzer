@@ -92,7 +92,7 @@ public class FileDataVisitor extends VoidVisitorAdapter<JavaFileDataHandler> { /
     final String fqn = n.getFullyQualifiedName().orElse(UNKNOWN);
     data.enterClass(name, fqn);
     data.getCurrentClassData().addMetric(CommonFileDataListener.SLOC, String.valueOf(getLoc(n) - getCloc(n)));
-    data.getCurrentClassData().addMetric(CommonFileDataListener.LOC, String.valueOf(getLoc(n)));
+    data.getCurrentClassData().addMetric(CommonFileDataListener.LINE_COUNT, String.valueOf(getLoc(n)));
     data.getCurrentClassData().setIsEnum();
     for (final Modifier modifier : n.getModifiers()) {
       data.getCurrentClassData().addModifier(modifier.getKeyword().asString());
@@ -130,7 +130,7 @@ public class FileDataVisitor extends VoidVisitorAdapter<JavaFileDataHandler> { /
     final String classFqn = n.getFullyQualifiedName().orElse(UNKNOWN);
     data.enterClass(name, classFqn);
     data.getCurrentClassData().addMetric(CommonFileDataListener.SLOC, String.valueOf(getLoc(n) - getCloc(n)));
-    data.getCurrentClassData().addMetric(CommonFileDataListener.LOC, String.valueOf(getLoc(n)));
+    data.getCurrentClassData().addMetric(CommonFileDataListener.LINE_COUNT, String.valueOf(getLoc(n)));
 
     if (n.isInterface()) {
       data.getCurrentClassData().setIsInterface();
@@ -208,7 +208,7 @@ public class FileDataVisitor extends VoidVisitorAdapter<JavaFileDataHandler> { /
       }
     }
     method.addMetric(CommonFileDataListener.SLOC, String.valueOf(getLoc(n) - getCloc(n)));
-    method.addMetric(CommonFileDataListener.LOC, String.valueOf(getLoc(n)));
+    method.addMetric(CommonFileDataListener.LINE_COUNT, String.valueOf(getLoc(n)));
     functionCount++;
     super.visit(n, data);
     data.leaveMethod();
@@ -230,7 +230,7 @@ public class FileDataVisitor extends VoidVisitorAdapter<JavaFileDataHandler> { /
           parameter.getModifiers());
     }
     constructor.addMetric(CommonFileDataListener.SLOC, String.valueOf(getLoc(n) - getCloc(n)));
-    constructor.addMetric(CommonFileDataListener.LOC, String.valueOf(getLoc(n)));
+    constructor.addMetric(CommonFileDataListener.LINE_COUNT, String.valueOf(getLoc(n)));
     functionCount++;
     super.visit(n, data);
     data.leaveMethod();
@@ -249,7 +249,7 @@ public class FileDataVisitor extends VoidVisitorAdapter<JavaFileDataHandler> { /
     final String locValue = String.valueOf(loc);
     final String slocValue = String.valueOf(sloc);
     final String clocValue = String.valueOf(getCloc(n));
-    data.addMetric(CommonFileDataListener.LOC, locValue);
+    data.addMetric(CommonFileDataListener.LINE_COUNT, locValue);
     data.addMetric(CommonFileDataListener.SLOC, slocValue);
     data.addMetric(CommonFileDataListener.CLOC, clocValue);
     super.visit(n, data);

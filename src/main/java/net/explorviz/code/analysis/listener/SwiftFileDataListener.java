@@ -172,7 +172,7 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
     }
 
     classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
   }
 
   private void addInheritanceRelations(final ClassDataHandler classData,
@@ -309,7 +309,7 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
       methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
   }
 
   @Override
@@ -330,7 +330,7 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
       methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-    methodData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+    methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
   }
 
   @Override

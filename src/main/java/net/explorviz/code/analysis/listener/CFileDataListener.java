@@ -133,7 +133,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
         classData.setIsStruct();
       }
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
   }
 
@@ -158,7 +158,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
     if (classData != null) {
       classData.setIsEnum();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      classData.addMetric(LOC, String.valueOf(calculateLoc(ctx)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
   }
 
@@ -216,7 +216,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
           methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
         }
         methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodData.addMetric(LOC, String.valueOf(functionLoc));
+        methodData.addMetric(LINE_COUNT, String.valueOf(functionLoc));
       }
     } else {
       final var methodHandler = fileDataHandler.addGlobalFunction(functionName, returnType);
@@ -225,7 +225,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
         methodHandler.setLines(ctx.start.getLine(), ctx.stop.getLine());
       }
       methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      methodHandler.addMetric(LOC, String.valueOf(functionLoc));
+      methodHandler.addMetric(LINE_COUNT, String.valueOf(functionLoc));
     }
   }
 
