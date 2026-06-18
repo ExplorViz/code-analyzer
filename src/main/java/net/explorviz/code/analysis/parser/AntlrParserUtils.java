@@ -1,5 +1,6 @@
 package net.explorviz.code.analysis.parser;
 
+import java.util.List;
 import java.util.function.Supplier;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -58,6 +59,16 @@ public final class AntlrParserUtils {
    */
   public static <T> T parseTwoStage(final Parser parser, final CommonTokenStream tokens,
       final Logger logger, final String fileName, final Supplier<T> parseCall) {
+    return parseTwoStage(parser, tokens, logger, fileName, null, parseCall);
+  }
+
+  /**
+   * Same as {@link #parseTwoStage(Parser, CommonTokenStream, Logger, String, Supplier)} but also
+   * records syntax-error messages in {@code syntaxErrors} (for tests and diagnostics).
+   */
+  static <T> T parseTwoStage(final Parser parser, final CommonTokenStream tokens,
+      final Logger logger, final String fileName, final List<String> syntaxErrors,
+      final Supplier<T> parseCall) {
 
     // Stage 1: SLL — fast, works for the vast majority of valid source files.
     parser.removeErrorListeners();
@@ -75,12 +86,12 @@ public final class AntlrParserUtils {
     parser.getInterpreter().setPredictionMode(PredictionMode.LL);
     parser.setErrorHandler(new ThresholdBailErrorStrategy(MAX_ERRORS));
     parser.removeErrorListeners();
-    parser.addErrorListener(new LoggingErrorListener(logger, fileName));
+    parser.addErrorListener(new LoggingErrorListener(logger, fileName, syntaxErrors));
     try {
       return parseCall.get();
     } catch (ParseCancellationException e) {
       logger.warn("Strict parse failed for {}, retrying with lenient error recovery", fileName);
-      return parseLenient(parser, tokens, logger, fileName, parseCall);
+      return parseLenient(parser, tokens, logger, fileName, syntaxErrors, parseCall);
     }
   }
 
@@ -90,12 +101,18 @@ public final class AntlrParserUtils {
    */
   public static <T> T parseLenient(final Parser parser, final CommonTokenStream tokens,
       final Logger logger, final String fileName, final Supplier<T> parseCall) {
+    return parseLenient(parser, tokens, logger, fileName, null, parseCall);
+  }
+
+  static <T> T parseLenient(final Parser parser, final CommonTokenStream tokens,
+      final Logger logger, final String fileName, final List<String> syntaxErrors,
+      final Supplier<T> parseCall) {
     tokens.seek(0);
     parser.reset();
     parser.getInterpreter().setPredictionMode(PredictionMode.LL);
     parser.setErrorHandler(new DefaultErrorStrategy());
     parser.removeErrorListeners();
-    parser.addErrorListener(new LoggingErrorListener(logger, fileName));
+    parser.addErrorListener(new LoggingErrorListener(logger, fileName, syntaxErrors));
     return parseCall.get();
   }
 
@@ -140,16 +157,28 @@ public final class AntlrParserUtils {
 
     private final Logger logger;
     private final String fileName;
+    private final List<String> syntaxErrors;
 
     LoggingErrorListener(final Logger logger, final String fileName) {
+      this(logger, fileName, null);
+    }
+
+    LoggingErrorListener(final Logger logger, final String fileName,
+        final List<String> syntaxErrors) {
       this.logger = logger;
       this.fileName = fileName;
+      this.syntaxErrors = syntaxErrors;
     }
 
     @Override
     public void syntaxError(final Recognizer<?, ?> recognizer, final Object offendingSymbol,
         final int line, final int charPositionInLine, final String msg,
         final RecognitionException e) {
+      final String formatted =
+          "Parse error in %s at %d:%d — %s".formatted(fileName, line, charPositionInLine, msg);
+      if (syntaxErrors != null) {
+        syntaxErrors.add(formatted);
+      }
       logger.warn("Parse error in {} at {}:{} — {}", fileName, line, charPositionInLine, msg);
     }
   }

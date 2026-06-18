@@ -27,7 +27,8 @@ public class AntlrTypeScriptParserService {
       final String fileHash) {
     try {
       LOGGER.trace("Parsing TS/JS file content for {}", fileName);
-      final CharStream charStream = CharStreams.fromString(fileContent);
+      final String normalizedContent = normalizeTsx(fileContent, fileName);
+      final CharStream charStream = CharStreams.fromString(normalizedContent);
       final String extension = getFileExtension(fileName);
       return parse(charStream, fileName, fileHash, extension);
     } catch (Exception e) {
@@ -82,6 +83,13 @@ public class AntlrTypeScriptParserService {
   private String getFileExtension(final String fileName) {
     final int lastDot = fileName.lastIndexOf('.');
     return lastDot > 0 ? fileName.substring(lastDot) : "";
+  }
+
+  private static String normalizeTsx(final String fileContent, final String fileName) {
+    if (fileName != null && fileName.endsWith(".tsx")) {
+      return TsxJsxNormalizer.replaceJsxWithNull(fileContent);
+    }
+    return fileContent;
   }
 
   public void reset() {

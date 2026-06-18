@@ -168,8 +168,14 @@ tupleType
     ;
 
 // Tuples can have a trailing comma. See https://github.com/Microsoft/TypeScript/issues/28893
+// Labeled elements: [x: number, y: number, z: number]
+tupleElementType
+    : identifier ':' type_
+    | type_
+    ;
+
 tupleElementTypes
-    : type_ (',' type_)* ','?
+    : tupleElementType (',' tupleElementType)* ','?
     ;
 
 functionType
@@ -231,7 +237,7 @@ restParameter
     ;
 
 requiredParameter
-    : decoratorList? accessibilityModifier? identifierOrPattern typeAnnotation?
+    : decoratorList? accessibilityModifier? identifierOrPattern typeAnnotation? initializer?
     ;
 
 accessibilityModifier
@@ -391,7 +397,7 @@ importStatement
     ;
 
 importFromBlock
-    : importDefault? (importNamespace | importModuleItems) importFrom eos
+    : TypeAlias? importDefault? (importNamespace | importModuleItems) importFrom eos
     | StringLiteral eos
     ;
 
@@ -432,8 +438,8 @@ aliasName
     ;
 
 exportStatement
-    : Export Default? (exportFromBlock | declaration) eos # ExportDeclaration
-    | Export Default singleExpression eos                 # ExportDefaultDeclaration
+    : Export TypeAlias? Default? (exportFromBlock | declaration) eos # ExportDeclaration
+    | Export Default singleExpression eos                             # ExportDefaultDeclaration
     ;
 
 exportFromBlock
@@ -565,7 +571,7 @@ debuggerStatement
     ;
 
 functionDeclaration
-    : Async? Function_ '*'? identifier callSignature (('{' functionBody '}') | SemiColon)
+    : Async? Function_ '*'? identifier typeParameters? '(' formalParameterList? ')' typeAnnotation? (('{' functionBody '}') | SemiColon)
     ;
 
 //Ovveride ECMA
@@ -598,8 +604,8 @@ classElement
     ;
 
 propertyMemberDeclaration
-    : propertyMemberBase propertyName '?'? typeAnnotation? initializer? SemiColon        # PropertyDeclarationExpression
-    | propertyMemberBase propertyName callSignature (('{' functionBody '}') | SemiColon) # MethodDeclarationExpression
+    : propertyMemberBase classElementName '?'? typeAnnotation? initializer? SemiColon        # PropertyDeclarationExpression
+    | propertyMemberBase classElementName callSignature (('{' functionBody '}') | SemiColon) # MethodDeclarationExpression
     | propertyMemberBase (getAccessor | setAccessor)                                     # GetterSetterDeclarationExpression
     | abstractDeclaration                                                                # AbstractMemberDeclaration
     ;
@@ -613,7 +619,7 @@ indexMemberDeclaration
     ;
 
 generatorMethod
-    : (Async {this.notLineTerminator()}?)? '*'? propertyName '(' formalParameterList? ')' '{' functionBody '}'
+    : (Async {this.notLineTerminator()}?)? '*'? propertyName '(' formalParameterList? ')' typeAnnotation? '{' functionBody '}'
     ;
 
 generatorFunctionDeclaration
@@ -733,10 +739,11 @@ expressionSequence
 singleExpression
     : anonymousFunction                                           # FunctionExpression
     | Class identifier? typeParameters? classHeritage classTail   # ClassExpression
-    | singleExpression '?.'? '[' expressionSequence ']'           # MemberIndexExpression
-    | singleExpression '?.' singleExpression                      # OptionalChainExpression
+    | singleExpression QuestionMarkDot? '[' expressionSequence ']'  # MemberIndexExpression
+    | singleExpression QuestionMarkDot identifierName typeGeneric? arguments? # OptionalMemberExpression
+    | singleExpression QuestionMarkDot arguments                    # OptionalCallExpression
+    | singleExpression '?.' singleExpression                        # OptionalChainExpression
     | singleExpression '!'? '.' '#'? identifierName typeGeneric?  # MemberDotExpression
-    | singleExpression '?'? '.' '#'? identifierName typeGeneric?  # MemberDotExpression
     // Split to try `new Date()` first, then `new Date`.
     | New singleExpression typeArguments? arguments                   # NewExpression
     | New singleExpression typeArguments?                             # NewExpression
@@ -904,7 +911,6 @@ identifier
     | KeyOf
     | TypeAlias
     | Constructor
-    | Namespace
     | Abstract
     ;
 

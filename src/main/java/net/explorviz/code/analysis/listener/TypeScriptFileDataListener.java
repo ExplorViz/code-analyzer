@@ -1,7 +1,10 @@
 package net.explorviz.code.analysis.listener;
 
+import java.util.ArrayList;
+import java.util.List;
 import net.explorviz.code.analysis.antlr.generated.typescript.TypeScriptParser;
 import net.explorviz.code.analysis.antlr.generated.typescript.TypeScriptParserBaseListener;
+import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.handler.TypeScriptFileDataHandler;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -15,6 +18,8 @@ import org.slf4j.LoggerFactory;
 public class TypeScriptFileDataListener extends TypeScriptParserBaseListener implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TypeScriptFileDataListener.class);
+  private static final String DEFAULT_RETURN_TYPE = "void";
+  private static final String UNTYPED_PARAMETER = "any";
 
   private final TypeScriptFileDataHandler fileDataHandler;
   private final String fileExtension;
@@ -31,7 +36,6 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
 
   @Override
   public void enterProgram(final TypeScriptParser.ProgramContext ctx) {
-    // Calculate total source SLOC and CLOC
     final int sloc = getSloc(tokens);
     final int cloc = getCloc(ctx);
 
@@ -52,8 +56,6 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
 
   @Override
   public void enterImportStatement(final TypeScriptParser.ImportStatementContext ctx) {
-    // Extract import statements
-    // Example: import { foo } from 'bar';
     if (ctx.getText() != null) {
       final String importText = ctx.getText();
       fileDataHandler.addImport(importText);
@@ -64,11 +66,26 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
   }
 
   @Override
+  public void enterNamespaceDeclaration(final TypeScriptParser.NamespaceDeclarationContext ctx) {
+    if (ctx.namespaceName() != null) {
+      final String namespaceName = ctx.namespaceName().getText();
+      fileDataHandler.enterNamespace(namespaceName);
+      LOGGER.atTrace()
+          .addArgument(namespaceName)
+          .log("Namespace: {}");
+    }
+  }
+
+  @Override
+  public void exitNamespaceDeclaration(final TypeScriptParser.NamespaceDeclarationContext ctx) {
+    fileDataHandler.leaveNamespace();
+  }
+
+  @Override
   public void enterClassDeclaration(final TypeScriptParser.ClassDeclarationContext ctx) {
-    // Extract class name
     if (ctx.identifier() != null) {
       final String className = ctx.identifier().getText();
-      final String fqn = className; // TODO: Build proper FQN with module/namespace
+      final String fqn = fileDataHandler.buildFqn(className);
 
       fileDataHandler.enterClass(className, fqn);
 
@@ -76,7 +93,6 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
           .addArgument(className)
           .log("Class: {}");
 
-      // Calculate class SLOC and LOC
       final int classLoc = calculateLoc(ctx);
       final var classData = fileDataHandler.getCurrentClassData();
       if (classData != null) {
@@ -94,23 +110,20 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
 
   @Override
   public void exitClassDeclaration(final TypeScriptParser.ClassDeclarationContext ctx) {
-    // Leave class
     fileDataHandler.leaveClass();
   }
 
   @Override
   public void enterInterfaceDeclaration(final TypeScriptParser.InterfaceDeclarationContext ctx) {
-    // Extract interface name
     if (ctx.identifier() != null) {
       final String interfaceName = ctx.identifier().getText();
-      final String fqn = interfaceName; // TODO: Build proper FQN
+      final String fqn = fileDataHandler.buildFqn(interfaceName);
 
       fileDataHandler.enterClass(interfaceName, fqn);
       final var classData = fileDataHandler.getCurrentClassData();
       if (classData != null) {
         classData.setIsInterface();
 
-        // Calculate interface SLOC and LOC
         final int interfaceLoc = calculateLoc(ctx);
         classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
         classData.addMetric(LOC, String.valueOf(interfaceLoc));
@@ -134,115 +147,82 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
 
   @Override
   public void exitInterfaceDeclaration(final TypeScriptParser.InterfaceDeclarationContext ctx) {
-    // Leave interface
     fileDataHandler.leaveClass();
   }
 
   @Override
   public void enterMethodDeclarationExpression(
       final TypeScriptParser.MethodDeclarationExpressionContext ctx) {
-    // Handle class methods: methodName() { ... }
-    // This catches methods defined inside classes using the shorthand syntax
-    if (ctx.propertyName() != null && fileDataHandler.isInClassContext()) {
-      functionCount++;
-      final String methodName = ctx.propertyName().getText();
-      final String methodFqn = methodName + "#1"; // TODO: Add proper parameter hashing
+    if (ctx.classElementName() == null || !fileDataHandler.isInClassContext()) {
+      return;
+    }
 
-      final var classData = fileDataHandler.getCurrentClassData();
-      if (classData != null) {
-        final var methodData = classData.addMethod(methodName, methodFqn, "void"); // TODO: Extract actual return type
+    functionCount++;
+    final String methodName = ctx.classElementName().getText();
+    final List<ParameterInfo> parameters = extractParameters(ctx.callSignature());
+    final String methodFqn = fileDataHandler.buildMethodFqn(methodName, extractParameterTypes(parameters));
+    final String returnType = extractReturnType(ctx.callSignature());
+    final boolean async = isAsync(ctx.propertyMemberBase());
 
-        // Set method location
-        if (ctx.start != null && ctx.stop != null) {
-          methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
-        }
+    final var classData = fileDataHandler.getCurrentClassData();
+    if (classData != null) {
+      final MethodDataHandler methodData = classData.addMethod(methodName, methodFqn, returnType);
+      populateMethod(methodData, ctx, parameters, async);
 
-        // Calculate method SLOC and LOC
-        final int methodLoc = calculateLoc(ctx);
-        methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodData.addMetric(LOC, String.valueOf(methodLoc));
-
-        LOGGER.atTrace()
-            .addArgument(methodName)
-            .log("Class method: {}");
-      }
+      LOGGER.atTrace()
+          .addArgument(methodName)
+          .log("Class method: {}");
     }
   }
 
   @Override
   public void enterConstructorDeclaration(
       final TypeScriptParser.ConstructorDeclarationContext ctx) {
-    // Handle class constructors
-    if (fileDataHandler.isInClassContext()) {
-      functionCount++;
-      final var classData = fileDataHandler.getCurrentClassData();
-      if (classData != null) {
-        final String constructorFqn = "constructor#1"; // TODO: Add proper parameter hashing
-        final var methodData = classData.addConstructor("constructor", constructorFqn);
+    if (!fileDataHandler.isInClassContext()) {
+      return;
+    }
 
-        // Set constructor location
-        if (ctx.start != null && ctx.stop != null) {
-          methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
-        }
+    functionCount++;
+    final var classData = fileDataHandler.getCurrentClassData();
+    if (classData != null) {
+      final List<ParameterInfo> parameters = extractParameters(ctx.formalParameterList());
+      final String constructorFqn = fileDataHandler.buildMethodFqn("constructor", extractParameterTypes(parameters));
+      final MethodDataHandler methodData = classData.addConstructor("constructor", constructorFqn);
+      populateMethod(methodData, ctx, parameters, false);
 
-        // Calculate constructor SLOC and LOC
-        final int constructorLoc = calculateLoc(ctx);
-        methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodData.addMetric(LOC, String.valueOf(constructorLoc));
-
-        LOGGER.atTrace()
-            .log("Constructor detected");
-      }
+      LOGGER.atTrace()
+          .log("Constructor detected");
     }
   }
 
   @Override
   public void enterFunctionDeclaration(final TypeScriptParser.FunctionDeclarationContext ctx) {
-    // Extract function name
-    if (ctx.identifier() != null) {
-      functionCount++;
-      final String functionName = ctx.identifier().getText();
+    if (ctx.identifier() == null) {
+      return;
+    }
 
-      // Check if we're inside a class or this is a global function
-      if (fileDataHandler.isInClassContext()) {
-        // Function inside a class - treat as a method
-        final String functionFqn = functionName + "#1"; // TODO: Add proper parameter hashing
+    functionCount++;
+    final String functionName = ctx.identifier().getText();
+    final List<ParameterInfo> parameters = extractParameters(ctx.formalParameterList());
+    final String returnType = extractReturnType(ctx.typeAnnotation());
+    final boolean async = ctx.Async() != null;
 
-        final var methodData = fileDataHandler.getCurrentClassData()
-            .addMethod(functionName, functionFqn, "void"); // TODO: Extract actual return type
+    if (fileDataHandler.isInClassContext()) {
+      final String functionFqn = fileDataHandler.buildMethodFqn(functionName, extractParameterTypes(parameters));
+      final var methodData = fileDataHandler.getCurrentClassData()
+          .addMethod(functionName, functionFqn, returnType);
+      populateMethod(methodData, ctx, parameters, async);
 
-        LOGGER.atTrace()
-            .addArgument(functionName)
-            .log("Function inside class: {}");
+      LOGGER.atTrace()
+          .addArgument(functionName)
+          .log("Function inside class: {}");
+    } else {
+      final MethodDataHandler methodHandler = fileDataHandler.addGlobalFunction(functionName, returnType);
+      populateMethod(methodHandler, ctx, parameters, async);
 
-        // Calculate function SLOC and LOC
-        final int functionLoc = calculateLoc(ctx);
-        methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodData.addMetric(LOC, String.valueOf(functionLoc));
-      } else {
-        // Global function - track it separately!
-        final var methodHandler = fileDataHandler.addGlobalFunction(
-            functionName,
-            "void" // TODO: Extract actual return type
-        );
-
-        // Set function location
-        if (ctx.start != null && ctx.stop != null) {
-          methodHandler.setLines(ctx.start.getLine(), ctx.stop.getLine());
-        }
-
-        // Calculate LOC and SLOC
-        final int functionLoc = calculateLoc(ctx);
-        methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodHandler.addMetric(LOC, String.valueOf(functionLoc));
-
-        // Check for async
-        // TODO: Detect async functions
-
-        LOGGER.atTrace()
-            .addArgument(functionName)
-            .log("Global function: {}");
-      }
+      LOGGER.atTrace()
+          .addArgument(functionName)
+          .log("Global function: {}");
     }
   }
 
@@ -254,55 +234,205 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
   @Override
   public void enterArrowFunctionDeclaration(
       final TypeScriptParser.ArrowFunctionDeclarationContext ctx) {
-    // Handle arrow functions: const foo = () => {}
-    // Arrow functions are typically assigned to variables, so we need to extract
-    // name
-
-    // For now, we'll try to get the identifier from the parent context (variable
-    // declaration)
-    String functionName = extractArrowFunctionName(ctx);
-
-    if (functionName != null) {
-      functionCount++;
-      if (fileDataHandler.isInClassContext()) {
-        // Arrow function inside a class (e.g., class field)
-        final String functionFqn = functionName + "#1";
-
-        final var methodData = fileDataHandler.getCurrentClassData()
-            .addMethod(functionName, functionFqn, "void");
-
-        // Calculate method SLOC and LOC
-        final int methodLoc = calculateLoc(ctx);
-        methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodData.addMetric(LOC, String.valueOf(methodLoc));
-
-        LOGGER.atTrace()
-            .addArgument(functionName)
-            .log("Arrow function inside class: {}");
-      } else {
-        // Global arrow function
-        final var methodHandler = fileDataHandler.addGlobalFunction(
-            functionName,
-            "void");
-
-        // Set function location
-        if (ctx.start != null && ctx.stop != null) {
-          methodHandler.setLines(ctx.start.getLine(), ctx.stop.getLine());
-        }
-
-        // Calculate SLOC and LOC
-        final int functionLoc = calculateLoc(ctx);
-        methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodHandler.addMetric(LOC, String.valueOf(functionLoc));
-
-        LOGGER.atTrace()
-            .addArgument(functionName)
-            .log("Global arrow function: {}");
-      }
-    } else {
-      // Anonymous arrow function - count it but don't add as named function
+    final String functionName = extractArrowFunctionName(ctx);
+    if (functionName == null) {
       LOGGER.atTrace().log("Anonymous arrow function detected");
+      return;
     }
+
+    functionCount++;
+    final List<ParameterInfo> parameters = extractParameters(ctx.arrowFunctionParameters());
+    final String returnType = extractReturnType(ctx.typeAnnotation());
+    final boolean async = ctx.Async() != null;
+
+    if (fileDataHandler.isInClassContext()) {
+      final String functionFqn = fileDataHandler.buildMethodFqn(functionName, extractParameterTypes(parameters));
+      final var methodData = fileDataHandler.getCurrentClassData()
+          .addMethod(functionName, functionFqn, returnType);
+      populateMethod(methodData, ctx, parameters, async);
+
+      LOGGER.atTrace()
+          .addArgument(functionName)
+          .log("Arrow function inside class: {}");
+    } else {
+      final MethodDataHandler methodHandler = fileDataHandler.addGlobalFunction(functionName, returnType);
+      populateMethod(methodHandler, ctx, parameters, async);
+
+      LOGGER.atTrace()
+          .addArgument(functionName)
+          .log("Global arrow function: {}");
+    }
+  }
+
+  @Override
+  public void enterVariableDeclaration(final TypeScriptParser.VariableDeclarationContext ctx) {
+    variableCount++;
+  }
+
+  private void populateMethod(final MethodDataHandler methodData, final ParserRuleContext ctx,
+      final List<ParameterInfo> parameters, final boolean async) {
+    for (final ParameterInfo parameter : parameters) {
+      methodData.addParameter(parameter.name(), parameter.type(), List.of());
+    }
+    if (async) {
+      methodData.addModifier("async");
+    }
+    if (ctx.start != null && ctx.stop != null) {
+      methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
+    }
+    final int methodLoc = calculateLoc(ctx);
+    methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+    methodData.addMetric(LOC, String.valueOf(methodLoc));
+  }
+
+  private List<ParameterInfo> extractParameters(final TypeScriptParser.CallSignatureContext callSignature) {
+    if (callSignature == null || callSignature.parameterList() == null) {
+      return List.of();
+    }
+    return extractParameters(callSignature.parameterList());
+  }
+
+  private List<ParameterInfo> extractParameters(
+      final TypeScriptParser.ArrowFunctionParametersContext arrowParameters) {
+    if (arrowParameters == null) {
+      return List.of();
+    }
+    if (arrowParameters.formalParameterList() != null) {
+      return extractParameters(arrowParameters.formalParameterList());
+    }
+    if (arrowParameters.propertyName() != null) {
+      return List.of(new ParameterInfo(arrowParameters.propertyName().getText(), UNTYPED_PARAMETER));
+    }
+    return List.of();
+  }
+
+  private List<ParameterInfo> extractParameters(
+      final TypeScriptParser.FormalParameterListContext formalParameterList) {
+    final List<ParameterInfo> parameters = new ArrayList<>();
+    if (formalParameterList == null) {
+      return parameters;
+    }
+
+    for (final TypeScriptParser.FormalParameterArgContext arg : formalParameterList.formalParameterArg()) {
+      parameters.add(new ParameterInfo(extractAssignableName(arg.assignable()),
+          extractTypeFromAnnotation(arg.typeAnnotation())));
+    }
+
+    if (formalParameterList.lastFormalParameterArg() != null) {
+      final TypeScriptParser.LastFormalParameterArgContext restArg = formalParameterList.lastFormalParameterArg();
+      final String restName = restArg.identifier() != null ? restArg.identifier().getText() : "rest";
+      parameters.add(new ParameterInfo(restName, extractTypeFromAnnotation(restArg.typeAnnotation(), "...")));
+    }
+
+    return parameters;
+  }
+
+  private List<ParameterInfo> extractParameters(final TypeScriptParser.ParameterListContext parameterList) {
+    final List<ParameterInfo> parameters = new ArrayList<>();
+    if (parameterList == null) {
+      return parameters;
+    }
+
+    if (parameterList.restParameter() != null) {
+      final TypeScriptParser.RestParameterContext rest = parameterList.restParameter();
+      parameters.add(new ParameterInfo("rest", extractTypeFromAnnotation(rest.typeAnnotation(), "...")));
+      return parameters;
+    }
+
+    for (final TypeScriptParser.ParameterContext parameter : parameterList.parameter()) {
+      if (parameter.requiredParameter() != null) {
+        parameters.add(extractRequiredParameter(parameter.requiredParameter()));
+      } else if (parameter.optionalParameter() != null) {
+        parameters.add(extractOptionalParameter(parameter.optionalParameter()));
+      }
+    }
+
+    return parameters;
+  }
+
+  private ParameterInfo extractRequiredParameter(
+      final TypeScriptParser.RequiredParameterContext requiredParameter) {
+    return new ParameterInfo(extractIdentifierOrPatternName(requiredParameter.identifierOrPattern()),
+        extractTypeFromAnnotation(requiredParameter.typeAnnotation()));
+  }
+
+  private ParameterInfo extractOptionalParameter(
+      final TypeScriptParser.OptionalParameterContext optionalParameter) {
+    final TypeScriptParser.IdentifierOrPatternContext pattern = optionalParameter.identifierOrPattern();
+    return new ParameterInfo(extractIdentifierOrPatternName(pattern),
+        extractTypeFromAnnotation(optionalParameter.typeAnnotation()));
+  }
+
+  private List<String> extractParameterTypes(final List<ParameterInfo> parameters) {
+    return parameters.stream().map(ParameterInfo::type).toList();
+  }
+
+  private String extractReturnType(final TypeScriptParser.CallSignatureContext callSignature) {
+    if (callSignature == null) {
+      return DEFAULT_RETURN_TYPE;
+    }
+    return extractReturnType(callSignature.typeAnnotation());
+  }
+
+  private String extractReturnType(final TypeScriptParser.TypeAnnotationContext typeAnnotation) {
+    if (typeAnnotation == null || typeAnnotation.type_() == null) {
+      return DEFAULT_RETURN_TYPE;
+    }
+    return normalizeTypeName(typeAnnotation.type_().getText());
+  }
+
+  private String extractTypeFromAnnotation(final TypeScriptParser.TypeAnnotationContext typeAnnotation) {
+    return extractTypeFromAnnotation(typeAnnotation, UNTYPED_PARAMETER);
+  }
+
+  private String extractTypeFromAnnotation(final TypeScriptParser.TypeAnnotationContext typeAnnotation,
+      final String defaultType) {
+    if (typeAnnotation == null || typeAnnotation.type_() == null) {
+      return defaultType;
+    }
+    return normalizeTypeName(typeAnnotation.type_().getText());
+  }
+
+  private String extractAssignableName(final TypeScriptParser.AssignableContext assignable) {
+    if (assignable == null) {
+      return "param";
+    }
+    if (assignable.identifier() != null) {
+      return assignable.identifier().getText();
+    }
+    return shortenPattern(assignable.getText());
+  }
+
+  private String extractIdentifierOrPatternName(
+      final TypeScriptParser.IdentifierOrPatternContext identifierOrPattern) {
+    if (identifierOrPattern == null) {
+      return "param";
+    }
+    if (identifierOrPattern.identifierName() != null) {
+      return identifierOrPattern.identifierName().getText();
+    }
+    return shortenPattern(identifierOrPattern.getText());
+  }
+
+  private String shortenPattern(final String pattern) {
+    if (pattern == null || pattern.isEmpty()) {
+      return "param";
+    }
+    if (pattern.length() > 40) {
+      return pattern.substring(0, 37) + "...";
+    }
+    return pattern;
+  }
+
+  private String normalizeTypeName(final String typeName) {
+    if (typeName == null || typeName.isBlank()) {
+      return DEFAULT_RETURN_TYPE;
+    }
+    return typeName.replaceAll("\\s+", " ").trim();
+  }
+
+  private boolean isAsync(final TypeScriptParser.PropertyMemberBaseContext propertyMemberBase) {
+    return propertyMemberBase != null && propertyMemberBase.Async() != null;
   }
 
   /**
@@ -310,35 +440,35 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
    */
   private String extractArrowFunctionName(
       final TypeScriptParser.ArrowFunctionDeclarationContext ctx) {
-    // Simple approach: look for identifiers in parent contexts
     ParserRuleContext parent = ctx.getParent();
 
     int depth = 0;
     while (parent != null && depth < 5) {
-      // Try to find any identifier in the parent context
-      String text = parent.getText();
+      if (parent instanceof TypeScriptParser.VariableDeclarationContext variableDeclaration) {
+        if (variableDeclaration.identifierOrKeyWord() != null) {
+          return variableDeclaration.identifierOrKeyWord().getText();
+        }
+      }
+      if (parent instanceof TypeScriptParser.PropertyDeclarationExpressionContext propertyDeclaration) {
+        if (propertyDeclaration.classElementName() != null) {
+          return propertyDeclaration.classElementName().getText();
+        }
+      }
+
+      final String text = parent.getText();
       if (text != null && text.contains("=")) {
-        // Likely a variable assignment: const foo = () => {}
-        String[] parts = text.split("=");
-        if (parts.length > 0) {
-          String potentialName = parts[0].trim();
-          // Remove keywords like const, let, var
-          potentialName = potentialName.replaceAll("^(const|let|var)\\s+", "");
-          if (potentialName.matches("[a-zA-Z_$][a-zA-Z0-9_$]*")) {
-            return potentialName;
-          }
+        final String[] parts = text.split("=", 2);
+        String potentialName = parts[0].trim();
+        potentialName = potentialName.replaceAll("^(const|let|var)\\s+", "");
+        if (potentialName.matches("[a-zA-Z_$#][a-zA-Z0-9_$#]*")) {
+          return potentialName;
         }
       }
       parent = parent.getParent();
       depth++;
     }
 
-    return null; // Anonymous arrow function
-  }
-
-  @Override
-  public void enterVariableDeclaration(final TypeScriptParser.VariableDeclarationContext ctx) {
-    variableCount++;
+    return null;
   }
 
   /**
@@ -352,22 +482,18 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
 
     int commentLines = 0;
 
-    // Iterate through all tokens to find comments on the hidden channel
     for (int i = 0; i < tokens.size(); i++) {
       final var token = tokens.get(i);
 
-      // Comments are typically on channel 1 (hidden channel)
       if (token.getChannel() != 0) {
         final String tokenText = token.getText();
 
         if (tokenText != null) {
-          // Count lines in single-line comments (//)
           if (tokenText.trim().startsWith("//")) {
             commentLines++;
           } else if (tokenText.trim().startsWith("/*")) {
-            // Count the number of newlines in the comment
             final long newlines = tokenText.chars().filter(ch -> ch == '\n').count();
-            commentLines += (int) newlines + 1; // +1 for the first line
+            commentLines += (int) newlines + 1;
           }
         }
       }
@@ -375,4 +501,6 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
 
     return commentLines;
   }
+
+  private record ParameterInfo(String name, String type) {}
 }

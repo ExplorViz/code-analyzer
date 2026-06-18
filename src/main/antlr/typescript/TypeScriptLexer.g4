@@ -61,7 +61,7 @@ SemiColon                  : ';';
 Comma                      : ',';
 Assign                     : '=';
 QuestionMark               : '?';
-QuestionMarkDot            : '?.';
+QuestionMarkDot            : '?.' {_input.LA(1) < '0' || _input.LA(1) > '9'}?;
 Colon                      : ':';
 Ellipsis                   : '...';
 Dot                        : '.';
