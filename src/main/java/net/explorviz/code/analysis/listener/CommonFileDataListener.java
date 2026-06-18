@@ -2,6 +2,7 @@ package net.explorviz.code.analysis.listener;
 
 import net.explorviz.code.analysis.handler.AbstractFileDataHandler;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 
 /**
  * Common methods for file data listeners.
@@ -53,11 +54,12 @@ public interface CommonFileDataListener {
     final java.util.Set<Integer> codeLines = new java.util.HashSet<>();
     for (int i = 0; i < tokens.size(); i++) {
       final org.antlr.v4.runtime.Token token = tokens.get(i);
-      if (token.getChannel() == 0) {
-        final String text = token.getText();
-        if (text != null && !text.trim().isEmpty()) {
-          codeLines.add(token.getLine());
-        }
+      if (token.getType() == Token.EOF || token.getChannel() != 0) {
+        continue;
+      }
+      final String text = token.getText();
+      if (text != null && !text.trim().isEmpty()) {
+        codeLines.add(token.getLine());
       }
     }
     return codeLines.size();
@@ -86,13 +88,14 @@ public interface CommonFileDataListener {
         continue;
       }
       final org.antlr.v4.runtime.Token token = tokens.get(i);
-      if (token.getChannel() == 0) {
-        final String text = token.getText();
-        if (text != null && !text.trim().isEmpty()) {
-          final int line = token.getLine();
-          if (line >= startLine && line <= endLine) {
-            codeLines.add(line);
-          }
+      if (token.getType() == Token.EOF || token.getChannel() != 0) {
+        continue;
+      }
+      final String text = token.getText();
+      if (text != null && !text.trim().isEmpty()) {
+        final int line = token.getLine();
+        if (line >= startLine && line <= endLine) {
+          codeLines.add(line);
         }
       }
     }

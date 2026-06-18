@@ -351,8 +351,25 @@ public class JavaFileDataListenerTest {
     final Double slocValue = data.getMetricsMap().get("sloc");
     Assertions.assertNotNull(slocValue);
     
-    // SLOC should be greater than 0
-    Assertions.assertTrue(slocValue > 0.0, "SLOC should be greater than 0");
+    // 7 non-blank, non-comment lines; trailing newline must not inflate SLOC via EOF token
+    Assertions.assertEquals(7.0, slocValue, 0.0, "SLOC should exclude EOF token line");
+  }
+
+  @Test
+  void testSLOCMetric_nestedJavaFile() throws IOException {
+    final String path = "src/test/resources/files/Nested.java";
+    final String fileContent = Files.readString(Path.of(path));
+
+    final JavaFileDataHandler fileDataHandler = antlrParserService.parseFileContent(
+        fileContent, "Nested.java", "test-commit");
+
+    Assertions.assertNotNull(fileDataHandler);
+
+    final FileData data = fileDataHandler.getProtoBufObject();
+    final Double slocValue = data.getMetricsMap().get("sloc");
+
+    Assertions.assertNotNull(slocValue);
+    Assertions.assertEquals(27.0, slocValue, 0.0, "SLOC should match manual code line count");
   }
 
   @Test
