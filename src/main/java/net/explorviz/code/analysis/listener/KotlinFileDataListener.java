@@ -65,6 +65,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
   private void addFunctionAndVariableMetrics() {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+    addImportAndClassCountMetrics(fileDataHandler);
   }
 
   @Override

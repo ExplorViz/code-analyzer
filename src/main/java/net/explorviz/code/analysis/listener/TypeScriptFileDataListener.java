@@ -52,6 +52,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
   public void exitProgram(final TypeScriptParser.ProgramContext ctx) {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+    addImportAndClassCountMetrics(fileDataHandler);
   }
 
   @Override

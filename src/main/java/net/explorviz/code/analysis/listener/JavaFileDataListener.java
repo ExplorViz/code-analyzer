@@ -58,6 +58,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   public void exitCompilationUnit(final JavaParser.CompilationUnitContext ctx) {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+    addImportAndClassCountMetrics(fileDataHandler);
   }
 
   @Override

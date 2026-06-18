@@ -1,5 +1,6 @@
 package net.explorviz.code.analysis.listener;
 
+import net.explorviz.code.analysis.handler.AbstractFileDataHandler;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
@@ -12,6 +13,13 @@ public interface CommonFileDataListener {
   String CLOC = "cloc";
   String FUNCTION_COUNT = "functionCount";
   String VARIABLE_COUNT = "variableCount";
+  String IMPORT_COUNT = "importCount";
+  String CLASS_COUNT = "classCount";
+
+  default void addImportAndClassCountMetrics(final AbstractFileDataHandler handler) {
+    handler.addMetric(IMPORT_COUNT, String.valueOf(handler.getImportCount()));
+    handler.addMetric(CLASS_COUNT, String.valueOf(handler.getClassCount()));
+  }
 
   default int calculateLoc(final ParserRuleContext ctx) {
     if (ctx == null || ctx.start == null || ctx.stop == null) {

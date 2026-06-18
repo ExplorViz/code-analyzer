@@ -60,6 +60,11 @@ public class CFileDataHandler extends AbstractFileDataHandler
     return fqn != null ? classDataMap.get(fqn) : null;
   }
 
+  @Override
+  public int getClassCount() {
+    return classDataMap.size();
+  }
+
   public boolean isInClassContext() {
     return !classStack.isEmpty();
   }

@@ -47,6 +47,7 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
   public void exitSourceFile(final GoParser.SourceFileContext ctx) {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+    addImportAndClassCountMetrics(fileDataHandler);
   }
 
   @Override

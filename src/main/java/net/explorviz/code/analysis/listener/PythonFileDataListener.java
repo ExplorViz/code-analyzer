@@ -46,6 +46,7 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
   public void exitFile_input(final PythonParser.File_inputContext ctx) {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+    addImportAndClassCountMetrics(fileDataHandler);
   }
 
   @Override

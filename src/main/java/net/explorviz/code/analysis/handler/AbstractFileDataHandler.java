@@ -36,6 +36,14 @@ public abstract class AbstractFileDataHandler {
     builder.addImportNames(importName);
   }
 
+  public int getImportCount() {
+    return builder.getImportNamesCount();
+  }
+
+  public int getClassCount() {
+    return 0;
+  }
+
   public String addMetric(final String metricName, final String metricValue) {
     try {
       builder.putMetrics(metricName, Double.parseDouble(metricValue));

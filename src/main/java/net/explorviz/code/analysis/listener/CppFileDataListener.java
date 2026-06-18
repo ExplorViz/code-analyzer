@@ -52,6 +52,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
   public void exitTranslationUnit(final CPP14Parser.TranslationUnitContext ctx) {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+    addImportAndClassCountMetrics(fileDataHandler);
   }
 
   /**

@@ -48,6 +48,7 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
   public void exitHtmlDocument(final PhpParser.HtmlDocumentContext ctx) {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+    addImportAndClassCountMetrics(fileDataHandler);
   }
 
   @Override

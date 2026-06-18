@@ -47,6 +47,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
   public void exitCompilation_unit(final CSharpParser.Compilation_unitContext ctx) {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+    addImportAndClassCountMetrics(fileDataHandler);
   }
 
   @Override

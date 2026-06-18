@@ -153,6 +153,7 @@ public class TypeScriptFileDataHandler extends AbstractFileDataHandler
     return globalFunctionHandlers.size();
   }
 
+  @Override
   public int getClassCount() {
     return classDataMap.size();
   }

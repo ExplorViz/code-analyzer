@@ -54,6 +54,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
   public void exitTranslationUnit(final CParser.TranslationUnitContext ctx) {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+    addImportAndClassCountMetrics(fileDataHandler);
   }
 
   private int getSlocIncludingPreprocessor() {

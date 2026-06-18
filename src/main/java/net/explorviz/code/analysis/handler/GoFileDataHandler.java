@@ -64,6 +64,11 @@ public class GoFileDataHandler extends AbstractFileDataHandler
     return classDataMap.get(fqn);
   }
 
+  @Override
+  public int getClassCount() {
+    return classDataMap.size();
+  }
+
   public boolean isInClassContext() {
     return !classStack.isEmpty();
   }

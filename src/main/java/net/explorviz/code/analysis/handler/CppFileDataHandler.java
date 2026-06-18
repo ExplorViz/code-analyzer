@@ -99,6 +99,7 @@ public class CppFileDataHandler extends AbstractFileDataHandler
     return globalFunctionHandlers.size();
   }
 
+  @Override
   public int getClassCount() {
     return classDataMap.size();
   }

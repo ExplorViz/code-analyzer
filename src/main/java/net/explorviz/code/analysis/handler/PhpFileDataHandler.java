@@ -79,6 +79,11 @@ public class PhpFileDataHandler extends AbstractFileDataHandler
     return classDataMap.get(classStack.peek());
   }
 
+  @Override
+  public int getClassCount() {
+    return classDataMap.size();
+  }
+
   public boolean isInClassContext() {
     return !classStack.isEmpty();
   }

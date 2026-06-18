@@ -89,6 +89,11 @@ public class PythonFileDataHandler extends AbstractFileDataHandler {
   }
 
   @Override
+  public int getClassCount() {
+    return classDataMap.size();
+  }
+
+  @Override
   public FileData getProtoBufObject() {
     // Add all root classes
     builder.clearClasses();

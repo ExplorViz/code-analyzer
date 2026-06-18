@@ -47,6 +47,7 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
   public void exitTop_level(final Swift5Parser.Top_levelContext ctx) {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+    addImportAndClassCountMetrics(fileDataHandler);
   }
 
   @Override

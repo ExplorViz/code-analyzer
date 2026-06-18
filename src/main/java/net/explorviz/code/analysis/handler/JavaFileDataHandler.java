@@ -88,6 +88,11 @@ public class JavaFileDataHandler extends AbstractFileDataHandler
     leaveClass();
   }
 
+  @Override
+  public int getClassCount() {
+    return classDataMap.size();
+  }
+
   public int getMethodCount() {
     int methodCount = 0;
     for (final Map.Entry<String, ClassDataHandler> entry : this.classDataMap.entrySet()) {

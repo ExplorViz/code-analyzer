@@ -48,6 +48,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
   public void exitCrate(final RustParser.CrateContext ctx) {
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
+    addImportAndClassCountMetrics(fileDataHandler);
   }
 
   @Override
