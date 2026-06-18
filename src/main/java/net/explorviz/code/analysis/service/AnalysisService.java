@@ -33,6 +33,7 @@ import net.explorviz.code.analysis.exceptions.PropertyNotDefinedException;
 import net.explorviz.code.analysis.export.DataExporter;
 import net.explorviz.code.analysis.git.GitMetricCollector;
 import net.explorviz.code.analysis.git.GitRepositoryHandler;
+import net.explorviz.code.analysis.git.RepositoryFileUrlBuilder;
 import net.explorviz.code.analysis.handler.AbstractFileDataHandler;
 import net.explorviz.code.analysis.handler.CommitReportHandler;
 import net.explorviz.code.analysis.handler.FallbackFileDataHandlerFactory;
@@ -167,9 +168,10 @@ public class AnalysisService {
 
       final String fullBranch = repository.getFullBranch();
       final String branch = repository.getBranch();
+      final String repositoryUrl = resolveRepositoryUrl(config, repository);
 
       // get fetch data from remote
-      final Optional<String> startCommit = findStartCommit(config, exporter, branch);
+      final Optional<String> startCommit = findStartCommit(config, exporter, branch, repositoryUrl);
 
       final Optional<String> endCommit = exporter.isRemote() ? Optional.empty() : config.endCommit();
 
@@ -376,11 +378,14 @@ public class AnalysisService {
   private void preInitializeRemoteState(AnalysisConfig config, DataExporter exporter) {
     if (exporter.isRemote()) {
       try {
+        final String repositoryUrl =
+            RepositoryFileUrlBuilder.resolveRepositoryUrl(config.repoRemoteUrl(), "").orElse("");
         exporter.getStateData(
             config.getRepositoryName(),
             config.branch().orElse("main"),
             config.landscapeToken(),
-            config.applicationPathsMap());
+            config.applicationPathsMap(),
+            repositoryUrl);
       } catch (final Exception e) {
         LOGGER.warn("Could not pre-initialize remote state for social fetch: {}", e.getMessage());
       }
@@ -398,10 +403,10 @@ public class AnalysisService {
   }
 
   private Optional<String> findStartCommit(final AnalysisConfig config,
-      final DataExporter exporter, final String branch) {
+      final DataExporter exporter, final String branch, final String repositoryUrl) {
     final StateData remoteState = exporter.getStateData(
         config.getRepositoryName(), branch,
-        config.landscapeToken(), config.applicationPathsMap());
+        config.landscapeToken(), config.applicationPathsMap(), repositoryUrl);
     if (exporter.isRemote()) {
 
       if (remoteState.getCommitId().isEmpty() || remoteState.getCommitId().isBlank()) {
@@ -924,6 +929,12 @@ public class AnalysisService {
       }
       return createMinimalFileDataHandler(file, commitSha, fileContent);
     }
+  }
+
+  private String resolveRepositoryUrl(final AnalysisConfig config, final Repository repository) {
+    return RepositoryFileUrlBuilder.resolveRepositoryUrl(
+            config.repoRemoteUrl(), GitRepositoryHandler.getRemoteOriginUrl(repository))
+        .orElse("");
   }
 
   private AbstractFileDataHandler createMinimalFileDataHandler(

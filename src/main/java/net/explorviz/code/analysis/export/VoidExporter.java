@@ -15,7 +15,7 @@ public class VoidExporter implements DataExporter {
   @Override
   public StateData getStateData(final String repositoryName, final String branchName,
       final String token,
-      final Map<String, String> applicationPaths) {
+      final Map<String, String> applicationPaths, final String repositoryUrl) {
     return StateData.newBuilder().build();
   }
 

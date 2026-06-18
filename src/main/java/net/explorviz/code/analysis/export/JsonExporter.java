@@ -71,7 +71,7 @@ public class JsonExporter implements DataExporter {
   @Override
   public StateData getStateData(final String repositoryName, final String branchName,
       final String token,
-      final Map<String, String> applicationPaths) {
+      final Map<String, String> applicationPaths, final String repositoryUrl) {
     LOGGER.atInfo()
         .addArgument(repositoryName)
         .addArgument(branchName)
@@ -84,6 +84,9 @@ public class JsonExporter implements DataExporter {
           .setRepositoryName(repositoryName)
           .setBranchName(branchName)
           .setLandscapeToken(token);
+      if (repositoryUrl != null && !repositoryUrl.isBlank()) {
+        requestBuilder.setRepositoryUrl(repositoryUrl);
+      }
       if (applicationPaths != null) {
         requestBuilder.putAllApplicationPaths(applicationPaths);
       }

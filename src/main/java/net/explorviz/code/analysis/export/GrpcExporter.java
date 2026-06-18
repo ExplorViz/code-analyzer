@@ -63,11 +63,14 @@ public final class GrpcExporter implements DataExporter {
   @Override
   public StateData getStateData(final String repositoryName, final String branchName,
       final String token,
-      final Map<String, String> applicationPaths) {
+      final Map<String, String> applicationPaths, final String repositoryUrl) {
     final StateDataRequest.Builder requestBuilder = StateDataRequest.newBuilder();
     requestBuilder.setBranchName(branchName);
     requestBuilder.setRepositoryName(repositoryName);
     requestBuilder.setLandscapeToken("".equals(token) ? landscapeTokenProperty : token);
+    if (repositoryUrl != null && !repositoryUrl.isBlank()) {
+      requestBuilder.setRepositoryUrl(repositoryUrl);
+    }
 
     if (applicationPaths == null || applicationPaths.isEmpty()) {
       requestBuilder.putApplicationPaths(applicationNameProperty, "");

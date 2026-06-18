@@ -16,6 +16,9 @@ message StateDataRequest {
   // Application name -> root application path relative to repo root
   // Default example: { "foo_application": "" }
   map<string, string> application_paths = 4;
+
+  // Remote clone URL of the repository (e.g. https://github.com/org/project.git)
+  string repository_url = 5;
 }
 
 message StateData {
