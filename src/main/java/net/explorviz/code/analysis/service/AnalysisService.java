@@ -141,6 +141,8 @@ public class AnalysisService {
   /* default */ int fileAnalysisParallelismProperty;
   @ConfigProperty(name = "explorviz.gitanalysis.file-persist-concurrency", defaultValue = "8")
   /* default */ int filePersistConcurrencyProperty;
+  @ConfigProperty(name = "explorviz.gitanalysis.file-persist-batch-size", defaultValue = "50")
+  /* default */ int filePersistBatchSizeProperty;
   @ConfigProperty(name = "explorviz.gitanalysis.run-mode", defaultValue = "api")
   /* default */ String runModeProperty;
 
@@ -566,7 +568,8 @@ public class AnalysisService {
     final List<Thread> persistThreads = new ArrayList<>(concurrency);
     for (int i = 0; i < concurrency; i++) {
       persistThreads.add(Thread.ofVirtual().name("file-persist-" + commitId + "-" + i)
-          .start(() -> exporter.persistFilesFromQueueInBatches(completedFiles, analysisFinished)));
+          .start(() -> exporter.persistFilesFromQueueInBatches(completedFiles, analysisFinished,
+              filePersistBatchSizeProperty)));
     }
 
     for (final CompletableFuture<FileData> analysisTask : analysisTasks) {

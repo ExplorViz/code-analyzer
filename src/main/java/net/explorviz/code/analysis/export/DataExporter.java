@@ -19,12 +19,6 @@ import net.explorviz.code.proto.TrackableResourceEvent;
  */
 public interface DataExporter {
 
-  /**
-   * Number of files collected before a single {@code PersistFiles} streaming call
-   * is made.
-   */
-  int FILE_PERSIST_BATCH_SIZE = 50;
-
   StateData getStateData(final String repositoryName, final String branchName, final String token,
       final Map<String, String> applicationPaths, final String repositoryUrl,
       final boolean skipLatestCommitLookup);
@@ -42,15 +36,13 @@ public interface DataExporter {
 
   /**
    * Drains {@code completedFiles} as files arrive and dispatches them to
-   * {@link #persistFilesBatch} in chunks of {@link #FILE_PERSIST_BATCH_SIZE}.
-   * Runs
-   * concurrently with the analysis pipeline; call
-   * {@code analysisFinished.countDown()}
-   * once all producers have finished to signal the final flush.
+   * {@link #persistFilesBatch} in chunks of {@code batchSize}. Runs concurrently
+   * with the analysis pipeline; call {@code analysisFinished.countDown()} once
+   * all producers have finished to signal the final flush.
    */
   default void persistFilesFromQueueInBatches(final BlockingQueue<FileData> completedFiles,
-      final CountDownLatch analysisFinished) {
-    final List<FileData> batch = new ArrayList<>(FILE_PERSIST_BATCH_SIZE);
+      final CountDownLatch analysisFinished, final int batchSize) {
+    final List<FileData> batch = new ArrayList<>(batchSize);
     try {
       while (analysisFinished.getCount() > 0 || !completedFiles.isEmpty()) {
         final FileData fileData = completedFiles.poll(100, TimeUnit.MILLISECONDS);
@@ -58,7 +50,7 @@ public interface DataExporter {
           continue;
         }
         batch.add(fileData);
-        if (batch.size() >= FILE_PERSIST_BATCH_SIZE) {
+        if (batch.size() >= batchSize) {
           persistFilesBatch(List.copyOf(batch));
           batch.clear();
         }
