@@ -158,6 +158,20 @@ public class GitRepositoryHandler { // NOPMD
   }
 
   /**
+   * Returns the size in bytes of a git blob without checking out the commit.
+   *
+   * @param blobId The {@link ObjectId}.
+   * @param repo   The {@link Repository}.
+   * @return The blob size in bytes.
+   * @throws IOException Thrown if JGit cannot read the blob.
+   */
+  public static long getBlobSize(final ObjectId blobId, final Repository repo) throws IOException {
+    try (ObjectReader objectReader = repo.newObjectReader()) {
+      return objectReader.open(blobId).getSize();
+    }
+  }
+
+  /**
    * Takes a relative path and converts it to an absolute path on host system.
    *
    * @param relativePath Relative path
@@ -476,18 +490,21 @@ public class GitRepositoryHandler { // NOPMD
           .setNewTree(prepareTreeParser(repository, newCommit.getTree())).setPathFilter(filter)
           .call();
 
-      for (final DiffEntry diff : diffs) {
-        if (diff.getChangeType().equals(DiffEntry.ChangeType.DELETE)) {
-          putInList2(repository, diff, deletedObjectIdList);
-          continue;
-        } else if (diff.getChangeType().equals(DiffEntry.ChangeType.RENAME)) {
-          putInList(repository, diff, addedObjectIdList);
-        } else if (diff.getChangeType().equals(DiffEntry.ChangeType.COPY)) {
-          putInList(repository, diff, addedObjectIdList);
-        } else if (diff.getChangeType().equals(DiffEntry.ChangeType.MODIFY)) {
-          putInList(repository, diff, modifiedObjectIdList);
-        } else if (diff.getChangeType().equals(DiffEntry.ChangeType.ADD)) {
-          putInList(repository, diff, addedObjectIdList);
+      try (DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
+        diffFormatter.setRepository(repository);
+        for (final DiffEntry diff : diffs) {
+          if (diff.getChangeType().equals(DiffEntry.ChangeType.DELETE)) {
+            putInList2(diffFormatter, diff, deletedObjectIdList);
+            continue;
+          } else if (diff.getChangeType().equals(DiffEntry.ChangeType.RENAME)) {
+            putInList(diffFormatter, diff, addedObjectIdList);
+          } else if (diff.getChangeType().equals(DiffEntry.ChangeType.COPY)) {
+            putInList(diffFormatter, diff, addedObjectIdList);
+          } else if (diff.getChangeType().equals(DiffEntry.ChangeType.MODIFY)) {
+            putInList(diffFormatter, diff, modifiedObjectIdList);
+          } else if (diff.getChangeType().equals(DiffEntry.ChangeType.ADD)) {
+            putInList(diffFormatter, diff, addedObjectIdList);
+          }
         }
       }
     }
@@ -495,32 +512,22 @@ public class GitRepositoryHandler { // NOPMD
         modifiedObjectIdList, deletedObjectIdList, addedObjectIdList);
   }
 
-  private void putInList(final Repository repository, final DiffEntry diff,
+  private void putInList(final DiffFormatter diffFormatter, final DiffEntry diff,
       final List<FileDescriptor> objectIdList)
       throws IOException {
-    Triple<Integer, Integer, Integer> mods;
-    try (DiffFormatter diffFormatter = new DiffFormatter(// NOPMD
-        DisabledOutputStream.INSTANCE)) {
-      diffFormatter.setRepository(repository);
-      final FileHeader fileHeader = diffFormatter.toFileHeader(diff);
-      mods = countModifications(fileHeader.toEditList()); // TODO: don't need to do that when deleted
-    }
+    final FileHeader fileHeader = diffFormatter.toFileHeader(diff);
+    final Triple<Integer, Integer, Integer> mods = countModifications(fileHeader.toEditList());
     final String[] parts = diff.getNewPath().split("/");
     objectIdList.add(
         new FileDescriptor(diff.getNewId().toObjectId(), parts[parts.length - 1], diff.getNewPath(),
             mods));
   }
 
-  private void putInList2(final Repository repository, final DiffEntry diff,
+  private void putInList2(final DiffFormatter diffFormatter, final DiffEntry diff,
       final List<FileDescriptor> objectIdList)
       throws IOException {
-    Triple<Integer, Integer, Integer> mods;
-    try (DiffFormatter diffFormatter = new DiffFormatter(// NOPMD
-        DisabledOutputStream.INSTANCE)) {
-      diffFormatter.setRepository(repository);
-      final FileHeader fileHeader = diffFormatter.toFileHeader(diff);
-      mods = countModifications(fileHeader.toEditList()); // TODO: don't need to do that when deleted
-    }
+    final FileHeader fileHeader = diffFormatter.toFileHeader(diff);
+    final Triple<Integer, Integer, Integer> mods = countModifications(fileHeader.toEditList());
     final String[] parts = diff.getOldPath().split("/");
     objectIdList.add(
         new FileDescriptor(diff.getOldId().toObjectId(), parts[parts.length - 1], diff.getOldPath(),

@@ -3,11 +3,8 @@ package net.explorviz.code.analysis.service;
 import com.google.protobuf.Timestamp;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -15,8 +12,11 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
@@ -58,6 +58,7 @@ import net.explorviz.code.proto.Language;
 import net.explorviz.code.proto.StateData;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -181,8 +182,9 @@ public class AnalysisService {
 
       checkIfCommitsAreReachable(startCommit, endCommit, fullBranch);
 
-      final int totalCommitsInRange = countCommitsInRange(repository, fullBranch, startCommit, endCommit,
-          exporter.isRemote());
+      final List<RevCommit> commitsInRange = collectCommitsInRange(repository, fullBranch, startCommit,
+          endCommit, exporter.isRemote());
+      final int totalCommitsInRange = commitsInRange.size();
 
       int commitsToAnalyze = totalCommitsInRange;
 
@@ -200,113 +202,88 @@ public class AnalysisService {
       LOGGER.info("Total commits to analyze: {}", commitsToAnalyze);
       analysisStatusService.markRunning(config.landscapeToken(), commitsToAnalyze, 0);
 
-      try (RevWalk revWalk = new RevWalk(repository)) {
-        prepareRevWalk(repository, revWalk, fullBranch);
+      final int commitsToSkipBeforeAnalyzing = totalCommitsInRange - commitsToAnalyze;
+      final Map<ObjectId, List<String>> tagsByCommitId = buildTagsByCommitId(repository);
 
-        int commitCount = 0;
-        int skippedInPreAnalysis = 0;
-        final int commitsToSkipBeforeAnalyzing = totalCommitsInRange - commitsToAnalyze;
+      // Pre-compile patterns
+      final List<java.nio.file.PathMatcher> restrictMatchers = compileMatchers(
+          config.includeInAnalysisExpressions());
+      final List<java.nio.file.PathMatcher> excludeMatchers = compileMatchers(
+          config.excludeFromAnalysisExpressions());
 
-        RevCommit lastCheckedCommit = null;
-        boolean inAnalysisRange = startCommit.isEmpty() || "".equals(startCommit.get());
+      RevCommit lastCheckedCommit = resolveRemoteStartCommit(repository, startCommit, exporter.isRemote());
+      int commitCount = 0;
+      for (int index = 0; index < commitsInRange.size(); index++) {
+        final RevCommit commit = commitsInRange.get(index);
 
-        // Pre-compile patterns
-        final List<java.nio.file.PathMatcher> restrictMatchers = compileMatchers(
-            config.includeInAnalysisExpressions());
-        final List<java.nio.file.PathMatcher> excludeMatchers = compileMatchers(
-            config.excludeFromAnalysisExpressions());
+        if (index < commitsToSkipBeforeAnalyzing) {
+          lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
+          continue;
+        }
 
-        for (final RevCommit commit : revWalk) {
+        if (commitCount >= commitsToAnalyze) {
+          break;
+        }
 
-          if (!inAnalysisRange) {
-            if (commit.name().equals(startCommit.get())) {
-              inAnalysisRange = true;
-              if (exporter.isRemote()) {
-                lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
-                continue;
-              }
-            } else {
-              if (exporter.isRemote()) {
-                lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
-              }
-              continue;
-            }
-          }
-          if (skippedInPreAnalysis < commitsToSkipBeforeAnalyzing) {
-            skippedInPreAnalysis++;
-            lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
-            continue;
-          }
+        LOGGER.atDebug().addArgument(commit.getName()).log("Analyzing commit: {}");
 
-          if (commitCount >= commitsToAnalyze) {
-            break;
-          }
+        final RevCommit baseCommit = lastCheckedCommit;
 
-          LOGGER.atDebug().addArgument(commit.getName()).log("Analyzing commit: {}");
+        final var descTriple = gitRepositoryHandler
+            .listDiff(
+                repository,
+                Optional.ofNullable(baseCommit),
+                commit,
+                config.pathRestrictionForDiff());
 
-          final boolean isFirstAnalyzedCommit = commitCount == 0;
-          final RevCommit baseCommit = (isFirstAnalyzedCommit && (!exporter.isRemote()
-              || startCommit.isEmpty())) ? null : lastCheckedCommit;
+        final List<FileDescriptor> descriptorAddedList = descTriple.right(); // NOPMD
+        final List<FileDescriptor> descriptorModifiedList = descTriple.left();
+        final List<FileDescriptor> descriptorDeletedList = descTriple.middle();
 
-          final var descTriple = gitRepositoryHandler
-              .listDiff(
-                  repository,
-                  Optional.ofNullable(baseCommit),
-                  commit,
-                  config.pathRestrictionForDiff());
+        applyGlobFiltering(descriptorAddedList, restrictMatchers, excludeMatchers);
+        applyGlobFiltering(descriptorModifiedList, restrictMatchers, excludeMatchers);
+        applyGlobFiltering(descriptorDeletedList, restrictMatchers, excludeMatchers);
 
-          final List<FileDescriptor> descriptorAddedList = descTriple.right(); // NOPMD
-          final List<FileDescriptor> descriptorModifiedList = descTriple.left();
-          final List<FileDescriptor> descriptorDeletedList = descTriple.middle();
+        LOGGER.atDebug().addArgument(descriptorAddedList.size())
+            .addArgument(descriptorModifiedList.size())
+            .log("Files added: {}, files modified: {}");
 
-          applyGlobFiltering(descriptorAddedList, restrictMatchers, excludeMatchers);
-          applyGlobFiltering(descriptorModifiedList, restrictMatchers, excludeMatchers);
-          applyGlobFiltering(descriptorDeletedList, restrictMatchers, excludeMatchers);
+        analysisStatusService.setCurrentCommitFiles(config.landscapeToken(),
+            descriptorAddedList.size() + descriptorModifiedList.size());
 
-          LOGGER.atDebug().addArgument(descriptorAddedList.size())
-              .addArgument(descriptorModifiedList.size())
-              .log("Files added: {}, files modified: {}");
-
-          analysisStatusService.setCurrentCommitFiles(config.landscapeToken(),
-              descriptorAddedList.size() + descriptorModifiedList.size());
-
-          if (descriptorAddedList.isEmpty() && descriptorModifiedList.isEmpty()) {
-            createCommitReport(config, repository, commit, baseCommit, exporter, branch, descTriple,
-                restrictMatchers, excludeMatchers);
-
-            commitCount++;
-            analysisStatusService.incrementAnalyzedCommit(config.landscapeToken());
-            lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
-            if (endCommit.isPresent() && commit.name().equals(endCommit.get())) {
-              break;
-            }
-            continue;
-          }
-
-          final List<FileDescriptor> descriptorList = new ArrayList<FileDescriptor>(); // NOPMD
-          descriptorList.addAll(descriptorAddedList);
-          descriptorList.addAll(descriptorModifiedList);
-
-          commitAnalysis(config, repository, commit, baseCommit, descriptorList, exporter,
-              branch, descTriple, restrictMatchers, excludeMatchers);
+        if (descriptorAddedList.isEmpty() && descriptorModifiedList.isEmpty()) {
+          createCommitReport(config, commit, baseCommit, exporter, branch, descTriple, tagsByCommitId);
 
           commitCount++;
           analysisStatusService.incrementAnalyzedCommit(config.landscapeToken());
-
           lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
-          // break if endCommit is reached, if endCommit is empty, run for all commits
-          if (endCommit.isPresent() && commit.name().equals(endCommit.get())) {
-            break;
-          }
+          continue;
         }
 
-        if (lastCheckedCommit != null) {
-          lastCheckedCommit.disposeBody();
-          lastCheckedCommit = null;
-        }
+        final List<FileDescriptor> descriptorList = new ArrayList<FileDescriptor>(); // NOPMD
+        descriptorList.addAll(descriptorAddedList);
+        descriptorList.addAll(descriptorModifiedList);
 
-        LOGGER.atTrace().addArgument(commitCount).log("Analyzed {} commits");
+        commitAnalysis(config, repository, commit, baseCommit, descriptorList, exporter,
+            branch, descTriple, tagsByCommitId);
+
+        commitCount++;
+        analysisStatusService.incrementAnalyzedCommit(config.landscapeToken());
+
+        lastCheckedCommit = advanceLastCheckedCommit(commit, lastCheckedCommit);
       }
+
+      for (final RevCommit commit : commitsInRange) {
+        commit.disposeBody();
+      }
+
+      final RevCommit finalLastCheckedCommit = lastCheckedCommit;
+      if (finalLastCheckedCommit != null && commitsInRange.stream()
+          .noneMatch(commit -> commit.getId().equals(finalLastCheckedCommit.getId()))) {
+        finalLastCheckedCommit.disposeBody();
+      }
+
+      LOGGER.atTrace().addArgument(commitCount).log("Analyzed {} commits");
       // checkout the branch, so not a single commit is checked out after the run
       Git.wrap(repository).checkout().setName(fullBranch).call();
     }
@@ -438,16 +415,26 @@ public class AnalysisService {
     return !"api".equals(runModeProperty);
   }
 
-  private int countCommitsInRange(final Repository repository, final String fullBranch,
+  private RevCommit resolveRemoteStartCommit(final Repository repository,
+      final Optional<String> startCommit, final boolean remoteExport) throws IOException {
+    if (!remoteExport || startCommit.isEmpty() || startCommit.get().isBlank()) {
+      return null;
+    }
+    try (RevWalk revWalk = new RevWalk(repository)) {
+      return revWalk.parseCommit(repository.resolve(startCommit.get()));
+    }
+  }
+
+  private List<RevCommit> collectCommitsInRange(final Repository repository, final String fullBranch,
       final Optional<String> startCommit, final Optional<String> endCommit,
       final boolean remoteExport) throws IOException {
     try (RevWalk revWalk = new RevWalk(repository)) {
       prepareRevWalk(repository, revWalk, fullBranch);
 
-      int totalCommits = 0;
+      final List<RevCommit> commits = new ArrayList<>();
       boolean inAnalysisRange = startCommit.isEmpty() || "".equals(startCommit.get());
 
-      for (final RevCommit commit : revWalk) {
+      for (RevCommit commit : revWalk) {
         if (!inAnalysisRange) {
           if (commit.name().equals(startCommit.get())) {
             inAnalysisRange = true;
@@ -458,14 +445,25 @@ public class AnalysisService {
             continue;
           }
         }
-        totalCommits++;
+        commits.add(commit);
         if (endCommit.isPresent() && commit.name().equals(endCommit.get())) {
           break;
         }
       }
 
-      return totalCommits;
+      return commits;
     }
+  }
+
+  private Map<ObjectId, List<String>> buildTagsByCommitId(final Repository repository)
+      throws GitAPIException {
+    final Map<ObjectId, List<String>> tagsByCommitId = new HashMap<>();
+    final List<Ref> tags = Git.wrap(repository).tagList().call();
+    for (final Ref tag : tags) {
+      tagsByCommitId.computeIfAbsent(tag.getObjectId(), ignored -> new ArrayList<>())
+          .add(tag.getName());
+    }
+    return tagsByCommitId;
   }
 
   private void prepareRevWalk(final Repository repository, final RevWalk revWalk,
@@ -489,21 +487,16 @@ public class AnalysisService {
       final RevCommit commit, final RevCommit lastCommit, final List<FileDescriptor> descriptorList,
       final DataExporter exporter, final String branchName,
       final Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>> descriptorTriple,
-      final List<java.nio.file.PathMatcher> restrictMatchers,
-      final List<java.nio.file.PathMatcher> excludeMatchers)
+      final Map<ObjectId, List<String>> tagsByCommitId)
       throws GitAPIException, NotFoundException, IOException {
 
-    createCommitReport(config, repository, commit, lastCommit, exporter, branchName, descriptorTriple,
-        restrictMatchers, excludeMatchers);
-
-    Git.wrap(repository).checkout().setName(commit.getName()).call();
+    createCommitReport(config, commit, lastCommit, exporter, branchName, descriptorTriple, tagsByCommitId);
 
     antlrParserService.reset();
 
     LOGGER.atTrace().addArgument(descriptorList.toString()).log("Files: {}");
 
     final String commitAuthor = commit.getAuthorIdent().getEmailAddress();
-    final String repositoryPath = GitRepositoryHandler.getCurrentRepositoryPath();
     final int parallelism = resolveFileAnalysisParallelism();
     final Semaphore inFlightTasks = new Semaphore(parallelism);
     final List<CompletableFuture<FileData>> analysisTasks = new ArrayList<>(descriptorList.size());
@@ -520,7 +513,7 @@ public class AnalysisService {
               .log("Analyzing file: {}");
 
           AbstractFileDataHandler fileDataHandler = analyzeFileForCommit(config, repository,
-              fileDescriptor, commit.getName(), commitAuthor, repositoryPath);
+              fileDescriptor, commit.getName(), commitAuthor);
           if (fileDataHandler == null) {
             LOGGER.atWarn()
                 .addArgument(fileDescriptor.reportedPath)
@@ -601,7 +594,7 @@ public class AnalysisService {
 
   private AbstractFileDataHandler analyzeFileForCommit(final AnalysisConfig config,
       final Repository repository, final FileDescriptor fileDescriptor, final String commitSha,
-      final String commitAuthor, final String repositoryPath) {
+      final String commitAuthor) {
     try {
       LOGGER.atDebug()
           .addArgument(fileDescriptor.reportedPath)
@@ -614,9 +607,9 @@ public class AnalysisService {
       }
 
       try {
-        final File file = new File(repositoryPath + "/" + fileDescriptor.relativePath);
-        fileDataHandler.addMetric(CommonFileDataListener.FILE_SIZE, String.valueOf(file.length()));
-      } catch (NullPointerException e) {
+        final long fileSize = GitRepositoryHandler.getBlobSize(fileDescriptor.objectId, repository);
+        fileDataHandler.addMetric(CommonFileDataListener.FILE_SIZE, String.valueOf(fileSize));
+      } catch (IOException e) {
         LOGGER.error("File size of file {} could not be analyzed: {}", fileDescriptor.relativePath,
             e.getMessage());
       }
@@ -646,12 +639,10 @@ public class AnalysisService {
     return commit;
   }
 
-  private void createCommitReport(final AnalysisConfig config, final Repository repository,
-      final RevCommit commit, final RevCommit lastCommit, final DataExporter exporter,
-      final String branchName,
+  private void createCommitReport(final AnalysisConfig config, final RevCommit commit,
+      final RevCommit lastCommit, final DataExporter exporter, final String branchName,
       final Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>> descriptorTriple,
-      final List<java.nio.file.PathMatcher> restrictMatchers,
-      final List<java.nio.file.PathMatcher> excludeMatchers)
+      final Map<ObjectId, List<String>> tagsByCommitId)
       throws NotFoundException, IOException, GitAPIException {
     final CommitReportHandler commitReportHandler = new CommitReportHandler();
 
@@ -682,13 +673,7 @@ public class AnalysisService {
       commitReportHandler.addModified(modifiedFile);
     }
 
-    final List<Ref> list = Git.wrap(repository).tagList().call();
-    final List<String> tags = new ArrayList<>();
-    for (final Ref tag : list) {
-      if (tag.getObjectId().equals(commit.getId())) {
-        tags.add(tag.getName());
-      }
-    }
+    final List<String> tags = tagsByCommitId.getOrDefault(commit.getId(), Collections.emptyList());
     commitReportHandler.addTags(tags);
     commitReportHandler.addToken(config.landscapeToken());
     commitReportHandler.setRepositoryName(config.getRepositoryName());
@@ -711,30 +696,36 @@ public class AnalysisService {
    * @param file the file descriptor
    * @return true if it's a readable text file
    */
-  /* package */ boolean isTextFile(final FileDescriptor file) {
+  /* package */ boolean isTextFile(final FileDescriptor file, final String fileContent) {
     final String fileName = file.fileName.toLowerCase();
 
     if (fileName.lastIndexOf('.') == -1) {
-      return false;
+      return isLikelyTextContent(fileContent);
     }
 
     if (TEXT_FILE_EXTENSIONS.contains(fileName.substring(fileName.lastIndexOf('.') + 1))) {
       return true;
     }
 
-    // Detect MIME type using file path
-    try {
-      Path path = FileSystems.getDefault()
-          .getPath(GitRepositoryHandler.getCurrentRepositoryPath() + "/" + file.relativePath);
-      return Files.probeContentType(path).startsWith("text");
-    } catch (Exception e) {
-      LOGGER.atTrace()
-          .addArgument(file.relativePath)
-          .addArgument(e.getMessage())
-          .log("Could not detect MIME type for {}: {}");
-    }
+    return isLikelyTextContent(fileContent);
+  }
 
-    return false;
+  private boolean isLikelyTextContent(final String fileContent) {
+    if (fileContent == null || fileContent.isEmpty()) {
+      return false;
+    }
+    int nonPrintable = 0;
+    final int sampleSize = Math.min(fileContent.length(), 4096);
+    for (int i = 0; i < sampleSize; i++) {
+      final char character = fileContent.charAt(i);
+      if (character == '\n' || character == '\r' || character == '\t') {
+        continue;
+      }
+      if (character < 32 || character == 127) {
+        nonPrintable++;
+      }
+    }
+    return nonPrintable == 0;
   }
 
   /**
@@ -896,7 +887,7 @@ public class AnalysisService {
             () -> cppParserService.parseFileContent(fileContent, file.reportedPath,
                 file.objectId.getName()),
             file, fileContent, Language.CPP);
-      } else if (isTextFile(file)) {
+      } else if (isTextFile(file, fileContent)) {
         LOGGER.atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
