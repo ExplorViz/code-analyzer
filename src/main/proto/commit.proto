@@ -29,6 +29,7 @@ message CommitData {
   repeated FileIdentifier added_files = 10;
   repeated FileIdentifier modified_files = 11;
   repeated FileIdentifier deleted_files = 12;
+  repeated FileIdentifier unchanged_files = 13;
 }
 
 message FileIdentifier {
