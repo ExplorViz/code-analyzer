@@ -559,13 +559,48 @@ public class AnalysisService {
       final Map<ObjectId, List<String>> tagsByCommitId)
       throws GitAPIException, NotFoundException, IOException {
 
-    createCommitReport(config, commit, lastCommit, exporter, branchName, descriptorTriple,
-        unchangedFiles, tagsByCommitId);
-
     antlrParserService.reset();
 
     LOGGER.atTrace().addArgument(descriptorList.toString()).log("Files: {}");
 
+    final long analysisStartedAt = System.nanoTime();
+    final List<CompletableFuture<FileData>> analysisTasks = submitFileAnalysisTasks(config,
+        repository, commit, descriptorList);
+    CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture<?>[0]))
+        .whenComplete((ignored, error) -> LOGGER.atDebug()
+            .addArgument(commit.getName())
+            .addArgument(analysisTasks.size())
+            .addArgument((System.nanoTime() - analysisStartedAt) / 1_000_000L)
+            .log("File analysis for commit {} ({} files) took {} ms"));
+
+    if (isCiMode()) {
+      createCommitReport(config, commit, lastCommit, exporter, branchName, descriptorTriple,
+          unchangedFiles, tagsByCommitId);
+      pipelinePersistAnalyzedFiles(exporter, analysisTasks, commit.getName(), null);
+      return;
+    }
+
+    // API mode: analyze files while the commit report is built and sent, but do not
+    // stream file data until the landscape service has received the commit.
+    final CompletableFuture<Void> commitPersistedBeforeSend = new CompletableFuture<>();
+    managedExecutor.execute(() -> {
+      try {
+        createCommitReport(config, commit, lastCommit, exporter, branchName, descriptorTriple,
+            unchangedFiles, tagsByCommitId);
+        commitPersistedBeforeSend.complete(null);
+      } catch (final NotFoundException | IOException | GitAPIException e) {
+        commitPersistedBeforeSend.completeExceptionally(e);
+      }
+    });
+
+    pipelinePersistAnalyzedFiles(exporter, analysisTasks, commit.getName(),
+        commitPersistedBeforeSend);
+    awaitCommitPersisted(commitPersistedBeforeSend);
+  }
+
+  private List<CompletableFuture<FileData>> submitFileAnalysisTasks(final AnalysisConfig config,
+      final Repository repository, final RevCommit commit,
+      final List<FileDescriptor> descriptorList) {
     final String commitAuthor = commit.getAuthorIdent().getEmailAddress();
     final int parallelism = resolveFileAnalysisParallelism();
     final Semaphore inFlightTasks = new Semaphore(parallelism);
@@ -609,31 +644,57 @@ public class AnalysisService {
         }
       }));
     }
+    return analysisTasks;
+  }
 
-    pipelinePersistAnalyzedFiles(exporter, analysisTasks, commit.getName());
+  private void awaitCommitPersisted(final CompletableFuture<Void> commitPersistedBeforeSend)
+      throws NotFoundException, IOException, GitAPIException {
+    try {
+      commitPersistedBeforeSend.join();
+    } catch (final java.util.concurrent.CompletionException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof NotFoundException notFoundException) {
+        throw notFoundException;
+      }
+      if (cause instanceof IOException ioException) {
+        throw ioException;
+      }
+      if (cause instanceof GitAPIException gitApiException) {
+        throw gitApiException;
+      }
+      if (cause instanceof RuntimeException runtimeException) {
+        throw runtimeException;
+      }
+      if (cause instanceof Error error) {
+        throw error;
+      }
+      throw e;
+    }
   }
 
   private void pipelinePersistAnalyzedFiles(final DataExporter exporter,
-      final List<CompletableFuture<FileData>> analysisTasks, final String commitId) {
+      final List<CompletableFuture<FileData>> analysisTasks, final String commitId,
+      final CompletableFuture<Void> commitPersistedBeforeSend) {
     if (analysisTasks.isEmpty()) {
       return;
     }
 
     // Pipeline: analysis and persistence run concurrently.
-    // Multiple persist threads drain the shared queue in batches and send them
-    // as independent gRPC streaming calls, so Neo4j processes several transactions
-    // in parallel. Each FileRevision subtree is owned by exactly one file, so
-    // concurrent transactions never conflict.
+    // A single batch accumulator minimizes gRPC batches per commit; up to
+    // filePersistConcurrencyProperty sends may run in parallel so Neo4j can
+    // process several transactions concurrently. Each FileRevision subtree is
+    // owned by exactly one file, so concurrent transactions never conflict.
     final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
     final CountDownLatch analysisFinished = new CountDownLatch(1);
 
-    final int concurrency = filePersistConcurrencyProperty;
-    final List<Thread> persistThreads = new ArrayList<>(concurrency);
-    for (int i = 0; i < concurrency; i++) {
-      persistThreads.add(Thread.ofVirtual().name("file-persist-" + commitId + "-" + i)
-          .start(() -> exporter.persistFilesFromQueueInBatches(completedFiles, analysisFinished,
-              filePersistBatchSizeProperty)));
-    }
+    final Thread persistThread = Thread.ofVirtual().name("file-persist-" + commitId)
+        .start(() -> {
+          if (commitPersistedBeforeSend != null) {
+            commitPersistedBeforeSend.join();
+          }
+          exporter.persistFilesFromQueueInBatches(completedFiles, analysisFinished,
+              filePersistBatchSizeProperty, filePersistConcurrencyProperty);
+        });
 
     for (final CompletableFuture<FileData> analysisTask : analysisTasks) {
       analysisTask.whenComplete((fileData, error) -> {
@@ -649,15 +710,9 @@ public class AnalysisService {
 
     CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture<?>[0])).join();
     analysisFinished.countDown();
-    boolean interrupted = false;
-    for (final Thread persistThread : persistThreads) {
-      try {
-        persistThread.join();
-      } catch (InterruptedException e) {
-        interrupted = true;
-      }
-    }
-    if (interrupted) {
+    try {
+      persistThread.join();
+    } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
   }

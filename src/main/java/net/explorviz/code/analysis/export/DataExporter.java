@@ -39,10 +39,28 @@ public interface DataExporter {
    * {@link #persistFilesBatch} in chunks of {@code batchSize}. Runs concurrently
    * with the analysis pipeline; call {@code analysisFinished.countDown()} once
    * all producers have finished to signal the final flush.
+   *
+   * <p>Uses a single batch accumulator so each commit produces at most
+   * {@code ceil(fileCount / batchSize)} batches. Concurrent sends are limited by
+   * {@code maxConcurrentSends}.
    */
   default void persistFilesFromQueueInBatches(final BlockingQueue<FileData> completedFiles,
       final CountDownLatch analysisFinished, final int batchSize) {
-    final List<FileData> batch = new ArrayList<>(batchSize);
+    persistFilesFromQueueInBatches(completedFiles, analysisFinished, batchSize, 1);
+  }
+
+  /**
+   * Like {@link #persistFilesFromQueueInBatches(BlockingQueue, CountDownLatch, int)}
+   * but allows up to {@code maxConcurrentSends} gRPC batch sends in flight.
+   */
+  default void persistFilesFromQueueInBatches(final BlockingQueue<FileData> completedFiles,
+      final CountDownLatch analysisFinished, final int batchSize,
+      final int maxConcurrentSends) {
+    final int effectiveBatchSize = Math.max(1, batchSize);
+    final int effectiveConcurrency = Math.max(1, maxConcurrentSends);
+    final Semaphore sendPermits = new Semaphore(effectiveConcurrency);
+    final List<Thread> sendThreads = new ArrayList<>();
+    final List<FileData> batch = new ArrayList<>(effectiveBatchSize);
     try {
       while (analysisFinished.getCount() > 0 || !completedFiles.isEmpty()) {
         final FileData fileData = completedFiles.poll(100, TimeUnit.MILLISECONDS);
@@ -50,16 +68,50 @@ public interface DataExporter {
           continue;
         }
         batch.add(fileData);
-        if (batch.size() >= batchSize) {
-          persistFilesBatch(List.copyOf(batch));
-          batch.clear();
+        if (batch.size() >= effectiveBatchSize) {
+          dispatchPersistBatch(batch, sendPermits, sendThreads);
         }
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    if (!batch.isEmpty()) {
-      persistFilesBatch(List.copyOf(batch));
+    dispatchPersistBatch(batch, sendPermits, sendThreads);
+    waitForPersistSendThreads(sendThreads);
+  }
+
+  private void dispatchPersistBatch(final List<FileData> batch, final Semaphore sendPermits,
+      final List<Thread> sendThreads) {
+    if (batch.isEmpty()) {
+      return;
+    }
+    try {
+      sendPermits.acquire();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return;
+    }
+    final List<FileData> toSend = List.copyOf(batch);
+    batch.clear();
+    sendThreads.add(Thread.ofVirtual().start(() -> {
+      try {
+        persistFilesBatch(toSend);
+      } finally {
+        sendPermits.release();
+      }
+    }));
+  }
+
+  private void waitForPersistSendThreads(final List<Thread> sendThreads) {
+    boolean interrupted = false;
+    for (final Thread sendThread : sendThreads) {
+      try {
+        sendThread.join();
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
     }
   }
 
