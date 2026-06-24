@@ -45,7 +45,7 @@ public class AnalysisRequest {
   private String excludeFromAnalysisExpressions;
 
   private boolean sendToRemote = true;
-  private boolean calculateMetrics = true;
+  private boolean includeDataStructures = true;
   private String startCommit;
   private String endCommit;
   private Integer commitAnalysisLimit;
@@ -134,12 +134,12 @@ public class AnalysisRequest {
     this.sendToRemote = sendToRemote;
   }
 
-  public boolean isCalculateMetrics() {
-    return calculateMetrics;
+  public boolean isIncludeDataStructures() {
+    return includeDataStructures;
   }
 
-  public void setCalculateMetrics(final boolean calculateMetrics) {
-    this.calculateMetrics = calculateMetrics;
+  public void setIncludeDataStructures(final boolean includeDataStructures) {
+    this.includeDataStructures = includeDataStructures;
   }
 
   public String getStartCommit() {
@@ -247,7 +247,7 @@ public class AnalysisRequest {
         .branch(Optional.ofNullable(branch))
         .includeInAnalysisExpressions(Optional.ofNullable(includeInAnalysisExpressions))
         .excludeFromAnalysisExpressions(Optional.ofNullable(excludeFromAnalysisExpressions))
-        .calculateMetrics(calculateMetrics)
+        .includeDataStructures(includeDataStructures)
         .startCommit(Optional.ofNullable(startCommit))
         .endCommit(Optional.ofNullable(endCommit))
         .commitAnalysisLimit(Optional.ofNullable(commitAnalysisLimit))

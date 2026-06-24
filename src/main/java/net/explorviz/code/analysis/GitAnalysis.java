@@ -61,8 +61,8 @@ public class GitAnalysis { // NOPMD
   @ConfigProperty(name = "explorviz.gitanalysis.send-to-remote", defaultValue = "true")
   /* default */ boolean sendToRemoteProperty; // NOCS
 
-  @ConfigProperty(name = "explorviz.gitanalysis.calculate-metrics", defaultValue = "true")
-  /* default */ boolean calculateMetricsProperty; // NOCS
+  @ConfigProperty(name = "explorviz.gitanalysis.include-data-structures", defaultValue = "true")
+  /* default */ boolean includeDataStructuresProperty; // NOCS
 
   @ConfigProperty(name = "explorviz.gitanalysis.start-commit-sha1")
   /* default */ Optional<String> startCommitProperty; // NOCS
@@ -103,7 +103,7 @@ public class GitAnalysis { // NOPMD
         .includeInAnalysisExpressions(includeInAnalysisExpressionsProperty)
         .excludeFromAnalysisExpressions(excludeFromAnalysisExpressionsProperty)
         .applicationRoot(applicationRootProperty)
-        .calculateMetrics(calculateMetricsProperty)
+        .includeDataStructures(includeDataStructuresProperty)
         .startCommit(startCommitProperty)
         .endCommit(endCommitProperty)
         .commitAnalysisLimit(commitAnalysisLimitProperty)

@@ -32,6 +32,7 @@ import net.explorviz.code.analysis.exceptions.DebugFileWriter;
 import net.explorviz.code.analysis.exceptions.NotFoundException;
 import net.explorviz.code.analysis.exceptions.PropertyNotDefinedException;
 import net.explorviz.code.analysis.export.DataExporter;
+import net.explorviz.code.analysis.export.FileDataExportFilter;
 import net.explorviz.code.analysis.git.GitMetricCollector;
 import net.explorviz.code.analysis.git.GitRepositoryHandler;
 import net.explorviz.code.analysis.git.RepositoryFileUrlBuilder;
@@ -629,7 +630,7 @@ public class AnalysisService {
             fileDataHandler.setRepositoryName(config.getRepositoryName());
           }
 
-          return fileDataHandler.getProtoBufObject();
+          return toExportFileData(fileDataHandler, config);
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           LOGGER.warn("File analysis interrupted for {}", fileDescriptor.reportedPath);
@@ -637,7 +638,7 @@ public class AnalysisService {
           GitMetricCollector.addCommitGitMetrics(minimalHandler, commitAuthor);
           minimalHandler.setLandscapeToken(config.landscapeToken());
           minimalHandler.setRepositoryName(config.getRepositoryName());
-          return minimalHandler.getProtoBufObject();
+          return toExportFileData(minimalHandler, config);
         } finally {
           inFlightTasks.release();
           analysisStatusService.incrementAnalyzedFile(config.landscapeToken());
@@ -645,6 +646,12 @@ public class AnalysisService {
       }));
     }
     return analysisTasks;
+  }
+
+  private FileData toExportFileData(final AbstractFileDataHandler fileDataHandler,
+      final AnalysisConfig config) {
+    return FileDataExportFilter.filter(fileDataHandler.getProtoBufObject(),
+        config.includeDataStructures());
   }
 
   private void awaitCommitPersisted(final CompletableFuture<Void> commitPersistedBeforeSend)

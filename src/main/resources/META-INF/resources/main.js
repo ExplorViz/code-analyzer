@@ -118,7 +118,7 @@ function collectPayload(formData) {
     payload[key] = value.trim();
   }
 
-  payload.calculateMetrics = formData.get("calculateMetrics") !== null;
+  payload.includeDataStructures = formData.get("includeDataStructures") !== null;
   payload.sendToRemote = formData.get("sendToRemote") !== null;
   payload.fetchSocialData = formData.get("fetchSocialData") !== null;
 
@@ -291,7 +291,7 @@ function applySample() {
       input.value = value;
     }
   });
-  form.elements.calculateMetrics.checked = true;
+  form.elements.includeDataStructures.checked = true;
   form.elements.sendToRemote.checked = true;
   form.elements.fetchSocialData.checked = false;
 

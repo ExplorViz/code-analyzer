@@ -17,7 +17,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     Optional<String> includeInAnalysisExpressions,
     Optional<String> excludeFromAnalysisExpressions,
     List<ApplicationPath> applicationPaths,
-    boolean calculateMetrics,
+    boolean includeDataStructures,
     Optional<String> startCommit, Optional<String> endCommit,
     Optional<Integer> commitAnalysisLimit,
     Optional<Integer> maxLocForFullAnalysis,
@@ -88,7 +88,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     private Optional<String> includeInAnalysisExpressions = Optional.empty();
     private Optional<String> excludeFromAnalysisExpressions = Optional.empty();
     private Optional<String> applicationRoot = Optional.empty();
-    private boolean calculateMetrics = true;
+    private boolean includeDataStructures = true;
     private Optional<String> startCommit = Optional.empty();
     private Optional<String> endCommit = Optional.empty();
     private Optional<Integer> commitAnalysisLimit = Optional.empty();
@@ -142,8 +142,8 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       return this;
     }
 
-    public Builder calculateMetrics(final boolean calculateMetrics) {
-      this.calculateMetrics = calculateMetrics;
+    public Builder includeDataStructures(final boolean includeDataStructures) {
+      this.includeDataStructures = includeDataStructures;
       return this;
     }
 
@@ -215,7 +215,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
           includeInAnalysisExpressions,
           excludeFromAnalysisExpressions,
           paths,
-          calculateMetrics,
+          includeDataStructures,
           startCommit,
           endCommit,
           commitAnalysisLimit,

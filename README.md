@@ -162,11 +162,13 @@ The Commit must be reachable in the given [branch](#explorvizgitanalysisbranch).
 This commit is included in the analysis, the analysis ends with the analysis of this commit.
 If [fetching from the remote](#explorvizgitanalysisfetch-remote-data) is enabled, this setting is ignored.
 
-### explorviz.gitanalysis.calculate-metrics
+### explorviz.gitanalysis.include-data-structures
 
-Type: Boolean or Empty (defaults to false)
+Type: Boolean or Empty (defaults to true)
 
-Enables the calculation of metrics that are added to the analysis data.
+When enabled, classes, functions, and parameters are included in exported file data.
+When disabled, only file-level metadata and computed metrics are sent.
+Metrics are always computed regardless of this setting.
 
 ### explorviz.gitanalysis.assume-unresolved-types-from-wildcard-imports
 

@@ -311,12 +311,15 @@
           </div>
           <div class="toggle-row">
             <label class="toggle">
-              <input checked name="calculateMetrics" type="checkbox" />
+              <input checked name="includeDataStructures" type="checkbox" />
               <span class="label-header">
-                Calculate Metrics
+                Include Data Structures
                 <span class="tooltip-container">
                   <span class="tooltip-icon">?</span>
-                  <span class="tooltip-text">Whether to calculate code metrics (e.g., lines of code).</span>
+                  <span class="tooltip-text"
+                    >Whether to include classes, functions, and parameters in exported file data. Metrics are always
+                    computed; when disabled, only file-level metadata and metrics are sent.</span
+                  >
                 </span>
               </span>
             </label>
