@@ -276,7 +276,8 @@ public class AnalysisService {
             descriptorAddedList.size() + descriptorModifiedList.size() + unchangedFiles.size());
 
         if (!bootstrapCommit && descriptorAddedList.isEmpty() && descriptorModifiedList.isEmpty()) {
-          createCommitReport(config, commit, baseCommit, exporter, branch, reportTriple,
+          createCommitReport(config, commit, baseCommit, exporter, branch,
+              descriptorAddedList, descriptorModifiedList, descriptorDeletedList,
               unchangedFiles, tagsByCommitId);
 
           commitCount++;
@@ -291,7 +292,8 @@ public class AnalysisService {
         descriptorList.addAll(unchangedFiles);
 
         commitAnalysis(config, repository, commit, baseCommit, descriptorList, exporter,
-            branch, reportTriple, unchangedFiles, tagsByCommitId);
+            branch, descriptorAddedList, descriptorModifiedList, descriptorDeletedList,
+            unchangedFiles, tagsByCommitId);
 
         commitCount++;
         analysisStatusService.incrementAnalyzedCommit(config.landscapeToken());
@@ -555,8 +557,8 @@ public class AnalysisService {
   private void commitAnalysis(final AnalysisConfig config, final Repository repository,
       final RevCommit commit, final RevCommit lastCommit, final List<FileDescriptor> descriptorList,
       final DataExporter exporter, final String branchName,
-      final Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>> descriptorTriple,
-      final List<FileDescriptor> unchangedFiles,
+      final List<FileDescriptor> addedFiles, final List<FileDescriptor> modifiedFiles,
+      final List<FileDescriptor> deletedFiles, final List<FileDescriptor> unchangedFiles,
       final Map<ObjectId, List<String>> tagsByCommitId)
       throws GitAPIException, NotFoundException, IOException {
 
@@ -575,8 +577,8 @@ public class AnalysisService {
             .log("File analysis for commit {} ({} files) took {} ms"));
 
     if (isCiMode()) {
-      createCommitReport(config, commit, lastCommit, exporter, branchName, descriptorTriple,
-          unchangedFiles, tagsByCommitId);
+      createCommitReport(config, commit, lastCommit, exporter, branchName,
+          addedFiles, modifiedFiles, deletedFiles, unchangedFiles, tagsByCommitId);
       pipelinePersistAnalyzedFiles(exporter, analysisTasks, commit.getName(), null);
       return;
     }
@@ -586,8 +588,8 @@ public class AnalysisService {
     final CompletableFuture<Void> commitPersistedBeforeSend = new CompletableFuture<>();
     managedExecutor.execute(() -> {
       try {
-        createCommitReport(config, commit, lastCommit, exporter, branchName, descriptorTriple,
-            unchangedFiles, tagsByCommitId);
+        createCommitReport(config, commit, lastCommit, exporter, branchName,
+            addedFiles, modifiedFiles, deletedFiles, unchangedFiles, tagsByCommitId);
         commitPersistedBeforeSend.complete(null);
       } catch (final NotFoundException | IOException | GitAPIException e) {
         commitPersistedBeforeSend.completeExceptionally(e);
@@ -773,8 +775,8 @@ public class AnalysisService {
 
   private void createCommitReport(final AnalysisConfig config, final RevCommit commit,
       final RevCommit lastCommit, final DataExporter exporter, final String branchName,
-      final Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>> descriptorTriple,
-      final List<FileDescriptor> unchangedFiles,
+      final List<FileDescriptor> addedFiles, final List<FileDescriptor> modifiedFiles,
+      final List<FileDescriptor> deletedFiles, final List<FileDescriptor> unchangedFiles,
       final Map<ObjectId, List<String>> tagsByCommitId)
       throws NotFoundException, IOException, GitAPIException {
     final CommitReportHandler commitReportHandler = new CommitReportHandler();
@@ -789,10 +791,6 @@ public class AnalysisService {
         .setSeconds(commit.getAuthorIdent().getWhen().getTime() / 1000).build());
     commitReportHandler.setCommitDate(Timestamp.newBuilder()
         .setSeconds(commit.getCommitterIdent().getWhen().getTime() / 1000).build());
-
-    final List<FileDescriptor> modifiedFiles = descriptorTriple.left();
-    final List<FileDescriptor> deletedFiles = descriptorTriple.middle();
-    final List<FileDescriptor> addedFiles = descriptorTriple.right();
 
     for (final FileDescriptor addedFile : addedFiles) {
       commitReportHandler.addAdded(addedFile);
