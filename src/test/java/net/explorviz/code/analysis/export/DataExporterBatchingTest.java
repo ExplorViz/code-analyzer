@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import net.explorviz.code.proto.CommitData;
@@ -36,22 +35,16 @@ class DataExporterBatchingTest {
   }
 
   @Test
-  void fileBatchesWaitForCommitGate() throws InterruptedException {
+  void drainsQueuedFilesAsSoonAsPersistThreadStarts() throws InterruptedException {
     final RecordingExporter exporter = new RecordingExporter();
     final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
     final CountDownLatch analysisFinished = new CountDownLatch(1);
-    final CompletableFuture<Void> commitGate = new CompletableFuture<>();
-
-    final Thread batcher = Thread.ofVirtual().start(() -> {
-      commitGate.join();
-      exporter.persistFilesFromQueueInBatches(completedFiles, analysisFinished, 500, 8);
-    });
 
     completedFiles.offer(FileData.getDefaultInstance());
-    Thread.sleep(100);
-    Assertions.assertTrue(exporter.batchSizes.isEmpty());
 
-    commitGate.complete(null);
+    final Thread batcher = Thread.ofVirtual().start(() -> exporter.persistFilesFromQueueInBatches(
+        completedFiles, analysisFinished, 500, 8));
+
     analysisFinished.countDown();
     batcher.join();
 

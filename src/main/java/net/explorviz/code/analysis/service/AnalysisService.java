@@ -146,6 +146,8 @@ public class AnalysisService {
   /* default */ int filePersistConcurrencyProperty;
   @ConfigProperty(name = "explorviz.gitanalysis.file-persist-batch-size", defaultValue = "50")
   /* default */ int filePersistBatchSizeProperty;
+  @ConfigProperty(name = "explorviz.gitanalysis.deferred-file-stub-threshold", defaultValue = "1000")
+  /* default */ int deferredFileStubThresholdProperty;
   @ConfigProperty(name = "explorviz.gitanalysis.run-mode", defaultValue = "api")
   /* default */ String runModeProperty;
 
@@ -176,6 +178,8 @@ public class AnalysisService {
       final String fullBranch = repository.getFullBranch();
       final String branch = repository.getBranch();
       final String repositoryUrl = resolveRepositoryUrl(config, repository);
+
+      preInitializeRemoteState(config, exporter, branch, repositoryUrl);
 
       // get fetch data from remote
       final AnalysisStartContext analysisStartContext =
@@ -331,7 +335,7 @@ public class AnalysisService {
     }
 
     // send state data before fetching to make sure precondition is met
-    preInitializeRemoteState(config, exporter);
+    preInitializeRemoteState(config, exporter, config.branch().orElse("main"), "");
 
     // determine time frame to fetch
     final int socialDataTimeFrameDays = config.socialDataTimeFrameDays().orElse(90);
@@ -384,20 +388,26 @@ public class AnalysisService {
     return endDate;
   }
 
-  private void preInitializeRemoteState(AnalysisConfig config, DataExporter exporter) {
+  private void preInitializeRemoteState(final AnalysisConfig config, final DataExporter exporter,
+      final String branch, final String repositoryUrl) {
     if (exporter.isRemote()) {
       try {
-        final String repositoryUrl =
-            RepositoryFileUrlBuilder.resolveRepositoryUrl(config.repoRemoteUrl(), "").orElse("");
+        final String resolvedRepositoryUrl =
+            RepositoryFileUrlBuilder.resolveRepositoryUrl(
+                    repositoryUrl.isBlank()
+                        ? config.repoRemoteUrl()
+                        : Optional.of(repositoryUrl),
+                    "")
+                .orElse("");
         exporter.getStateData(
             config.getRepositoryName(),
-            config.branch().orElse("main"),
+            branch,
             config.landscapeToken(),
             config.applicationPathsMap(),
-            repositoryUrl,
+            resolvedRepositoryUrl,
             true);
       } catch (final Exception e) {
-        LOGGER.warn("Could not pre-initialize remote state for social fetch: {}", e.getMessage());
+        LOGGER.warn("Could not pre-initialize remote state: {}", e.getMessage());
       }
     }
   }
@@ -566,6 +576,12 @@ public class AnalysisService {
 
     LOGGER.atTrace().addArgument(descriptorList.toString()).log("Files: {}");
 
+    // Commit metadata must be in the landscape service before any FileData arrives.
+    // For initial commits this returns quickly; for incremental commits it links changed files
+    // and copies unchanged files from the parent synchronously.
+    createCommitReport(config, commit, lastCommit, exporter, branchName,
+        addedFiles, modifiedFiles, deletedFiles, unchangedFiles, tagsByCommitId);
+
     final long analysisStartedAt = System.nanoTime();
     final List<CompletableFuture<FileData>> analysisTasks = submitFileAnalysisTasks(config,
         repository, commit, descriptorList);
@@ -576,29 +592,7 @@ public class AnalysisService {
             .addArgument((System.nanoTime() - analysisStartedAt) / 1_000_000L)
             .log("File analysis for commit {} ({} files) took {} ms"));
 
-    if (isCiMode()) {
-      createCommitReport(config, commit, lastCommit, exporter, branchName,
-          addedFiles, modifiedFiles, deletedFiles, unchangedFiles, tagsByCommitId);
-      pipelinePersistAnalyzedFiles(exporter, analysisTasks, commit.getName(), null);
-      return;
-    }
-
-    // API mode: analyze files while the commit report is built and sent, but do not
-    // stream file data until the landscape service has received the commit.
-    final CompletableFuture<Void> commitPersistedBeforeSend = new CompletableFuture<>();
-    managedExecutor.execute(() -> {
-      try {
-        createCommitReport(config, commit, lastCommit, exporter, branchName,
-            addedFiles, modifiedFiles, deletedFiles, unchangedFiles, tagsByCommitId);
-        commitPersistedBeforeSend.complete(null);
-      } catch (final NotFoundException | IOException | GitAPIException e) {
-        commitPersistedBeforeSend.completeExceptionally(e);
-      }
-    });
-
-    pipelinePersistAnalyzedFiles(exporter, analysisTasks, commit.getName(),
-        commitPersistedBeforeSend);
-    awaitCommitPersisted(commitPersistedBeforeSend);
+    pipelinePersistAnalyzedFiles(exporter, analysisTasks, commit.getName());
   }
 
   private List<CompletableFuture<FileData>> submitFileAnalysisTasks(final AnalysisConfig config,
@@ -656,34 +650,8 @@ public class AnalysisService {
         config.includeDataStructures());
   }
 
-  private void awaitCommitPersisted(final CompletableFuture<Void> commitPersistedBeforeSend)
-      throws NotFoundException, IOException, GitAPIException {
-    try {
-      commitPersistedBeforeSend.join();
-    } catch (final java.util.concurrent.CompletionException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof NotFoundException notFoundException) {
-        throw notFoundException;
-      }
-      if (cause instanceof IOException ioException) {
-        throw ioException;
-      }
-      if (cause instanceof GitAPIException gitApiException) {
-        throw gitApiException;
-      }
-      if (cause instanceof RuntimeException runtimeException) {
-        throw runtimeException;
-      }
-      if (cause instanceof Error error) {
-        throw error;
-      }
-      throw e;
-    }
-  }
-
   private void pipelinePersistAnalyzedFiles(final DataExporter exporter,
-      final List<CompletableFuture<FileData>> analysisTasks, final String commitId,
-      final CompletableFuture<Void> commitPersistedBeforeSend) {
+      final List<CompletableFuture<FileData>> analysisTasks, final String commitId) {
     if (analysisTasks.isEmpty()) {
       return;
     }
@@ -697,13 +665,8 @@ public class AnalysisService {
     final CountDownLatch analysisFinished = new CountDownLatch(1);
 
     final Thread persistThread = Thread.ofVirtual().name("file-persist-" + commitId)
-        .start(() -> {
-          if (commitPersistedBeforeSend != null) {
-            commitPersistedBeforeSend.join();
-          }
-          exporter.persistFilesFromQueueInBatches(completedFiles, analysisFinished,
-              filePersistBatchSizeProperty, filePersistConcurrencyProperty);
-        });
+        .start(() -> exporter.persistFilesFromQueueInBatches(completedFiles, analysisFinished,
+            filePersistBatchSizeProperty, filePersistConcurrencyProperty));
 
     for (final CompletableFuture<FileData> analysisTask : analysisTasks) {
       analysisTask.whenComplete((fileData, error) -> {
@@ -785,6 +748,22 @@ public class AnalysisService {
       commitReportHandler.init(commit.getId().getName(), null, branchName);
     } else {
       commitReportHandler.init(commit.getId().getName(), lastCommit.getId().getName(), branchName);
+    }
+
+    final int analysisFileCount =
+        addedFiles.size() + modifiedFiles.size() + unchangedFiles.size();
+    commitReportHandler.setAnalysisFileCount(analysisFileCount);
+    final boolean deferFileStubs = analysisFileCount > deferredFileStubThresholdProperty;
+    commitReportHandler.setDeferFileStubCreation(deferFileStubs);
+    if (deferFileStubs) {
+      LOGGER.info(
+          "Commit {} for repository {} exceeds deferred file-stub threshold ({} > {}): "
+              + "sending metadata only ({} deleted paths)",
+          commit.getName(),
+          config.getRepositoryName(),
+          analysisFileCount,
+          deferredFileStubThresholdProperty,
+          deletedFiles.size());
     }
 
     commitReportHandler.setAuthorDate(Timestamp.newBuilder()

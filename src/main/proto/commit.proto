@@ -25,11 +25,14 @@ message CommitData {
   // Author association data
   ContributorData author = 9;
 
+  // Number of files that are analyzed for this commit.
+  int32 analysis_file_count = 10;
+
   // Git file metrics
-  repeated FileIdentifier added_files = 10;
-  repeated FileIdentifier modified_files = 11;
-  repeated FileIdentifier deleted_files = 12;
-  repeated FileIdentifier unchanged_files = 13;
+  repeated FileIdentifier added_files = 11;
+  repeated FileIdentifier modified_files = 12;
+  repeated FileIdentifier deleted_files = 13;
+  repeated FileIdentifier unchanged_files = 14;
 }
 
 message FileIdentifier {
