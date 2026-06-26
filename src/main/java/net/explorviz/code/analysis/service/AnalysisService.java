@@ -146,8 +146,6 @@ public class AnalysisService {
   /* default */ int filePersistConcurrencyProperty;
   @ConfigProperty(name = "explorviz.gitanalysis.file-persist-batch-size", defaultValue = "50")
   /* default */ int filePersistBatchSizeProperty;
-  @ConfigProperty(name = "explorviz.gitanalysis.deferred-file-stub-threshold", defaultValue = "1000")
-  /* default */ int deferredFileStubThresholdProperty;
   @ConfigProperty(name = "explorviz.gitanalysis.run-mode", defaultValue = "api")
   /* default */ String runModeProperty;
 
@@ -185,8 +183,6 @@ public class AnalysisService {
       final AnalysisStartContext analysisStartContext =
           resolveAnalysisStartContext(config, exporter, branch, repositoryUrl);
       final Optional<String> startCommit = analysisStartContext.startCommit();
-      final boolean landscapeHasPersistedCommits =
-          analysisStartContext.landscapeHasPersistedCommits();
 
       final Optional<String> endCommit = exporter.isRemote() ? Optional.empty() : config.endCommit();
 
@@ -237,30 +233,22 @@ public class AnalysisService {
 
         LOGGER.atDebug().addArgument(commit.getName()).log("Analyzing commit: {}");
 
-        final RevCommit baseCommit = lastCheckedCommit;
-        final boolean bootstrapCommit = shouldAnalyzeAllFilesInCommit(
-            commitCount, landscapeHasPersistedCommits);
+        final boolean isFirstAnalyzedCommit = commitCount == 0;
+        final RevCommit baseCommit =
+            (isFirstAnalyzedCommit && (!exporter.isRemote() || startCommit.isEmpty()))
+                ? null
+                : lastCheckedCommit;
 
-        if (bootstrapCommit) {
+        if (isFirstAnalyzedCommit && baseCommit == null) {
           LOGGER.info(
               "First commit analyzed for repository {} on branch {} — analyzing all files",
               config.getRepositoryName(),
               branch);
         }
 
-        final var reportTriple = gitRepositoryHandler.listDiff(
-            repository,
-            resolveDiffBaseCommit(baseCommit),
-            commit,
-            config.pathRestrictionForDiff());
-
-        List<FileDescriptor> unchangedFiles = List.of();
-        if (bootstrapCommit && baseCommit != null) {
-          final List<FileDescriptor> allFilesInCommit = gitRepositoryHandler.listFilesInCommit(
-              repository, commit, config.pathRestrictionForDiff());
-          unchangedFiles = new ArrayList<>(
-              resolveUnchangedFilesForBootstrapCommit(allFilesInCommit, reportTriple));
-        }
+        final var reportTriple =
+            gitRepositoryHandler.listDiff(
+                repository, Optional.ofNullable(baseCommit), commit, config.pathRestrictionForDiff());
 
         final List<FileDescriptor> descriptorAddedList = new ArrayList<>(reportTriple.right()); // NOPMD
         final List<FileDescriptor> descriptorModifiedList = new ArrayList<>(reportTriple.left());
@@ -269,20 +257,26 @@ public class AnalysisService {
         applyGlobFiltering(descriptorAddedList, restrictMatchers, excludeMatchers);
         applyGlobFiltering(descriptorModifiedList, restrictMatchers, excludeMatchers);
         applyGlobFiltering(descriptorDeletedList, restrictMatchers, excludeMatchers);
-        applyGlobFiltering(unchangedFiles, restrictMatchers, excludeMatchers);
 
         LOGGER.atDebug().addArgument(descriptorAddedList.size())
             .addArgument(descriptorModifiedList.size())
-            .addArgument(unchangedFiles.size())
-            .log("Files added: {}, files modified: {}, files unchanged: {}");
+            .log("Files added: {}, files modified: {}");
 
-        analysisStatusService.setCurrentCommitFiles(config.landscapeToken(),
-            descriptorAddedList.size() + descriptorModifiedList.size() + unchangedFiles.size());
+        analysisStatusService.setCurrentCommitFiles(
+            config.landscapeToken(),
+            descriptorAddedList.size() + descriptorModifiedList.size());
 
-        if (!bootstrapCommit && descriptorAddedList.isEmpty() && descriptorModifiedList.isEmpty()) {
-          createCommitReport(config, commit, baseCommit, exporter, branch,
-              descriptorAddedList, descriptorModifiedList, descriptorDeletedList,
-              unchangedFiles, tagsByCommitId);
+        if (descriptorAddedList.isEmpty() && descriptorModifiedList.isEmpty()) {
+          createCommitReport(
+              config,
+              commit,
+              baseCommit,
+              exporter,
+              branch,
+              descriptorAddedList,
+              descriptorModifiedList,
+              descriptorDeletedList,
+              tagsByCommitId);
 
           commitCount++;
           analysisStatusService.incrementAnalyzedCommit(config.landscapeToken());
@@ -293,11 +287,19 @@ public class AnalysisService {
         final List<FileDescriptor> descriptorList = new ArrayList<FileDescriptor>(); // NOPMD
         descriptorList.addAll(descriptorAddedList);
         descriptorList.addAll(descriptorModifiedList);
-        descriptorList.addAll(unchangedFiles);
 
-        commitAnalysis(config, repository, commit, baseCommit, descriptorList, exporter,
-            branch, descriptorAddedList, descriptorModifiedList, descriptorDeletedList,
-            unchangedFiles, tagsByCommitId);
+        commitAnalysis(
+            config,
+            repository,
+            commit,
+            baseCommit,
+            descriptorList,
+            exporter,
+            branch,
+            descriptorAddedList,
+            descriptorModifiedList,
+            descriptorDeletedList,
+            tagsByCommitId);
 
         commitCount++;
         analysisStatusService.incrementAnalyzedCommit(config.landscapeToken());
@@ -459,19 +461,19 @@ public class AnalysisService {
     return new AnalysisStartContext(config.startCommit(), landscapeHasPersistedCommits);
   }
 
-  /**
-   * The first commit persisted for a repository must include every file in that commit. Later
-   * commits can be analyzed incrementally against their parent.
-   */
-  /* package */ boolean shouldAnalyzeAllFilesInCommit(final int analyzedCommitCount,
-      final boolean landscapeHasPersistedCommits) {
-    return analyzedCommitCount == 0 && !landscapeHasPersistedCommits;
+  /* package */ RevCommit resolveDiffBaseCommit(
+      final int commitCount,
+      final boolean remoteExport,
+      final Optional<String> startCommit,
+      final RevCommit lastCheckedCommit) {
+    final boolean isFirstAnalyzedCommit = commitCount == 0;
+    if (isFirstAnalyzedCommit && (!remoteExport || startCommit.isEmpty())) {
+      return null;
+    }
+    return lastCheckedCommit;
   }
 
-  /**
-   * Resolves the parent commit used to classify file changes in the commit report.
-   */
-  /* package */ Optional<RevCommit> resolveDiffBaseCommit(final RevCommit baseCommit) {
+  /* package */ Optional<RevCommit> toOptionalDiffBase(final RevCommit baseCommit) {
     return Optional.ofNullable(baseCommit);
   }
 
@@ -568,19 +570,25 @@ public class AnalysisService {
       final RevCommit commit, final RevCommit lastCommit, final List<FileDescriptor> descriptorList,
       final DataExporter exporter, final String branchName,
       final List<FileDescriptor> addedFiles, final List<FileDescriptor> modifiedFiles,
-      final List<FileDescriptor> deletedFiles, final List<FileDescriptor> unchangedFiles,
+      final List<FileDescriptor> deletedFiles,
       final Map<ObjectId, List<String>> tagsByCommitId)
       throws GitAPIException, NotFoundException, IOException {
+
+    // Commit metadata and every file stub must reach the landscape service before FileData.
+    createCommitReport(
+        config,
+        commit,
+        lastCommit,
+        exporter,
+        branchName,
+        addedFiles,
+        modifiedFiles,
+        deletedFiles,
+        tagsByCommitId);
 
     antlrParserService.reset();
 
     LOGGER.atTrace().addArgument(descriptorList.toString()).log("Files: {}");
-
-    // Commit metadata must be in the landscape service before any FileData arrives.
-    // For initial commits this returns quickly; for incremental commits it links changed files
-    // and copies unchanged files from the parent synchronously.
-    createCommitReport(config, commit, lastCommit, exporter, branchName,
-        addedFiles, modifiedFiles, deletedFiles, unchangedFiles, tagsByCommitId);
 
     final long analysisStartedAt = System.nanoTime();
     final List<CompletableFuture<FileData>> analysisTasks = submitFileAnalysisTasks(config,
@@ -739,7 +747,7 @@ public class AnalysisService {
   private void createCommitReport(final AnalysisConfig config, final RevCommit commit,
       final RevCommit lastCommit, final DataExporter exporter, final String branchName,
       final List<FileDescriptor> addedFiles, final List<FileDescriptor> modifiedFiles,
-      final List<FileDescriptor> deletedFiles, final List<FileDescriptor> unchangedFiles,
+      final List<FileDescriptor> deletedFiles,
       final Map<ObjectId, List<String>> tagsByCommitId)
       throws NotFoundException, IOException, GitAPIException {
     final CommitReportHandler commitReportHandler = new CommitReportHandler();
@@ -750,21 +758,7 @@ public class AnalysisService {
       commitReportHandler.init(commit.getId().getName(), lastCommit.getId().getName(), branchName);
     }
 
-    final int analysisFileCount =
-        addedFiles.size() + modifiedFiles.size() + unchangedFiles.size();
-    commitReportHandler.setAnalysisFileCount(analysisFileCount);
-    final boolean deferFileStubs = analysisFileCount > deferredFileStubThresholdProperty;
-    commitReportHandler.setDeferFileStubCreation(deferFileStubs);
-    if (deferFileStubs) {
-      LOGGER.info(
-          "Commit {} for repository {} exceeds deferred file-stub threshold ({} > {}): "
-              + "sending metadata only ({} deleted paths)",
-          commit.getName(),
-          config.getRepositoryName(),
-          analysisFileCount,
-          deferredFileStubThresholdProperty,
-          deletedFiles.size());
-    }
+    commitReportHandler.setAnalysisFileCount(addedFiles.size() + modifiedFiles.size());
 
     commitReportHandler.setAuthorDate(Timestamp.newBuilder()
         .setSeconds(commit.getAuthorIdent().getWhen().getTime() / 1000).build());
@@ -781,10 +775,6 @@ public class AnalysisService {
 
     for (final FileDescriptor modifiedFile : modifiedFiles) {
       commitReportHandler.addModified(modifiedFile);
-    }
-
-    for (final FileDescriptor unchangedFile : unchangedFiles) {
-      commitReportHandler.addUnchanged(unchangedFile);
     }
 
     final List<String> tags = tagsByCommitId.getOrDefault(commit.getId(), Collections.emptyList());

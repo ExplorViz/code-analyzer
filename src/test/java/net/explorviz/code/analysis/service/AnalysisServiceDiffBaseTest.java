@@ -3,9 +3,11 @@ package net.explorviz.code.analysis.service;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 import net.explorviz.code.analysis.types.FileDescriptor;
 import net.explorviz.code.analysis.types.Triple;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -17,33 +19,25 @@ class AnalysisServiceDiffBaseTest {
   AnalysisService analysisService;
 
   @Test
-  void analyzesAllFilesForFirstCommitWhenLandscapeHasNoPersistedCommits() {
-    Assertions.assertTrue(analysisService.shouldAnalyzeAllFilesInCommit(0, false));
+  void usesNullDiffBaseForFirstLocalCommitWithoutStartCommit() {
+    Assertions.assertNull(
+        analysisService.resolveDiffBaseCommit(0, false, Optional.empty(), null));
   }
 
   @Test
-  void doesNotAnalyzeAllFilesForFirstCommitWhenLandscapeAlreadyHasCommits() {
-    Assertions.assertFalse(analysisService.shouldAnalyzeAllFilesInCommit(0, true));
-  }
+  void usesParentDiffBaseForFirstRemoteCommitWithStartCommit() {
+    final RevCommit parent = Mockito.mock(RevCommit.class);
 
-  @Test
-  void doesNotAnalyzeAllFilesForSubsequentCommits() {
-    Assertions.assertFalse(analysisService.shouldAnalyzeAllFilesInCommit(1, false));
-  }
-
-  @Test
-  void usesParentDiffBaseWhenAvailable() {
-    final var baseCommit = Mockito.mock(org.eclipse.jgit.revwalk.RevCommit.class);
-
-    Assertions.assertTrue(analysisService.resolveDiffBaseCommit(baseCommit).isPresent());
     Assertions.assertSame(
-        baseCommit,
-        analysisService.resolveDiffBaseCommit(baseCommit).orElseThrow());
+        parent, analysisService.resolveDiffBaseCommit(0, true, Optional.of("parent"), parent));
   }
 
   @Test
-  void usesEmptyDiffBaseForRootCommitWithoutParent() {
-    Assertions.assertTrue(analysisService.resolveDiffBaseCommit(null).isEmpty());
+  void usesParentDiffBaseForSubsequentCommits() {
+    final RevCommit parent = Mockito.mock(RevCommit.class);
+
+    Assertions.assertSame(
+        parent, analysisService.resolveDiffBaseCommit(1, false, Optional.empty(), parent));
   }
 
   @Test

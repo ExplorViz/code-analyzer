@@ -1,7 +1,6 @@
 package net.explorviz.code.analysis.handler;
 
 import com.google.protobuf.Timestamp;
-import java.util.List;
 import net.explorviz.code.analysis.types.FileDescriptor;
 import net.explorviz.code.proto.CommitData;
 import org.eclipse.jgit.lib.ObjectId;
@@ -20,42 +19,25 @@ class CommitReportHandlerTest {
   }
 
   @Test
-  void includesAllFileIdentifiersByDefault() {
+  void includesChangedFileIdentifiersAndAnalysisFileCount() {
     addSampleFiles();
 
-    handler.setAnalysisFileCount(3);
+    handler.setAnalysisFileCount(2);
     handler.setAuthorDate(Timestamp.newBuilder().setSeconds(1).build());
     handler.setCommitDate(Timestamp.newBuilder().setSeconds(2).build());
 
     final CommitData commitData = handler.getCommitData();
 
-    Assertions.assertEquals(3, commitData.getAnalysisFileCount());
+    Assertions.assertEquals(2, commitData.getAnalysisFileCount());
     Assertions.assertEquals(1, commitData.getAddedFilesCount());
     Assertions.assertEquals(1, commitData.getModifiedFilesCount());
-    Assertions.assertEquals(1, commitData.getUnchangedFilesCount());
+    Assertions.assertEquals(0, commitData.getUnchangedFilesCount());
     Assertions.assertEquals(1, commitData.getDeletedFilesCount());
   }
 
   @Test
-  void defersFileStubCreationWhenRequested() {
+  void clearResetsFileLists() {
     addSampleFiles();
-
-    handler.setAnalysisFileCount(3);
-    handler.setDeferFileStubCreation(true);
-
-    final CommitData commitData = handler.getCommitData();
-
-    Assertions.assertEquals(3, commitData.getAnalysisFileCount());
-    Assertions.assertTrue(commitData.getAddedFilesList().isEmpty());
-    Assertions.assertTrue(commitData.getModifiedFilesList().isEmpty());
-    Assertions.assertTrue(commitData.getUnchangedFilesList().isEmpty());
-    Assertions.assertEquals(1, commitData.getDeletedFilesCount());
-  }
-
-  @Test
-  void clearResetsDeferredMode() {
-    addSampleFiles();
-    handler.setDeferFileStubCreation(true);
     handler.getCommitData();
 
     handler.init("commit-2", null, "main");
@@ -65,13 +47,11 @@ class CommitReportHandlerTest {
 
     Assertions.assertEquals(1, commitData.getAddedFilesCount());
     Assertions.assertEquals(1, commitData.getModifiedFilesCount());
-    Assertions.assertEquals(1, commitData.getUnchangedFilesCount());
   }
 
   private void addSampleFiles() {
     handler.addAdded(file("0123456789abcdef0123456789abcdef01234567", "src/Added.java"));
     handler.addModified(file("abcdef0123456789abcdef0123456789abcdef01", "src/Modified.java"));
-    handler.addUnchanged(file("fedcba9876543210fedcba9876543210fedcba98", "src/Unchanged.java"));
     handler.addDeleted(file("1111111111111111111111111111111111111111", "src/Deleted.java"));
   }
 

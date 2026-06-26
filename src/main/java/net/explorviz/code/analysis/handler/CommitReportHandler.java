@@ -18,10 +18,8 @@ public class CommitReportHandler { // NOPMD
   private final List<FileIdentifier> addedFiles = new ArrayList<>();
   private final List<FileIdentifier> deletedFiles = new ArrayList<>();
   private final List<FileIdentifier> modifiedFiles = new ArrayList<>();
-  private final List<FileIdentifier> unchangedFiles = new ArrayList<>();
   private CommitData.Builder builder;
   private ContributorData.Builder contributorBuilder;
-  private boolean deferFileStubCreation;
 
   /**
    * Creates a blank handler, use
@@ -42,8 +40,6 @@ public class CommitReportHandler { // NOPMD
     this.addedFiles.clear();
     this.deletedFiles.clear();
     this.modifiedFiles.clear();
-    this.unchangedFiles.clear();
-    this.deferFileStubCreation = false;
   }
 
   /**
@@ -84,10 +80,6 @@ public class CommitReportHandler { // NOPMD
     modifiedFiles.add(toFileId(fileDescriptor));
   }
 
-  public void addUnchanged(final FileDescriptor fileDescriptor) {
-    unchangedFiles.add(toFileId(fileDescriptor));
-  }
-
   public void addTags(final List<String> tags) {
     builder.addAllTags(tags);
   }
@@ -116,20 +108,13 @@ public class CommitReportHandler { // NOPMD
     builder.setAnalysisFileCount(analysisFileCount);
   }
 
-  public void setDeferFileStubCreation(final boolean deferFileStubCreation) {
-    this.deferFileStubCreation = deferFileStubCreation;
-  }
-
   /**
    * Returns the commit data. * * @return commit data object
    */
   public CommitData getCommitData() {
+    builder.addAllAddedFiles(addedFiles);
+    builder.addAllModifiedFiles(modifiedFiles);
     builder.addAllDeletedFiles(deletedFiles);
-    if (!deferFileStubCreation) {
-      builder.addAllAddedFiles(addedFiles);
-      builder.addAllModifiedFiles(modifiedFiles);
-      builder.addAllUnchangedFiles(unchangedFiles);
-    }
     return builder.build();
   }
 }
