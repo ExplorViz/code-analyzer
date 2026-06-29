@@ -33,6 +33,9 @@ message CommitData {
   repeated FileIdentifier modified_files = 12;
   repeated FileIdentifier deleted_files = 13;
   repeated FileIdentifier unchanged_files = 14;
+
+  // All git parent commits, oldest-to-newest analysis order is derived from these links.
+  repeated string parent_commit_ids = 15;
 }
 
 message FileIdentifier {

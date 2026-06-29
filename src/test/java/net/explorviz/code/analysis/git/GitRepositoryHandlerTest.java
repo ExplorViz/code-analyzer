@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Stream;
 import net.explorviz.code.analysis.types.RemoteRepositoryObject;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.lib.ObjectId;
@@ -22,6 +23,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -215,6 +217,39 @@ public class GitRepositoryHandlerTest {
       }
     }
 
+  }
+
+  @Test
+  void configureBranchRevWalk_includesAllReachableCommitsNotJustFirstParent()
+      throws IOException {
+    final Path traceServiceRepo = Path.of(System.getProperty("user.home"), "Documents",
+        "ExplorViz", "trace-service");
+    Assumptions.assumeTrue(Files.isDirectory(traceServiceRepo.resolve(".git")),
+        "Local trace-service clone required for this test");
+
+    try (Git git = Git.open(traceServiceRepo.toFile());
+        Repository repository = git.getRepository();
+        RevWalk allReachableWalk = new RevWalk(repository);
+        RevWalk branchWalk = new RevWalk(repository)) {
+      final String mainRef = "refs/heads/main";
+      allReachableWalk.markStart(allReachableWalk.parseCommit(repository.resolve(mainRef)));
+      final long allReachableCount = countCommits(allReachableWalk);
+
+      gitRepositoryHandler.configureBranchRevWalk(branchWalk, repository, mainRef);
+      final long branchWalkCount = countCommits(branchWalk);
+
+      Assertions.assertEquals(allReachableCount, branchWalkCount);
+      Assertions.assertTrue(branchWalkCount > 72,
+          "Branch walk must include merged commits, not only the first-parent chain");
+    }
+  }
+
+  private static long countCommits(final RevWalk revWalk) {
+    long count = 0;
+    for (RevCommit ignored : revWalk) {
+      count++;
+    }
+    return count;
   }
 
 }

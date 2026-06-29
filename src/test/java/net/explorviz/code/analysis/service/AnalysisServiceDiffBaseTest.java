@@ -20,24 +20,38 @@ class AnalysisServiceDiffBaseTest {
 
   @Test
   void usesNullDiffBaseForFirstLocalCommitWithoutStartCommit() {
+    final RevCommit commit = Mockito.mock(RevCommit.class);
+    Mockito.when(commit.getParentCount()).thenReturn(0);
+
     Assertions.assertNull(
-        analysisService.resolveDiffBaseCommit(0, false, Optional.empty(), null));
+        analysisService.resolveDiffBaseCommit(
+            commit, 0, false, Optional.empty(), null));
   }
 
   @Test
-  void usesParentDiffBaseForFirstRemoteCommitWithStartCommit() {
-    final RevCommit parent = Mockito.mock(RevCommit.class);
+  void usesLastCheckedCommitForFirstRemoteCommitWithStartCommitWhenGitParentMissing() {
+    final RevCommit lastChecked = Mockito.mock(RevCommit.class);
+    final RevCommit commit = Mockito.mock(RevCommit.class);
+    Mockito.when(commit.getParentCount()).thenReturn(0);
 
     Assertions.assertSame(
-        parent, analysisService.resolveDiffBaseCommit(0, true, Optional.of("parent"), parent));
+        lastChecked,
+        analysisService.resolveDiffBaseCommit(
+            commit, 0, true, Optional.of("parent"), lastChecked));
   }
 
   @Test
-  void usesParentDiffBaseForSubsequentCommits() {
-    final RevCommit parent = Mockito.mock(RevCommit.class);
+  void usesFirstGitParentForSubsequentCommits() {
+    final RevCommit firstParent = Mockito.mock(RevCommit.class);
+    final RevCommit lastChecked = Mockito.mock(RevCommit.class);
+    final RevCommit commit = Mockito.mock(RevCommit.class);
+    Mockito.when(commit.getParentCount()).thenReturn(1);
+    Mockito.doReturn(firstParent).when(commit).getParent(0);
 
     Assertions.assertSame(
-        parent, analysisService.resolveDiffBaseCommit(1, false, Optional.empty(), parent));
+        firstParent,
+        analysisService.resolveDiffBaseCommit(
+            commit, 1, false, Optional.empty(), lastChecked));
   }
 
   @Test

@@ -64,7 +64,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.context.ManagedExecutor;
@@ -235,9 +234,8 @@ public class AnalysisService {
 
         final boolean isFirstAnalyzedCommit = commitCount == 0;
         final RevCommit baseCommit =
-            (isFirstAnalyzedCommit && (!exporter.isRemote() || startCommit.isEmpty()))
-                ? null
-                : lastCheckedCommit;
+            resolveDiffBaseCommit(
+                commit, commitCount, exporter.isRemote(), startCommit, lastCheckedCommit);
 
         if (isFirstAnalyzedCommit && baseCommit == null) {
           LOGGER.info(
@@ -461,7 +459,12 @@ public class AnalysisService {
     return new AnalysisStartContext(config.startCommit(), landscapeHasPersistedCommits);
   }
 
+  /**
+   * Resolves the old commit for {@code git diff}. Uses the first git parent when available so file
+   * diffs align with {@code parent_commit_id} used for unchanged-file copying in landscape-service.
+   */
   /* package */ RevCommit resolveDiffBaseCommit(
+      final RevCommit commit,
       final int commitCount,
       final boolean remoteExport,
       final Optional<String> startCommit,
@@ -470,7 +473,19 @@ public class AnalysisService {
     if (isFirstAnalyzedCommit && (!remoteExport || startCommit.isEmpty())) {
       return null;
     }
+    if (commit.getParentCount() > 0) {
+      return commit.getParent(0);
+    }
     return lastCheckedCommit;
+  }
+
+  /** Uses all git parent links so branch commit trees preserve merge topology. */
+  /* package */ List<String> resolveStoredParentCommitIds(final RevCommit commit) {
+    final List<String> parentIds = new ArrayList<>(commit.getParentCount());
+    for (int parentIndex = 0; parentIndex < commit.getParentCount(); parentIndex++) {
+      parentIds.add(commit.getParent(parentIndex).getName());
+    }
+    return parentIds;
   }
 
   /* package */ Optional<RevCommit> toOptionalDiffBase(final RevCommit baseCommit) {
@@ -551,19 +566,7 @@ public class AnalysisService {
 
   private void prepareRevWalk(final Repository repository, final RevWalk revWalk,
       final String branch) throws IOException {
-    revWalk.sort(RevSort.COMMIT_TIME_DESC, true);
-    revWalk.sort(RevSort.REVERSE, true);
-
-    LOGGER.atTrace().addArgument(branch).log("Analyzing branch: {}");
-
-    // get a list of all known heads, tags, remotes, ...
-    final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();
-    for (final Ref ref : allRefs) {
-      if (ref.getName().equals(branch)) {
-        revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
-        break;
-      }
-    }
+    gitRepositoryHandler.configureBranchRevWalk(revWalk, repository, branch);
   }
 
   private void commitAnalysis(final AnalysisConfig config, final Repository repository,
@@ -752,11 +755,8 @@ public class AnalysisService {
       throws NotFoundException, IOException, GitAPIException {
     final CommitReportHandler commitReportHandler = new CommitReportHandler();
 
-    if (lastCommit == null) {
-      commitReportHandler.init(commit.getId().getName(), null, branchName);
-    } else {
-      commitReportHandler.init(commit.getId().getName(), lastCommit.getId().getName(), branchName);
-    }
+    commitReportHandler.init(
+        commit.getId().getName(), resolveStoredParentCommitIds(commit), branchName);
 
     commitReportHandler.setAnalysisFileCount(addedFiles.size() + modifiedFiles.size());
 

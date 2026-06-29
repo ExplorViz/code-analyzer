@@ -44,7 +44,9 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.patch.FileHeader;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
@@ -497,6 +499,7 @@ public class GitRepositoryHandler { // NOPMD
             putInList2(diffFormatter, diff, deletedObjectIdList);
             continue;
           } else if (diff.getChangeType().equals(DiffEntry.ChangeType.RENAME)) {
+            putInList2(diffFormatter, diff, deletedObjectIdList);
             putInList(diffFormatter, diff, addedObjectIdList);
           } else if (diff.getChangeType().equals(DiffEntry.ChangeType.COPY)) {
             putInList(diffFormatter, diff, addedObjectIdList);
@@ -670,6 +673,25 @@ public class GitRepositoryHandler { // NOPMD
       throw new RuntimeException(e); // NOPMD
     }
     return false;
+  }
+
+  /**
+   * Configures a {@link RevWalk} to traverse all commits reachable from the branch tip and emit
+   * them in topological order (oldest first), matching {@code git rev-list --reverse}.
+   */
+  public void configureBranchRevWalk(
+      final RevWalk revWalk, final Repository repository, final String branchRef)
+      throws IOException {
+    revWalk.sort(RevSort.TOPO);
+    revWalk.sort(RevSort.REVERSE);
+
+    LOGGER.atTrace().addArgument(branchRef).log("Walking branch: {}");
+
+    final ObjectId branchId = repository.resolve(branchRef);
+    if (branchId == null) {
+      throw new IOException("Branch not found: " + branchRef);
+    }
+    revWalk.markStart(revWalk.parseCommit(branchId));
   }
 
 }

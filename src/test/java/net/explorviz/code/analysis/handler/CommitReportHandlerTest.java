@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.handler;
 
 import com.google.protobuf.Timestamp;
+import java.util.List;
 import net.explorviz.code.analysis.types.FileDescriptor;
 import net.explorviz.code.proto.CommitData;
 import org.eclipse.jgit.lib.ObjectId;
@@ -15,7 +16,17 @@ class CommitReportHandlerTest {
   @BeforeEach
   void setUp() {
     handler = new CommitReportHandler();
-    handler.init("commit-1", "parent-1", "main");
+    handler.init("commit-1", List.of("parent-1"), "main");
+  }
+
+  @Test
+  void storesAllParentCommitIds() {
+    handler.init("commit-1", List.of("parent-1", "parent-2"), "main");
+
+    final CommitData commitData = handler.getCommitData();
+
+    Assertions.assertEquals("parent-1", commitData.getParentCommitId());
+    Assertions.assertEquals(List.of("parent-1", "parent-2"), commitData.getParentCommitIdsList());
   }
 
   @Test
@@ -40,7 +51,7 @@ class CommitReportHandlerTest {
     addSampleFiles();
     handler.getCommitData();
 
-    handler.init("commit-2", null, "main");
+    handler.init("commit-2", List.of(), "main");
     addSampleFiles();
 
     final CommitData commitData = handler.getCommitData();

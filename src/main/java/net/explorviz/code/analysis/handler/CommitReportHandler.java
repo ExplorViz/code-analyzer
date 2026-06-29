@@ -23,7 +23,7 @@ public class CommitReportHandler { // NOPMD
 
   /**
    * Creates a blank handler, use
-   * {@link CommitReportHandler#init(String, String, String)} to initialize it.
+   * {@link CommitReportHandler#init(String, java.util.List, String)} to initialize it.
    */
   public CommitReportHandler() {
     this.builder = CommitData.newBuilder();
@@ -32,7 +32,7 @@ public class CommitReportHandler { // NOPMD
 
   /**
    * Clears the commitReportData from old data entries. Gets called in
-   * {@link CommitReportHandler#init(String, String, String)} automatically.
+   * {@link CommitReportHandler#init(String, java.util.List, String)} automatically.
    */
   public void clear() {
     this.builder = CommitData.newBuilder();
@@ -45,15 +45,20 @@ public class CommitReportHandler { // NOPMD
   /**
    * Initialize the current report handler.
    *
-   * @param commitId       the id of the commit
-   * @param parentCommitId the id of the parent commit, can be null if no parent
-   *                       exists
-   * @param branchName     the name of the branch
+   * @param commitId        the id of the commit
+   * @param parentCommitIds git parent commit ids (may be empty for root commits)
+   * @param branchName      the name of the branch
    */
-  public void init(final String commitId, final String parentCommitId, final String branchName) {
+  public void init(
+      final String commitId, final List<String> parentCommitIds, final String branchName) {
     clear();
     builder.setCommitId(commitId);
-    builder.setParentCommitId(parentCommitId == null ? "NONE" : parentCommitId);
+    if (parentCommitIds == null || parentCommitIds.isEmpty()) {
+      builder.setParentCommitId("NONE");
+    } else {
+      builder.setParentCommitId(parentCommitIds.get(0));
+      builder.addAllParentCommitIds(parentCommitIds);
+    }
     builder.setBranchName(branchName);
   }
 
