@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.sse.Sse;
 import jakarta.ws.rs.sse.SseEventSink;
@@ -25,6 +26,9 @@ public class AnalysisStatusService {
 
   private final Map<String, AnalysisProgressState> stateByLandscapeToken = new ConcurrentHashMap<>();
   private final Map<String, Set<SseSubscriber>> subscribersByLandscapeToken = new ConcurrentHashMap<>();
+
+  @Inject
+  TerminalProgressReporter terminalProgressReporter;
 
   private record SseSubscriber(SseEventSink sink, Sse sse) {
   }
@@ -148,6 +152,8 @@ public class AnalysisStatusService {
   }
 
   private void notifySubscribers(final String landscapeToken, final AnalysisProgressState state) {
+    terminalProgressReporter.update(state);
+
     final Set<SseSubscriber> subscribers = subscribersByLandscapeToken.get(landscapeToken);
     if (subscribers == null || subscribers.isEmpty()) {
       return;

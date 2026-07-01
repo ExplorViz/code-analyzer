@@ -14,6 +14,7 @@ import net.explorviz.code.analysis.export.GrpcExporter;
 import net.explorviz.code.analysis.export.JsonExporter;
 import net.explorviz.code.analysis.service.AnalysisConfig;
 import net.explorviz.code.analysis.service.AnalysisService;
+import net.explorviz.code.analysis.service.AnalysisStatusService;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -88,6 +89,9 @@ public class GitAnalysis { // NOPMD
   @Inject
   /* package */ AnalysisService analysisService; // NOCS
 
+  @Inject
+  /* package */ AnalysisStatusService analysisStatusService; // NOCS
+
   /**
    * Creates an AnalysisConfig from the current properties.
    *
@@ -139,7 +143,16 @@ public class GitAnalysis { // NOPMD
     } else {
       exporter = new JsonExporter(config.getRepositoryName(), applicationNameProperty);
     }
-    analyzeAndSendRepo(exporter);
+    try {
+      analyzeAndSendRepo(exporter);
+      analysisStatusService.markFinished(landscapeTokenProperty);
+    } catch (IOException | GitAPIException | PropertyNotDefinedException | NotFoundException e) {
+      analysisStatusService.markFailed(landscapeTokenProperty);
+      throw e;
+    } catch (RuntimeException e) {
+      analysisStatusService.markFailed(landscapeTokenProperty);
+      throw e;
+    }
 
     final long endTime = System.currentTimeMillis();
 
