@@ -2,7 +2,10 @@ package net.explorviz.code.analysis.service;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import java.lang.reflect.Constructor;
 import java.util.List;
+import org.eclipse.jgit.lib.AnyObjectId;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -15,9 +18,9 @@ class AnalysisServiceLandscapeParentTest {
 
   @Test
   void usesLastAnalyzedCommitAsPrimaryParentForLandscapeCopy() {
-    final RevCommit lastAnalyzed = commitWithName("analyzed-parent");
-    final RevCommit gitParent = commitWithName("git-parent-0");
-    final RevCommit gitParent2 = commitWithName("git-parent-1");
+    final RevCommit lastAnalyzed = commitWithId("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    final RevCommit gitParent = commitWithId("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+    final RevCommit gitParent2 = commitWithId("cccccccccccccccccccccccccccccccccccccccc");
     final RevCommit commit = Mockito.mock(RevCommit.class);
     Mockito.when(commit.getParentCount()).thenReturn(2);
     Mockito.doReturn(gitParent).when(commit).getParent(0);
@@ -27,12 +30,16 @@ class AnalysisServiceLandscapeParentTest {
         analysisService.resolveLandscapeParentCommitIds(commit, lastAnalyzed);
 
     Assertions.assertEquals(
-        List.of("analyzed-parent", "git-parent-0", "git-parent-1"), parentIds);
+        List.of(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "cccccccccccccccccccccccccccccccccccccccc"),
+        parentIds);
   }
 
   @Test
   void fallsBackToGitParentsForBootstrapCommit() {
-    final RevCommit gitParent = commitWithName("git-parent-0");
+    final RevCommit gitParent = commitWithId("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
     final RevCommit commit = Mockito.mock(RevCommit.class);
     Mockito.when(commit.getParentCount()).thenReturn(1);
     Mockito.doReturn(gitParent).when(commit).getParent(0);
@@ -40,12 +47,18 @@ class AnalysisServiceLandscapeParentTest {
     final List<String> parentIds =
         analysisService.resolveLandscapeParentCommitIds(commit, null);
 
-    Assertions.assertEquals(List.of("git-parent-0"), parentIds);
+    Assertions.assertEquals(
+        List.of("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"), parentIds);
   }
 
-  private static RevCommit commitWithName(final String name) {
-    final RevCommit commit = Mockito.mock(RevCommit.class);
-    Mockito.when(commit.getName()).thenReturn(name);
-    return commit;
+  private static RevCommit commitWithId(final String objectId) {
+    try {
+      final Constructor<RevCommit> constructor =
+          RevCommit.class.getDeclaredConstructor(AnyObjectId.class);
+      constructor.setAccessible(true);
+      return constructor.newInstance(ObjectId.fromString(objectId));
+    } catch (ReflectiveOperationException exception) {
+      throw new IllegalStateException("Failed to create RevCommit test stub", exception);
+    }
   }
 }
