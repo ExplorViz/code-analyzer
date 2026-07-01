@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -268,7 +269,7 @@ public class AnalysisService {
           createCommitReport(
               config,
               commit,
-              baseCommit,
+              lastCheckedCommit,
               exporter,
               branch,
               descriptorAddedList,
@@ -290,7 +291,7 @@ public class AnalysisService {
             config,
             repository,
             commit,
-            baseCommit,
+            lastCheckedCommit,
             descriptorList,
             exporter,
             branch,
@@ -460,8 +461,8 @@ public class AnalysisService {
   }
 
   /**
-   * Resolves the old commit for {@code git diff}. Uses the first git parent when available so file
-   * diffs align with {@code parent_commit_id} used for unchanged-file copying in landscape-service.
+   * Resolves the old commit for {@code git diff}. This may differ from the commit used for
+   * unchanged-file inheritance in landscape-service; see {@link #resolveLandscapeParentCommitIds}.
    */
   /* package */ RevCommit resolveDiffBaseCommit(
       final RevCommit commit,
@@ -486,6 +487,20 @@ public class AnalysisService {
       parentIds.add(commit.getParent(parentIndex).getName());
     }
     return parentIds;
+  }
+
+  /**
+   * Parent commit ids for {@link CommitData}. The first id is used by landscape-service to copy
+   * unchanged files and must be the previously analyzed commit on the current branch walk.
+   */
+  /* package */ List<String> resolveLandscapeParentCommitIds(
+      final RevCommit commit, final RevCommit lastAnalyzedCommit) {
+    final LinkedHashSet<String> parentIds = new LinkedHashSet<>();
+    if (lastAnalyzedCommit != null) {
+      parentIds.add(lastAnalyzedCommit.getName());
+    }
+    parentIds.addAll(resolveStoredParentCommitIds(commit));
+    return List.copyOf(parentIds);
   }
 
   /* package */ Optional<RevCommit> toOptionalDiffBase(final RevCommit baseCommit) {
@@ -570,7 +585,8 @@ public class AnalysisService {
   }
 
   private void commitAnalysis(final AnalysisConfig config, final Repository repository,
-      final RevCommit commit, final RevCommit lastCommit, final List<FileDescriptor> descriptorList,
+      final RevCommit commit, final RevCommit lastAnalyzedCommit,
+      final List<FileDescriptor> descriptorList,
       final DataExporter exporter, final String branchName,
       final List<FileDescriptor> addedFiles, final List<FileDescriptor> modifiedFiles,
       final List<FileDescriptor> deletedFiles,
@@ -581,7 +597,7 @@ public class AnalysisService {
     createCommitReport(
         config,
         commit,
-        lastCommit,
+        lastAnalyzedCommit,
         exporter,
         branchName,
         addedFiles,
@@ -748,7 +764,7 @@ public class AnalysisService {
   }
 
   private void createCommitReport(final AnalysisConfig config, final RevCommit commit,
-      final RevCommit lastCommit, final DataExporter exporter, final String branchName,
+      final RevCommit lastAnalyzedCommit, final DataExporter exporter, final String branchName,
       final List<FileDescriptor> addedFiles, final List<FileDescriptor> modifiedFiles,
       final List<FileDescriptor> deletedFiles,
       final Map<ObjectId, List<String>> tagsByCommitId)
@@ -756,7 +772,9 @@ public class AnalysisService {
     final CommitReportHandler commitReportHandler = new CommitReportHandler();
 
     commitReportHandler.init(
-        commit.getId().getName(), resolveStoredParentCommitIds(commit), branchName);
+        commit.getId().getName(),
+        resolveLandscapeParentCommitIds(commit, lastAnalyzedCommit),
+        branchName);
 
     commitReportHandler.setAnalysisFileCount(addedFiles.size() + modifiedFiles.size());
 
