@@ -189,7 +189,7 @@ public class AnalysisService {
       checkIfCommitsAreReachable(startCommit, endCommit, fullBranch);
 
       final List<RevCommit> commitsInRange = collectCommitsInRange(repository, fullBranch, startCommit,
-          endCommit, exporter.isRemote());
+          endCommit, exporter.isRemote(), config.firstParentCommitsOnly());
       final int totalCommitsInRange = commitsInRange.size();
 
       int commitsToAnalyze = totalCommitsInRange;
@@ -540,9 +540,9 @@ public class AnalysisService {
 
   private List<RevCommit> collectCommitsInRange(final Repository repository, final String fullBranch,
       final Optional<String> startCommit, final Optional<String> endCommit,
-      final boolean remoteExport) throws IOException {
+      final boolean remoteExport, final boolean firstParentCommitsOnly) throws IOException {
     try (RevWalk revWalk = new RevWalk(repository)) {
-      prepareRevWalk(repository, revWalk, fullBranch);
+      prepareRevWalk(repository, revWalk, fullBranch, firstParentCommitsOnly);
 
       final List<RevCommit> commits = new ArrayList<>();
       boolean inAnalysisRange = startCommit.isEmpty() || "".equals(startCommit.get());
@@ -580,8 +580,9 @@ public class AnalysisService {
   }
 
   private void prepareRevWalk(final Repository repository, final RevWalk revWalk,
-      final String branch) throws IOException {
-    gitRepositoryHandler.configureBranchRevWalk(revWalk, repository, branch);
+      final String branch, final boolean firstParentCommitsOnly) throws IOException {
+    gitRepositoryHandler.configureBranchRevWalk(revWalk, repository, branch,
+        firstParentCommitsOnly);
   }
 
   private void commitAnalysis(final AnalysisConfig config, final Repository repository,

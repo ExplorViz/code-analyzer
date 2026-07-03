@@ -50,6 +50,7 @@ public class AnalysisRequest {
   private String endCommit;
   private Integer commitAnalysisLimit;
   private Integer maxLocForFullAnalysis;
+  private boolean firstParentCommitsOnly = true;
   private String landscapeToken = "mytokenvalue";
   private String applicationName = "";
   private String applicationRoot;
@@ -198,6 +199,14 @@ public class AnalysisRequest {
     this.maxLocForFullAnalysis = maxLocForFullAnalysis;
   }
 
+  public boolean isFirstParentCommitsOnly() {
+    return firstParentCommitsOnly;
+  }
+
+  public void setFirstParentCommitsOnly(final boolean firstParentCommitsOnly) {
+    this.firstParentCommitsOnly = firstParentCommitsOnly;
+  }
+
   public boolean isFetchSocialData() {
     return fetchSocialData;
   }
@@ -252,6 +261,7 @@ public class AnalysisRequest {
         .endCommit(Optional.ofNullable(endCommit))
         .commitAnalysisLimit(Optional.ofNullable(commitAnalysisLimit))
         .maxLocForFullAnalysis(Optional.ofNullable(maxLocForFullAnalysis))
+        .firstParentCommitsOnly(firstParentCommitsOnly)
         .landscapeToken((landscapeToken != null && !landscapeToken.isBlank()) ? landscapeToken : "mytokenvalue")
         .applicationRoot(Optional.ofNullable(applicationRoot))
         .fetchSocialData(fetchSocialData)

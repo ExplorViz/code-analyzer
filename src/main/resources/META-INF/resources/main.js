@@ -121,6 +121,7 @@ function collectPayload(formData) {
   payload.includeDataStructures = formData.get("includeDataStructures") !== null;
   payload.sendToRemote = formData.get("sendToRemote") !== null;
   payload.fetchSocialData = formData.get("fetchSocialData") !== null;
+  payload.firstParentCommitsOnly = formData.get("firstParentCommitsOnly") !== null;
 
   if (payload.commitAnalysisLimit) {
     payload.commitAnalysisLimit = parseInt(payload.commitAnalysisLimit);
@@ -294,6 +295,7 @@ function applySample() {
   form.elements.includeDataStructures.checked = true;
   form.elements.sendToRemote.checked = true;
   form.elements.fetchSocialData.checked = false;
+  form.elements.firstParentCommitsOnly.checked = true;
 
   if (applicationRowsContainer) {
     applicationRowsContainer.replaceChildren();

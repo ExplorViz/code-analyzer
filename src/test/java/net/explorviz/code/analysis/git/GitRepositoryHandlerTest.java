@@ -220,7 +220,31 @@ public class GitRepositoryHandlerTest {
   }
 
   @Test
-  void configureBranchRevWalk_includesAllReachableCommitsNotJustFirstParent()
+  void configureBranchRevWalk_firstParentOnly_excludesMergedBranchCommits()
+      throws IOException {
+    final Path traceServiceRepo = Path.of(System.getProperty("user.home"), "Documents",
+        "ExplorViz", "trace-service");
+    Assumptions.assumeTrue(Files.isDirectory(traceServiceRepo.resolve(".git")),
+        "Local trace-service clone required for this test");
+
+    try (Git git = Git.open(traceServiceRepo.toFile());
+        Repository repository = git.getRepository();
+        RevWalk allReachableWalk = new RevWalk(repository);
+        RevWalk firstParentWalk = new RevWalk(repository)) {
+      final String mainRef = "refs/heads/main";
+      allReachableWalk.markStart(allReachableWalk.parseCommit(repository.resolve(mainRef)));
+      final long allReachableCount = countCommits(allReachableWalk);
+
+      gitRepositoryHandler.configureBranchRevWalk(firstParentWalk, repository, mainRef, true);
+      final long firstParentCount = countCommits(firstParentWalk);
+
+      Assertions.assertTrue(firstParentCount < allReachableCount,
+          "First-parent walk must exclude merged feature-branch commits");
+    }
+  }
+
+  @Test
+  void configureBranchRevWalk_includesAllReachableCommits_whenFirstParentDisabled()
       throws IOException {
     final Path traceServiceRepo = Path.of(System.getProperty("user.home"), "Documents",
         "ExplorViz", "trace-service");
@@ -235,12 +259,12 @@ public class GitRepositoryHandlerTest {
       allReachableWalk.markStart(allReachableWalk.parseCommit(repository.resolve(mainRef)));
       final long allReachableCount = countCommits(allReachableWalk);
 
-      gitRepositoryHandler.configureBranchRevWalk(branchWalk, repository, mainRef);
+      gitRepositoryHandler.configureBranchRevWalk(branchWalk, repository, mainRef, false);
       final long branchWalkCount = countCommits(branchWalk);
 
       Assertions.assertEquals(allReachableCount, branchWalkCount);
       Assertions.assertTrue(branchWalkCount > 72,
-          "Branch walk must include merged commits, not only the first-parent chain");
+          "Branch walk must include merged commits when first-parent filtering is disabled");
     }
   }
 

@@ -676,14 +676,21 @@ public class GitRepositoryHandler { // NOPMD
   }
 
   /**
-   * Configures a {@link RevWalk} to traverse all commits reachable from the branch tip and emit
+   * Configures a {@link RevWalk} to traverse commits reachable from the branch tip and emit
    * them in topological order (oldest first), matching {@code git rev-list --reverse}.
+   *
+   * @param firstParentCommitsOnly when {@code true}, only follow first-parent links so merged
+   *                               feature-branch commits are excluded
    */
   public void configureBranchRevWalk(
-      final RevWalk revWalk, final Repository repository, final String branchRef)
+      final RevWalk revWalk, final Repository repository, final String branchRef,
+      final boolean firstParentCommitsOnly)
       throws IOException {
     revWalk.sort(RevSort.TOPO);
     revWalk.sort(RevSort.REVERSE);
+    if (firstParentCommitsOnly) {
+      revWalk.setFirstParent(true);
+    }
 
     LOGGER.atTrace().addArgument(branchRef).log("Walking branch: {}");
 

@@ -120,6 +120,20 @@
               <input min="1" name="commitAnalysisLimit" placeholder="all" type="number" value="1" />
             </label>
 
+            <label class="toggle" style="grid-column: 1 / -1">
+              <input checked name="firstParentCommitsOnly" type="checkbox" />
+              <span class="label-header">
+                First-Parent Commits Only
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text"
+                    >When enabled, only commits on the first-parent chain are analyzed. Commits from merged feature
+                    branches are excluded.</span
+                  >
+                </span>
+              </span>
+            </label>
+
             <label style="grid-column: 1 / -1">
               <span class="label-header">
                 Max LOC for Full Analysis
