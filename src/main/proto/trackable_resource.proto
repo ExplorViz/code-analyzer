@@ -31,9 +31,10 @@ enum AnnotationType {
 }
 
 enum ResourceState {
-  OPEN = 0;
-  CLOSED = 1;
-  MERGED = 2;
+  UNCHANGED = 0;
+  OPEN = 1;
+  CLOSED = 2;
+  MERGED = 3;
 }
 
 message TrackableResourceEvent {

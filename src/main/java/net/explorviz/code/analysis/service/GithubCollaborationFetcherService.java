@@ -299,7 +299,7 @@ public class GithubCollaborationFetcherService {
           eventActorLogin = eventNode.getJsonObject("author").getString("login", authorLogin);
         }
 
-        ResourceState newState = baseBuilder.getNewState(); // Default to current state
+        ResourceState newState = ResourceState.UNCHANGED; // Default to unchanged and update on transition only
 
         // Special handling for PullRequestCommit
         if ("PullRequestCommit".equals(type)) {
