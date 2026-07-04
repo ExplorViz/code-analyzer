@@ -17,6 +17,7 @@ import io.smallrye.graphql.client.core.Variable;
 import io.smallrye.graphql.client.dynamic.api.DynamicGraphQLClient;
 import io.smallrye.graphql.client.dynamic.api.DynamicGraphQLClientBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import java.text.SimpleDateFormat;
@@ -275,7 +276,7 @@ public class GithubCollaborationFetcherService {
     List<TrackableResourceEvent> events = new ArrayList<>();
     String id = getJsonString(node, "id", "");
 
-    String authorLogin = baseBuilder.getActor().getGithubLogin();
+    ContributorData baseActor = baseBuilder.getActor();
 
     // Process Timeline Items
     if (node.containsKey("timelineItems") && !node.isNull("timelineItems")) {
@@ -292,12 +293,21 @@ public class GithubCollaborationFetcherService {
         String timestamp = eventNode.containsKey("createdAt") ? eventNode.getString("createdAt") : "";
 
         // Determine Actor
-        String eventActorLogin = authorLogin; // default to resource author
+        String eventActorLogin = "";
+        String eventActorEmail = "";
+        String eventActorAvatarUrl = "";
         if (eventNode.containsKey("actor") && !eventNode.isNull("actor")) {
-          eventActorLogin = eventNode.getJsonObject("actor").getString("login", authorLogin);
+          JsonObject actorObj = eventNode.getJsonObject("actor");
+          eventActorLogin = getJsonString(actorObj, "login", "");
+          eventActorEmail = getJsonString(actorObj, "email", "");
+          eventActorAvatarUrl = getJsonString(actorObj, "avatarUrl", "");
         } else if (eventNode.containsKey("author") && !eventNode.isNull("author")) {
-          eventActorLogin = eventNode.getJsonObject("author").getString("login", authorLogin);
+          JsonObject authorObj = eventNode.getJsonObject("author");
+          eventActorLogin = getJsonString(authorObj, "login", "");
+          eventActorEmail = getJsonString(authorObj, "email", "");
+          eventActorAvatarUrl = getJsonString(authorObj, "avatarUrl", "");
         }
+
 
         ResourceState newState = ResourceState.UNCHANGED; // Default to unchanged and update on transition only
 
@@ -307,8 +317,11 @@ public class GithubCollaborationFetcherService {
           timestamp = commitNode.getString("authoredDate", "");
           if (commitNode.containsKey("author") && !commitNode.isNull("author")) {
             JsonObject commitAuthor = commitNode.getJsonObject("author");
+            eventActorEmail = getJsonString(commitAuthor, "email", "");
             if (commitAuthor.containsKey("user") && !commitAuthor.isNull("user")) {
-              eventActorLogin = commitAuthor.getJsonObject("user").getString("login", authorLogin);
+              JsonObject userObj = commitAuthor.getJsonObject("user");
+              eventActorLogin = getJsonString(userObj, "login", "");
+              eventActorAvatarUrl = getJsonString(userObj, "avatarUrl", "");
             }
           }
         }
@@ -322,9 +335,13 @@ public class GithubCollaborationFetcherService {
           newState = ResourceState.MERGED;
         }
 
-        ContributorData eventActor = baseBuilder.getActor().toBuilder()
+        ContributorData eventActor = ContributorData.newBuilder()
+            .setLandscapeToken(baseActor.getLandscapeToken())
+            .setRepositoryName(baseActor.getRepositoryName())
             .setGithubLogin(eventActorLogin)
             .setGitUsername(eventActorLogin)
+            .setAvatarUrl(eventActorAvatarUrl)
+            .setEmail(eventActorEmail)
             .build();
 
         TrackableResourceEvent event = baseBuilder.clone()
@@ -382,9 +399,15 @@ public class GithubCollaborationFetcherService {
                         field("timelineItems", args(arg("first", 50)),
                             field("nodes",
                                 field("__typename"),
-                                on("ClosedEvent", field("createdAt"), field("actor", field("login"))),
-                                on("ReopenedEvent", field("createdAt"), field("actor", field("login"))),
-                                on("IssueComment", field("createdAt"), field("author", field("login")))
+                                on("ClosedEvent", field("createdAt"),
+                                    field("actor", field("login"), field("avatarUrl"),
+                                        on("User", field("email")))),
+                                on("ReopenedEvent", field("createdAt"),
+                                    field("actor", field("login"), field("avatarUrl"),
+                                        on("User", field("email")))),
+                                on("IssueComment", field("createdAt"),
+                                    field("author", field("login"), field("avatarUrl"),
+                                        on("User", field("email"))))
                             )
                         )
                     ),
@@ -412,18 +435,33 @@ public class GithubCollaborationFetcherService {
                         field("timelineItems", args(arg("first", 50)),
                             field("nodes",
                                 field("__typename"),
-                                on("ClosedEvent", field("createdAt"), field("actor", field("login"))),
-                                on("MergedEvent", field("createdAt"), field("actor", field("login"))),
-                                on("ReopenedEvent", field("createdAt"), field("actor", field("login"))),
-                                on("IssueComment", field("createdAt"), field("author", field("login"))),
-                                on("HeadRefForcePushedEvent", field("createdAt"), field("actor", field("login"))),
+                                on("ClosedEvent", field("createdAt"),
+                                    field("actor", field("login"), field("avatarUrl"),
+                                        on("User", field("email")))),
+                                on("MergedEvent", field("createdAt"),
+                                    field("actor", field("login"), field("avatarUrl"),
+                                        on("User", field("email")))),
+                                on("ReopenedEvent", field("createdAt"),
+                                    field("actor", field("login"), field("avatarUrl"),
+                                        on("User", field("email")))),
+                                on("IssueComment", field("createdAt"),
+                                    field("author", field("login"), field("avatarUrl"),
+                                        on("User", field("email")))),
+                                on("HeadRefForcePushedEvent", field("createdAt"),
+                                    field("actor", field("login"), field("avatarUrl"),
+                                        on("User", field("email")))),
                                 on("PullRequestCommit",
                                     field("commit",
                                         field("authoredDate"),
-                                        field("author", field("user", field("login")))
+                                        field("author",
+                                            field("email"),
+                                            field("user", field("login"), field("avatarUrl"))
+                                        )
                                     )
                                 ),
-                                on("PullRequestReview", field("createdAt"), field("author", field("login")))
+                                on("PullRequestReview", field("createdAt"),
+                                    field("author", field("login"), field("avatarUrl"),
+                                        on("User", field("email"))))
                             )
                         )
                     )
