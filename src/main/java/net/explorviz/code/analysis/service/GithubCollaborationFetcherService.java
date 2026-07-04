@@ -285,6 +285,11 @@ public class GithubCollaborationFetcherService {
         JsonObject eventNode = timelineNodes.getJsonObject(i);
         String type = eventNode.getString("__typename", "");
 
+        // skip closedEvent if merged like generateLifecycleEvents
+        if ("ClosedEvent".equals(type) && node.containsKey("mergedAt") && !node.isNull("mergedAt")) {
+          continue;
+        }
+
         AnnotationType annotationType = mapToAnnotationType(type);
         if (annotationType == null) {
           continue;
