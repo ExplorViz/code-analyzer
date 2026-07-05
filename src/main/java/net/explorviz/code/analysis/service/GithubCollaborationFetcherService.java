@@ -25,10 +25,12 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.explorviz.code.analysis.export.DataExporter;
 import net.explorviz.code.proto.AnnotationType;
 import net.explorviz.code.proto.ContributorData;
@@ -168,11 +170,26 @@ public class GithubCollaborationFetcherService {
       return events;
     }
 
-    events.addAll(generateLifecycleEvents(node, baseBuilder));
 
+    final List<TrackableResourceEvent> lifecycleEvents = generateLifecycleEvents(node, baseBuilder);
+
+    List<TrackableResourceEvent> timelineEvents = new ArrayList<>();
     if (node.containsKey("timelineItems") && !node.isNull("timelineItems")) {
-      events.addAll(parseTimelineEvents(node, baseBuilder));
+      timelineEvents = parseTimelineEvents(node, baseBuilder);
     }
+
+    final Set<AnnotationType> timelineTypes = EnumSet.noneOf(AnnotationType.class);
+    for (final TrackableResourceEvent timelineEvent : timelineEvents) {
+      timelineTypes.add(timelineEvent.getAnnotationType());
+    }
+
+    // skip synthetic CLOSE or MERGE events if full timeline event exists
+    for (final TrackableResourceEvent lifecycleEvent : lifecycleEvents) {
+      if (!timelineTypes.contains(lifecycleEvent.getAnnotationType())) {
+        events.add(lifecycleEvent);
+      }
+    }
+    events.addAll(timelineEvents);
 
     return events;
   }
@@ -248,7 +265,7 @@ public class GithubCollaborationFetcherService {
       } else {
         events.add(baseBuilder.clone()
             .setAnnotationType(AnnotationType.CREATE)
-            .setAnnotationId(id)
+            .setAnnotationId(id + "-" + AnnotationType.CREATE.name())
             .setNewState(ResourceState.OPEN)
             .setEventTimestamp(timestamp.get())
             .build());
@@ -262,7 +279,7 @@ public class GithubCollaborationFetcherService {
       } else {
         events.add(baseBuilder.clone()
             .setAnnotationType(AnnotationType.MERGE)
-            .setAnnotationId(id)
+            .setAnnotationId(id + "-" + AnnotationType.MERGE.name())
             .setNewState(ResourceState.MERGED)
             .setEventTimestamp(timestamp.get())
             .build());
@@ -274,7 +291,7 @@ public class GithubCollaborationFetcherService {
       } else {
         events.add(baseBuilder.clone()
             .setAnnotationType(AnnotationType.CLOSE)
-            .setAnnotationId(id)
+            .setAnnotationId(id + "-" + AnnotationType.CLOSE.name())
             .setNewState(ResourceState.CLOSED)
             .setEventTimestamp(timestamp.get())
             .build());

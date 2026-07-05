@@ -328,12 +328,15 @@ public class AnalysisService {
       return;
     }
 
+    if (config.repoRemoteUrl().isEmpty()) {
+      LOGGER.info("Skipping GitHub social data fetch, no remote URL configured.");
+      return;
+    }
+
     // determine repo sub string with format "owner/repo" needed for graphql query
-    if(config.repoRemoteUrl().isPresent()){
-      final Optional<String> repoSubString = extractGithubRepoSubString(config.repoRemoteUrl().get());
-      if (repoSubString.isEmpty()) {
-        return;
-      }
+    final Optional<String> repoSubString = extractGithubRepoSubString(config.repoRemoteUrl().get());
+    if (repoSubString.isEmpty()) {
+      return;
     }
 
     // send state data before fetching to make sure precondition is met
