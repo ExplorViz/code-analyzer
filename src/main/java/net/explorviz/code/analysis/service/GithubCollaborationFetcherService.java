@@ -22,17 +22,20 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import net.explorviz.code.analysis.export.DataExporter;
 import net.explorviz.code.proto.AnnotationType;
 import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.ResourceState;
 import net.explorviz.code.proto.TrackableResourceEvent;
 import net.explorviz.code.proto.TrackableResourceType;
+import org.checkerframework.common.value.qual.StringVal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -211,14 +214,12 @@ public class GithubCollaborationFetcherService {
         .build();
 
     // Parse Labels
-    String labelsStr = "";
+    List<String> labelNames = new ArrayList<>();
     if (node.containsKey("labels") && !node.isNull("labels")) {
       jakarta.json.JsonArray labelNodes = node.getJsonObject("labels").getJsonArray("nodes");
-      List<String> labelNames = new ArrayList<>();
       for (int l = 0; l < labelNodes.size(); l++) {
         labelNames.add(labelNodes.getJsonObject(l).getString("name", "unknown"));
       }
-      labelsStr = String.join(",", labelNames);
     }
 
     return TrackableResourceEvent.newBuilder()
@@ -230,7 +231,7 @@ public class GithubCollaborationFetcherService {
         .setTitle(title)
         .setDescription(description)
         .setWebUrl(webUrl)
-        .setLabels(labelsStr);
+        .addAllLabels(labelNames);
   }
 
   private List<TrackableResourceEvent> generateLifecycleEvents(
@@ -241,31 +242,43 @@ public class GithubCollaborationFetcherService {
     String id = getJsonString(node, "id", "");
 
     if (node.containsKey("createdAt") && !node.isNull("createdAt")) {
-      TrackableResourceEvent event = baseBuilder.clone()
-          .setAnnotationType(AnnotationType.CREATE)
-          .setAnnotationId(id)
-          .setNewState(ResourceState.OPEN)
-          .setEventTimestamp(parseTimestamp(node.getString("createdAt")))
-          .build();
-      events.add(event);
+      Optional<Timestamp> timestamp = parseTimestamp(node.getString("createdAt"));
+      if (timestamp.isEmpty()) {
+        LOGGER.warn("Skipping CREATE event for id={}: missing or invalid createdAt", id);
+      } else {
+        events.add(baseBuilder.clone()
+            .setAnnotationType(AnnotationType.CREATE)
+            .setAnnotationId(id)
+            .setNewState(ResourceState.OPEN)
+            .setEventTimestamp(timestamp.get())
+            .build());
+      }
     }
 
     if (node.containsKey("mergedAt") && !node.isNull("mergedAt")) {
-      TrackableResourceEvent event = baseBuilder.clone()
-          .setAnnotationType(AnnotationType.MERGE)
-          .setAnnotationId(id)
-          .setNewState(ResourceState.MERGED)
-          .setEventTimestamp(parseTimestamp(node.getString("mergedAt")))
-          .build();
-      events.add(event);
+      Optional<Timestamp> timestamp = parseTimestamp(node.getString("mergedAt"));
+      if (timestamp.isEmpty()) {
+        LOGGER.warn("Skipping MERGE event for id={}: missing or invalid mergedAt", id);
+      } else {
+        events.add(baseBuilder.clone()
+            .setAnnotationType(AnnotationType.MERGE)
+            .setAnnotationId(id)
+            .setNewState(ResourceState.MERGED)
+            .setEventTimestamp(timestamp.get())
+            .build());
+      }
     } else if (node.containsKey("closedAt") && !node.isNull("closedAt")) {
-      TrackableResourceEvent event = baseBuilder.clone()
-          .setAnnotationType(AnnotationType.CLOSE)
-          .setAnnotationId(id)
-          .setNewState(ResourceState.CLOSED)
-          .setEventTimestamp(parseTimestamp(node.getString("closedAt")))
-          .build();
-      events.add(event);
+      Optional<Timestamp> timestamp = parseTimestamp(node.getString("closedAt"));
+      if (timestamp.isEmpty()) {
+        LOGGER.warn("Skipping CLOSE event for id={}: missing or invalid closedAt", id);
+      } else {
+        events.add(baseBuilder.clone()
+            .setAnnotationType(AnnotationType.CLOSE)
+            .setAnnotationId(id)
+            .setNewState(ResourceState.CLOSED)
+            .setEventTimestamp(timestamp.get())
+            .build());
+      }
     }
     return events;
   }
@@ -349,15 +362,18 @@ public class GithubCollaborationFetcherService {
             .setEmail(eventActorEmail)
             .build();
 
-        TrackableResourceEvent event = baseBuilder.clone()
-            .setAnnotationType(annotationType)
-            .setAnnotationId(id + "-" + type + "-" + i)
-            .setEventTimestamp(parseTimestamp(timestamp))
-            .setActor(eventActor)
-            .setNewState(newState)
-            .build();
-
-        events.add(event);
+        Optional<Timestamp> parsedTimestamp = parseTimestamp(timestamp);
+        if (parsedTimestamp.isEmpty()) {
+          LOGGER.warn("Skipping {} event for id={}: missing or invalid timestamp", annotationType, id);
+        } else {
+          events.add(baseBuilder.clone()
+              .setAnnotationType(annotationType)
+              .setAnnotationId(id + "-" + type + "-" + i)
+              .setEventTimestamp(parsedTimestamp.get())
+              .setActor(eventActor)
+              .setNewState(newState)
+              .build());
+        }
       }
     }
     return events;
@@ -519,16 +535,19 @@ public class GithubCollaborationFetcherService {
         : defaultValue;
   }
 
-  public Timestamp parseTimestamp(String isoTimestamp) {
+  public Optional<Timestamp> parseTimestamp(String isoTimestamp) {
     if (isoTimestamp == null || isoTimestamp.isBlank()) {
-      return Timestamp.getDefaultInstance(); // Safe fallback
+      return Optional.empty();
     }
 
-    // parse instant to protobuf timestamp
-    Instant instant = Instant.parse(isoTimestamp);
-    return Timestamp.newBuilder()
-        .setSeconds(instant.getEpochSecond())
-        .setNanos(instant.getNano())
-        .build();
+    try {
+      Instant instant = Instant.parse(isoTimestamp);
+      return Optional.of(Timestamp.newBuilder()
+          .setSeconds(instant.getEpochSecond())
+          .setNanos(instant.getNano())
+          .build());
+    } catch (DateTimeParseException e) {
+      return Optional.empty();
+    }
   }
 }

@@ -55,6 +55,6 @@ message TrackableResourceEvent {
   string title = 10;
   string description = 11;
   string web_url = 12;
-  string labels = 13;
+  repeated string labels = 13;
 
 }
