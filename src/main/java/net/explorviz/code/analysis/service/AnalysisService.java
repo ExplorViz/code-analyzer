@@ -323,16 +323,17 @@ public class AnalysisService {
   }
 
   private void fetchSocialData(final AnalysisConfig config, final DataExporter exporter) {
-
     if (!config.fetchSocialData()) {
       LOGGER.info("Skipping GitHub social data fetch, not enabled in config.");
       return;
     }
 
     // determine repo sub string with format "owner/repo" needed for graphql query
-    final Optional<String> repoSubString = extractGithubRepoSubString(config.repoRemoteUrl().get());
-    if (repoSubString.isEmpty()) {
-      return;
+    if(config.repoRemoteUrl().isPresent()){
+      final Optional<String> repoSubString = extractGithubRepoSubString(config.repoRemoteUrl().get());
+      if (repoSubString.isEmpty()) {
+        return;
+      }
     }
 
     // send state data before fetching to make sure precondition is met
