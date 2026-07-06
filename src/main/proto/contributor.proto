@@ -4,12 +4,6 @@ option java_multiple_files = true;
 option java_package = "net.explorviz.code.proto";
 option java_outer_classname = "ContributorProto";
 
-import "google/protobuf/empty.proto";
-
-service ContributorService {
-  rpc PersistContributor (ContributorData) returns (google.protobuf.Empty) {}
-}
-
 message ContributorData {
   // Git data
   string landscape_token = 1;

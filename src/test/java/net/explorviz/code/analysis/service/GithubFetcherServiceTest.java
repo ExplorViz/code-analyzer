@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-public class GitHubFetcherServiceTest {
+public class GithubFetcherServiceTest {
 
   @Inject
   GithubFetcherService githubSocialFetcherService;

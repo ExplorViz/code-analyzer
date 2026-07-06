@@ -19,7 +19,6 @@ import io.smallrye.graphql.client.dynamic.api.DynamicGraphQLClientBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
-import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -55,7 +54,13 @@ public class GithubFetcherService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GithubFetcherService.class);
 
-  final String githubUrl = "https://api.github.com/graphql";
+  private static final String GITHUB_URL = "https://api.github.com/graphql";
+  private static final Integer PAGE_SIZE = 100;
+  private static final Integer NUM_LABELS = 10;
+  private static final Integer NUM_TIMELINE_ITEMS = 100;
+  private static final Integer NUM_COMMITS = 100;
+  private static final Integer NUM_ISSUE_REFERENCES = 20;
+
 
   Optional<CompletableFuture<Void>> fetchSocialData(
       final AnalysisConfig config, final DataExporter exporter, ManagedExecutor managedExecutor) {
@@ -184,12 +189,12 @@ public class GithubFetcherService {
     String pullRequestQueryStr = String.format("repo:%s is:pr updated:%s", repoOwnerAndName, dateRange);
 
     try (DynamicGraphQLClient githubClient = DynamicGraphQLClientBuilder.newBuilder()
-        .url(githubUrl)
+        .url(GITHUB_URL)
         .header("Authorization", "Bearer " + githubToken)
         .build()) {
 
-      if (!githubToken.startsWith("github_pat")) {
-        throw new IllegalArgumentException("Invalid github token. Aborting GitHub Data fetching.");
+      if (!isTokenValid(githubToken)) {
+        return;
       }
 
       LOGGER.info("Initiating Issue search with query: {}", issueQueryStr);
@@ -205,6 +210,29 @@ public class GithubFetcherService {
       }
       LOGGER.error("Failed to fetch social data: {}", e.getMessage(), e);
     }
+  }
+
+  private boolean isTokenValid(final String token) {
+    Document viewerQuery = document(
+        operation(
+            field("viewer",
+                field("login")
+            )
+        )
+    );
+
+    try (DynamicGraphQLClient githubClient = DynamicGraphQLClientBuilder.newBuilder()
+        .url(GITHUB_URL)
+        .header("Authorization", "Bearer " + token)
+        .build()) {
+
+      githubClient.executeSync(viewerQuery);
+
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Invalid GitHub token, aborting GitHub Data fetching: " + e.getMessage(), e);
+    }
+
+    return true;
   }
 
   private void executePaginatedSearch(
@@ -231,15 +259,19 @@ public class GithubFetcherService {
 
         Response response = githubClient.executeSync(query, variables);
 
-//        String pathString = String.format("json/response%d.json", System.currentTimeMillis());
-//        java.nio.file.Path path = java.nio.file.Path.of(pathString);
-//        Files.createDirectories(path.getParent());
-//
-//        java.nio.file.Files.writeString(
-//            path,
-//            response.getData().toString());
+        //        String pathString = String.format("json/response%d.json", System.currentTimeMillis());
+        //        java.nio.file.Path path = java.nio.file.Path.of(pathString);V
+        //        Files.createDirectories(path.getParent());
+        //
+        //        java.nio.file.Files.writeString(
+        //            path,
+        //            response.getData().toString());
 
-        if (response.hasError() || isRateLimitExceeded(response)) {
+        if (response.hasError()) {
+          LOGGER.warn("GraphQL query {} failed with errors: {}", queryStr, response.getErrors());
+          break;
+        } else if (isRateLimitExceeded(response)) {
+          LOGGER.warn("Rate-limit exceeded for query: {}", queryStr);
           break;
         }
 
@@ -540,7 +572,7 @@ public class GithubFetcherService {
                 args(
                     arg("query", queryVar),
                     arg("type", typeVar),
-                    arg("first", 100),
+                    arg("first", PAGE_SIZE),
                     arg("after", cursorVar)
                 ),
                 field("pageInfo",
@@ -567,10 +599,10 @@ public class GithubFetcherService {
                                 field("email")
                             )
                         ),
-                        field("labels", args(arg("first", 10)),
+                        field("labels", args(arg("first", NUM_LABELS)),
                             field("nodes", field("name"))
                         ),
-                        field("timelineItems", args(arg("first", 100)),
+                        field("timelineItems", args(arg("first", NUM_TIMELINE_ITEMS)),
                             field("nodes",
                                 field("__typename"),
                                 on("ClosedEvent", field("createdAt"),
@@ -586,10 +618,10 @@ public class GithubFetcherService {
                         )
                     ),
                     on("PullRequest",
-                        field("commits", args(arg("first", 100)),
+                        field("commits", args(arg("first", NUM_COMMITS)),
                             field("nodes", field("commit", field("oid")))
                             ),
-                        field("closingIssuesReferences", args(arg("first", 20)),
+                        field("closingIssuesReferences", args(arg("first", NUM_ISSUE_REFERENCES)),
                             field("nodes", field("number"))),
                         field("mergeCommit", field("oid")),
                         field("id"),
@@ -609,10 +641,10 @@ public class GithubFetcherService {
                                 field("email")
                             )
                         ),
-                        field("labels", args(arg("first", 10)),
+                        field("labels", args(arg("first", NUM_LABELS)),
                             field("nodes", field("name"))
                         ),
-                        field("timelineItems", args(arg("first", 50)),
+                        field("timelineItems", args(arg("first", NUM_TIMELINE_ITEMS)),
                             field("nodes",
                                 field("__typename"),
                                 on("ClosedEvent", field("createdAt"),

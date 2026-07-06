@@ -141,11 +141,10 @@ public final class GrpcExporter implements DataExporter {
     try {
       trackableResourceGrpcClient.persistTrackableResourceEvent(trackableResourceEvent);
     } catch (final Exception e) {
-      if (LOGGER.isErrorEnabled()) {
-        LOGGER.error("Failed to send trackable resource event {}: {}", trackableResourceEvent.getAnnotationId(),
-            e.getMessage());
-        LOGGER.debug("Detailed event data: {}", trackableResourceEvent);
-      }
+      LOGGER.error("Failed to send trackable resource event {}: {}", trackableResourceEvent.getAnnotationId(),
+          e.getMessage());
+      throw new RuntimeException("Failed to send trackable resource event for "
+          + trackableResourceEvent.getAnnotationId(), e);
     }
   }
   
