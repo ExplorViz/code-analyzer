@@ -1,0 +1,640 @@
+{
+  "search": {
+    "pageInfo": {
+      "hasNextPage": false,
+      "endCursor": "Y3Vyc29yOjc="
+    },
+    "nodes": [
+      {
+        "__typename": "PullRequest",
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "oid": "8b6ee6de9ee562837974dcd116d0012ae9dd42db"
+              }
+            }
+          ]
+        },
+        "closingIssuesReferences": {
+          "nodes": []
+        },
+        "id": "PR_kwDOAkSj0c7uPTwM",
+        "number": 3115,
+        "title": "Add ZeroTimer",
+        "body": "# Pull Request\r\n\r\n## Contribution\r\nThis pull request provides the following contribution to Kieker\r\n- Contribution 1 Add a `ZeroTimer`, that acts as a `AbstractTimeSource` and just returns 0; should be used for factorial experiments with MooBench\r\n\r\n\r\n## Code Quality Thresholds\r\n- [ ] It was necessary to raise any code quality thresholds\r\n- If yes, which had to be raised and why was it necessary?\r\n..\r\n",
+        "url": "https://github.com/kieker-monitoring/kieker/pull/3115",
+        "state": "OPEN",
+        "createdAt": "2026-07-06T07:51:44Z",
+        "closedAt": null,
+        "mergedAt": null,
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+          "name": "User 1",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "ReviewRequestedEvent"
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2026-07-03T10:30:22Z",
+                "author": {
+                  "email": "user-1@example.invalid",
+                  "user": {
+                    "login": "user-1",
+                    "avatarUrl": "https://avatars.example.invalid/u/1?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-07-06T09:25:05Z",
+              "actor": {
+                "login": "user-1",
+                "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+                "email": ""
+              }
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "PullRequest",
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "oid": "f9a29b26b98e3d15a5576541f07070a9c896a5d1"
+              }
+            }
+          ]
+        },
+        "closingIssuesReferences": {
+          "nodes": []
+        },
+        "id": "PR_kwDOAkSj0c7uJn_3",
+        "number": 3114,
+        "title": "Bump com.rabbitmq:amqp-client from 5.29.0 to 5.33.0",
+        "body": "Bumps [com.rabbitmq:amqp-client](https://github.com/rabbitmq/rabbitmq-java-client) from 5.29.0 to 5.33.0.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/rabbitmq/rabbitmq-java-client/releases\">com.rabbitmq:amqp-client's releases</a>.</em></p>\n<blockquote>\n<h2>5.33.0</h2>\n<h1>Changes between 5.32.0 and 5.33.0</h1>\n<p>This is a maintenance release with bug fixes and dependency upgrades. It introduces minor breaking changes compared to 5.32.0 (see below for details). All users are encouraged to upgrade.</p>\n<p>The RabbitMQ team normally maintain strict backward compatibility in minor versions. However, this release includes exceptional breaking changes that were necessary to patch security gaps and enforce secure-by-default behavior.</p>\n<p>Breaking changes:</p>\n<ul>\n<li>Hostname verification is now enabled by default as soon as TLS is used.</li>\n<li><code>ConnectionFactory#useSslProtocol()</code> now utilizes the JVM's default <code>SSLContext</code>, which validates the server certificate.\n<ul>\n<li>Note: This should primarily affect test environments, as <code>useSslProtocol()</code> was never intended for production use.</li>\n<li>Action required: For test or development environments where certificate validation needs to be disabled, users can now explicitly switch to the new <code>ConnectionFactory#useTlsWithNoVerification()</code> method.</li>\n</ul>\n</li>\n<li>JSON-RPC support classes now introduce an &quot;allowlist&quot;. This change only impacts installations that explicitly utilize these classes.</li>\n</ul>\n<h2>Harden RPC support classes</h2>\n<p>GitHub PR: <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2002\">#2002</a></p>\n<h2>Enable hostname verification by default</h2>\n<p>GitHub issue: <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2005\">#2005</a></p>\n<h2>Introduce helper for dev/test TLS setup</h2>\n<p>GitHub PR: <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2001\">#2001</a></p>\n<h2>Enforce inbound frame max more strictly</h2>\n<p>GitHub PRs: <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/1995\">#1995</a> <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/1998\">#1998</a></p>\n<h2>Bump dependencies</h2>\n<p>GitHub issue: <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/1991\">#1991</a></p>\n<h1>Dependency</h1>\n<h2>Maven</h2>\n<pre lang=\"xml\"><code>&lt;dependency&gt;\r\n  &lt;groupId&gt;com.rabbitmq&lt;/groupId&gt;\r\n  &lt;artifactId&gt;amqp-client&lt;/artifactId&gt;\r\n  &lt;version&gt;5.33.0&lt;/version&gt;\r\n&lt;/dependency&gt;\r\n</code></pre>\n<h2>Gradle</h2>\n<pre lang=\"groovy\"><code>compile 'com.rabbitmq:amqp-client:5.33.0'\r\n&lt;/tr&gt;&lt;/table&gt; \n</code></pre>\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/a6ff07ecf96c1f001d611ea9b88ed8b6e045aa61\"><code>a6ff07e</code></a> [maven-release-plugin] prepare release v5.33.0</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/a3cbc200936a02cf321ab0f1ae311718a34c13c0\"><code>a3cbc20</code></a> Set release version to 5.33.0</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/7c33063f7f11433f620df70873b611cb4b2cd830\"><code>7c33063</code></a> Recommend against replacing SocketConfigurator</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/43263bc7cd4717e8b1ce073e61d6bf35accdb8b7\"><code>43263bc</code></a> Merge pull request <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2001\">#2001</a> from rabbitmq/mergify/bp/v5.x/pr-1999</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/fd34d84ddc79f93be0f3f9bbc14cfcc0639146dd\"><code>fd34d84</code></a> Document NIO configurators</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/4a05f2b774e3f7022c328228fbdb7c316cb61b70\"><code>4a05f2b</code></a> Fix NIO test</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/f02566a5040872b80f79b811c941c342b5308f25\"><code>f02566a</code></a> Merge pull request <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2002\">#2002</a> from rabbitmq/mergify/bp/v5.x/pr-2000</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/38ef88e78faf203e45255d1e8530f5da60b76622\"><code>38ef88e</code></a> Merge pull request <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2004\">#2004</a> from rabbitmq/user-2/maven/v5.x/com.diffplug.spo...</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/66ef941fe058c436a32e1768a95960e3b1d62abc\"><code>66ef941</code></a> Bump com.diffplug.spotless:spotless-maven-plugin from 3.7.0 to 3.8.0</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/c6089b0224e4486a1eebb8efb83bbd89f9e250a0\"><code>c6089b0</code></a> Fix conflicts</li>\n<li>Additional commits viewable in <a href=\"https://github.com/rabbitmq/rabbitmq-java-client/compare/v5.29.0...v5.33.0\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\n[![user-2 compatibility score](https://user-2-badges.githubapp.com/badges/compatibility_score?dependency-name=com.rabbitmq:amqp-client&package-manager=gradle&previous-version=5.29.0&new-version=5.33.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-user-2-security-updates#about-compatibility-scores)\n\nuser-2 will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@user-2 rebase`.\n\n[//]: # (user-2-automerge-start)\n[//]: # (user-2-automerge-end)\n\n---\n\n<details>\n<summary>user-2 commands and options</summary>\n<br />\n\nYou can trigger user-2 actions by commenting on this PR:\n- `@user-2 rebase` will rebase this PR\n- `@user-2 recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@user-2 show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@user-2 ignore this major version` will close this PR and stop user-2 creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@user-2 ignore this minor version` will close this PR and stop user-2 creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@user-2 ignore this dependency` will close this PR and stop user-2 creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+        "url": "https://github.com/kieker-monitoring/kieker/pull/3114",
+        "state": "MERGED",
+        "createdAt": "2026-07-06T01:43:01Z",
+        "closedAt": "2026-07-06T07:49:17Z",
+        "mergedAt": "2026-07-06T07:49:17Z",
+        "author": {
+          "login": "user-2",
+          "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+        },
+        "labels": {
+          "nodes": [
+            {
+              "name": "dependencies"
+            },
+            {
+              "name": "java"
+            }
+          ]
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2026-07-06T01:43:00Z",
+                "author": {
+                  "email": "user-3@example.invalid",
+                  "user": {
+                    "login": "user-3",
+                    "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-07-06T07:49:08Z",
+              "actor": {
+                "login": "user-1",
+                "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "MergedEvent",
+              "createdAt": "2026-07-06T07:49:17Z",
+              "actor": {
+                "login": "user-1",
+                "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "ClosedEvent",
+              "createdAt": "2026-07-06T07:49:17Z",
+              "actor": {
+                "login": "user-1",
+                "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "HeadRefDeletedEvent"
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "PullRequest",
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "oid": "b13b9db855ec0d4f817215a42ad329faf21c1054"
+              }
+            }
+          ]
+        },
+        "closingIssuesReferences": {
+          "nodes": []
+        },
+        "id": "PR_kwDOAkSj0c7uJn6b",
+        "number": 3113,
+        "title": "Bump com.squareup.okhttp3:okhttp from 5.3.2 to 5.4.0",
+        "body": "Bumps [com.squareup.okhttp3:okhttp](https://github.com/square/okhttp) from 5.3.2 to 5.4.0.\n<details>\n<summary>Changelog</summary>\n<p><em>Sourced from <a href=\"https://github.com/square/okhttp/blob/master/CHANGELOG.md\">com.squareup.okhttp3:okhttp's changelog</a>.</em></p>\n<blockquote>\n<h2>Version 5.4.0</h2>\n<p><em>2026-06-08</em></p>\n<ul>\n<li>New: Add superpowers to interceptors. Interceptors can now override anything settable on\n<code>OkHttpClient.Builder</code>, such as the cache, connection pool, socket factory, and DNS. We expect\nthis will allow most users to use interceptors everywhere, insted of mixing and matching\ninterceptors with custom <code>Call.Factory</code> wrappers.</li>\n<li>Fix: Limit each HTTP/2 response to 256 KiB of total headers.</li>\n<li>Upgrade: [kotlinx.coroutines 1.11.0][coroutines_1_11_0]. This is used by the optional\n<code>okhttp-coroutines</code> artifact.</li>\n<li>Upgrade: [GraalVM 25.0.3][graalvm_25].</li>\n<li>Upgrade: [Okio 3.17.0][okio_3_17_0].</li>\n</ul>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/square/okhttp/commit/61423f472da24e0ccc42b6a2c0863fb27932fea5\"><code>61423f4</code></a> Prepare for release 5.4.0.</li>\n<li><a href=\"https://github.com/square/okhttp/commit/d7e6effcb6852ca848b5f497032546b98b0a6370\"><code>d7e6eff</code></a> Update eclipse.osgi to v3.24.200 (<a href=\"https://redirect.github.com/square/okhttp/issues/9480\">#9480</a>)</li>\n<li><a href=\"https://github.com/square/okhttp/commit/7a350986e3231a7b81cbfcc6e3c185327033422b\"><code>7a35098</code></a> Update bnd to v7.3.0 (<a href=\"https://redirect.github.com/square/okhttp/issues/9475\">#9475</a>)</li>\n<li><a href=\"https://github.com/square/okhttp/commit/0c5a45b1174b8f735cc251eb19faaed87b65d868\"><code>0c5a45b</code></a> Update dependency com.puppycrawl.tools:checkstyle to v13.5.0 (<a href=\"https://redirect.github.com/square/okhttp/issues/9468\">#9468</a>)</li>\n<li><a href=\"https://github.com/square/okhttp/commit/113ad17f70af6984a1a8b4d46024118e5409c44b\"><code>113ad17</code></a> Update dependency macos to v26 (<a href=\"https://redirect.github.com/square/okhttp/issues/9457\">#9457</a>)</li>\n<li><a href=\"https://github.com/square/okhttp/commit/84f601af03d047eef3f4b2f0ca6b6f72303dcea1\"><code>84f601a</code></a> Update shadow.plugin to v9.4.2 (<a href=\"https://redirect.github.com/square/okhttp/issues/9466\">#9466</a>)</li>\n<li><a href=\"https://github.com/square/okhttp/commit/7d463f4bcfca91e4466037f2c65c7c700545d64c\"><code>7d463f4</code></a> Update spotless.plugin to v8.6.0 (<a href=\"https://redirect.github.com/square/okhttp/issues/9464\">#9464</a>)</li>\n<li><a href=\"https://github.com/square/okhttp/commit/3bf00f52921a0727bd18997cd92112dd2e582ed7\"><code>3bf00f5</code></a> Update plugin com.diffplug.spotless to v8.6.0 (<a href=\"https://redirect.github.com/square/okhttp/issues/9463\">#9463</a>)</li>\n<li><a href=\"https://github.com/square/okhttp/commit/cfc45a3f146d2389797a3d51d405e9118bed56c9\"><code>cfc45a3</code></a> Update spotless.plugin to v8.5.1 (<a href=\"https://redirect.github.com/square/okhttp/issues/9456\">#9456</a>)</li>\n<li><a href=\"https://github.com/square/okhttp/commit/81c5006e336c1cb67870694e38707e2c1c44fb34\"><code>81c5006</code></a> Apply gradle lint correctly (<a href=\"https://redirect.github.com/square/okhttp/issues/9459\">#9459</a>)</li>\n<li>Additional commits viewable in <a href=\"https://github.com/square/okhttp/compare/parent-5.3.2...parent-5.4.0\">compare view</a></li>\n</ul>\n</details>\n<br />\n",
+        "url": "https://github.com/kieker-monitoring/kieker/pull/3113",
+        "state": "OPEN",
+        "createdAt": "2026-07-06T01:42:54Z",
+        "closedAt": null,
+        "mergedAt": null,
+        "author": {
+          "login": "user-2",
+          "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+        },
+        "labels": {
+          "nodes": [
+            {
+              "name": "dependencies"
+            },
+            {
+              "name": "java"
+            }
+          ]
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2026-07-06T07:56:22Z",
+                "author": {
+                  "email": "user-3@example.invalid",
+                  "user": {
+                    "login": "user-3",
+                    "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-07-06T07:56:23Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "PullRequest",
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "oid": "48bc82b5f812464b964ff770e4f6ca255723b5ee"
+              }
+            }
+          ]
+        },
+        "closingIssuesReferences": {
+          "nodes": []
+        },
+        "id": "PR_kwDOAkSj0c7rlhRG",
+        "number": 3111,
+        "title": "Bump commons-io:commons-io from 2.21.0 to 2.22.0",
+        "body": "Bumps commons-io:commons-io from 2.21.0 to 2.22.0.\n",
+        "url": "https://github.com/kieker-monitoring/kieker/pull/3111",
+        "state": "MERGED",
+        "createdAt": "2026-06-29T01:43:19Z",
+        "closedAt": "2026-07-06T07:48:49Z",
+        "mergedAt": "2026-07-06T07:48:49Z",
+        "author": {
+          "login": "user-2",
+          "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+        },
+        "labels": {
+          "nodes": [
+            {
+              "name": "dependencies"
+            },
+            {
+              "name": "java"
+            }
+          ]
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2026-07-03T10:05:38Z",
+                "author": {
+                  "email": "user-3@example.invalid",
+                  "user": {
+                    "login": "user-3",
+                    "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-07-03T10:05:40Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            },
+            {
+              "__typename": "MergedEvent",
+              "createdAt": "2026-07-06T07:48:49Z",
+              "actor": {
+                "login": "user-1",
+                "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "ClosedEvent",
+              "createdAt": "2026-07-06T07:48:49Z",
+              "actor": {
+                "login": "user-1",
+                "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "HeadRefDeletedEvent"
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "PullRequest",
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "oid": "a223dc29798a2cfaedf8d68299f2749a10848169"
+              }
+            }
+          ]
+        },
+        "closingIssuesReferences": {
+          "nodes": []
+        },
+        "id": "PR_kwDOAkSj0c7rlhBl",
+        "number": 3110,
+        "title": "Bump gradle-wrapper from 8.14.4 to 9.6.1",
+        "body": "Bumps [gradle-wrapper](https://github.com/gradle/gradle) from 8.14.4 to 9.6.1.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/gradle/gradle/releases\">gradle-wrapper's releases</a>.</em></p>\n<blockquote>\n<h2>9.6.1</h2>\n<p>The Gradle team is excited to announce Gradle 9.6.1.</p>\n<p>Here are the highlights of this release:</p>\n<ul>\n<li>Improved Configuration Cache hit rates</li>\n<li>Additional CLI rendering options</li>\n<li>Important project hierarchy lookup deprecations</li>\n</ul>\n<p><a href=\"https://docs.gradle.org/9.6.1/release-notes.html\">Read the Release Notes</a></p>\n<p>We would like to thank the following community members for their contributions to this release of Gradle:\n<a href=\"https://github.com/Ahar28\">Aharnish Solanki</a>,\n<a href=\"https://github.com/benediktjohannes\">Benedikt Johannes</a>,\n<a href=\"https://github.com/devareddy05\">Devendra Reddy Pennabadi</a>,\n<a href=\"https://github.com/smplio\">Dmytro Rodionov</a>,\n<a href=\"https://github.com/Dreeam-qwq\">Dreeam</a>,\n<a href=\"https://github.com/EliasHdzR\">Elías Hernández Rodríguez</a>,\n<a href=\"https://github.com/Juneezee\">Eng Zer Jun</a>,\n<a href=\"https://github.com/FinlayRJW\">FinlayRJW</a>,\n<a href=\"https://github.com/kamalkansal27\">Kamal Kansal</a>,\n<a href=\"https://github.com/Marcono1234\">Marcono1234</a>,\n<a href=\"https://github.com/runningcode\">Nelson Osacky</a>,\n<a href=\"https://github.com/hfhbd\">Philip Wedemann</a>,\n<a href=\"https://github.com/rkdfx\">Ravi</a>,\n<a href=\"https://github.com/rpalcolea\">Roberto Perez Alcolea</a>,\n<a href=\"https://github.com/rschmitt\">Ryan Schmitt</a>,\n<a href=\"https://github.com/sschuberth\">Sebastian Schuberth</a>,\n<a href=\"https://github.com/seung-hun-h\">seunghun.ham</a>,\n<a href=\"https://github.com/sk-reddy17\">sk-reddy17</a>,\n<a href=\"https://github.com/Suvrat1629\">Suvrat Acharya</a>,\n<a href=\"https://github.com/VedantMadane\">Vedant Madane</a>.</p>\n<h2>Upgrade instructions</h2>\n<p>Switch your build to use Gradle 9.6.1 by updating your wrapper:</p>\n<pre><code>./gradlew :wrapper --gradle-version=9.6.1 &amp;&amp; ./gradlew :wrapper\r\n</code></pre>\n<p>See the Gradle <a href=\"https://docs.gradle.org/9.6.1/userguide/upgrading_version_9.html\">9.x upgrade guide</a> to learn about deprecations, breaking changes and other considerations when upgrading.</p>\n<p>For Java, Groovy, Kotlin and Android compatibility, see the <a href=\"https://docs.gradle.org/9.6.1/userguide/compatibility.html\">full compatibility notes</a>.</p>\n<h2>Reporting problems</h2>\n<p>If you find a problem with this release, please file a bug on <a href=\"https://github.com/gradle/gradle/issues\">GitHub Issues</a> adhering to our issue guidelines.\nIf you're not sure you're encountering a bug, please use the <a href=\"https://discuss.gradle.org/c/help-discuss\">forum</a>.</p>\n<p>We hope you will build happiness with Gradle, and we look forward to your feedback via <a href=\"https://twitter.com/gradle\">Twitter</a> or on <a href=\"https://github.com/gradle\">GitHub</a>.</p>\n<h2>9.6.0</h2>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/gradle/gradle/commit/309d128bd9fe8c0b71311878fc660b9cbaa07c51\"><code>309d128</code></a> Update fixed issues in release notes for 9.6.1 (<a href=\"https://redirect.github.com/gradle/gradle/issues/38328\">#38328</a>)</li>\n<li><a href=\"https://github.com/gradle/gradle/commit/040a978e74ceefbd408bd832fca23e1462fb34b7\"><code>040a978</code></a> Update fixed issues in release notes for 9.6.1</li>\n<li><a href=\"https://github.com/gradle/gradle/commit/e0b8325523e3ae1e93fe81da595a1fb1b66a6cce\"><code>e0b8325</code></a> Restore --non-interactive flag instead of --interactive/--no-interactive (<a href=\"https://redirect.github.com/gradle/gradle/issues/38\">#38</a>...</li>\n<li><a href=\"https://github.com/gradle/gradle/commit/946f3e637ce0d8042a22a8096b9837a69607382e\"><code>946f3e6</code></a> Limit explicit temp file permission setting to intended use case (<a href=\"https://redirect.github.com/gradle/gradle/issues/38300\">#38300</a>)</li>\n<li><a href=\"https://github.com/gradle/gradle/commit/65f82246193da1bd8c7a087712c3c376aab1dd82\"><code>65f8224</code></a> Restore --non-interactive flag instead of --interactive/--no-interactive</li>\n<li><a href=\"https://github.com/gradle/gradle/commit/e346a5ec9d5bbdb5a2478118651d22c19b121f39\"><code>e346a5e</code></a> Adjust CLI flag to configure non-interactive console (<a href=\"https://redirect.github.com/gradle/gradle/issues/38301\">#38301</a>)</li>\n<li><a href=\"https://github.com/gradle/gradle/commit/9b53be9a1271e12ac5186f7148c5a15b85f1f1d6\"><code>9b53be9</code></a> Adjust CLI flag to configure non-interactive console</li>\n<li><a href=\"https://github.com/gradle/gradle/commit/0dd3b53bec1c03db4bb20b7cb401c948123c5db4\"><code>0dd3b53</code></a> Limit explicit temp file permission setting to intended use case</li>\n<li><a href=\"https://github.com/gradle/gradle/commit/48e5ac210190a0e3a33083404eea77e4dbdf8918\"><code>48e5ac2</code></a> Add reproducers</li>\n<li><a href=\"https://github.com/gradle/gradle/commit/25598fd75cffa8034af51d399e2b4bf03ba4c7ab\"><code>25598fd</code></a> Prepare 9.6.1 patch release (<a href=\"https://redirect.github.com/gradle/gradle/issues/38293\">#38293</a>)</li>\n<li>Additional commits viewable in <a href=\"https://github.com/gradle/gradle/compare/v8.14.4...v9.6.1\">compare view</a></li>\n</ul>\n</details>\n<br />\n",
+        "url": "https://github.com/kieker-monitoring/kieker/pull/3110",
+        "state": "OPEN",
+        "createdAt": "2026-06-29T01:42:58Z",
+        "closedAt": null,
+        "mergedAt": null,
+        "author": {
+          "login": "user-2",
+          "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+        },
+        "labels": {
+          "nodes": [
+            {
+              "name": "dependencies"
+            },
+            {
+              "name": "java"
+            }
+          ]
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-07-03T10:06:03Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2026-07-06T07:57:18Z",
+                "author": {
+                  "email": "user-3@example.invalid",
+                  "user": {
+                    "login": "user-3",
+                    "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-07-06T07:57:20Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "PullRequest",
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "oid": "11bd847a3da59ffad8ae8fe72281a91bd31e0059"
+              }
+            }
+          ]
+        },
+        "closingIssuesReferences": {
+          "nodes": []
+        },
+        "id": "PR_kwDOAkSj0c7nvPqe",
+        "number": 3106,
+        "title": "Bump net.sourceforge.plantuml:plantuml from 1.2025.2 to 1.2026.6",
+        "body": "Bumps [net.sourceforge.plantuml:plantuml](https://github.com/plantuml/plantuml) from 1.2025.2 to 1.2026.6.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/plantuml/plantuml/releases\">net.sourceforge.plantuml:plantuml's releases</a>.</em></p>\n<blockquote>\n<h2>v1.2026.6</h2>\n<h2>What's Changed</h2>\n<ul>\n<li>✨ enable TeaVM JS build for the MIT license flavor by <a href=\"https://github.com/nanodeath\"><code>@​nanodeath</code></a> in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2741\">plantuml/plantuml#2741</a></li>\n<li>⬆️ Bump com.gorylenko.gradle-git-properties from 2.5.7 to 3.0.3 by <a href=\"https://github.com/user-2\"><code>@​user-2</code></a>[bot] in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2722\">plantuml/plantuml#2722</a></li>\n<li>⬆️ Bump com.github.librepdf:openpdf from 3.0.4 to 3.0.5 by <a href=\"https://github.com/user-2\"><code>@​user-2</code></a>[bot] in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2718\">plantuml/plantuml#2718</a></li>\n<li>⬆️ Bump teavm from 0.13.1 to 0.14.1 by <a href=\"https://github.com/user-2\"><code>@​user-2</code></a>[bot] in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2720\">plantuml/plantuml#2720</a></li>\n<li>⬆️ Bump org.graalvm.buildtools.native from 1.1.0 to 1.1.1 by <a href=\"https://github.com/user-2\"><code>@​user-2</code></a>[bot] in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2723\">plantuml/plantuml#2723</a></li>\n<li>⬆️ Bump org.xmlunit:xmlunit-core from 2.11.0 to 2.12.0 by <a href=\"https://github.com/user-2\"><code>@​user-2</code></a>[bot] in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2734\">plantuml/plantuml#2734</a></li>\n<li>⬆️ Bump com.gorylenko.gradle-git-properties from 3.0.3 to 4.0.1 by <a href=\"https://github.com/user-2\"><code>@​user-2</code></a>[bot] in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2733\">plantuml/plantuml#2733</a></li>\n<li>⬆️ Bump org.sonarqube from 7.3.0.8198 to 7.3.1.8318 by <a href=\"https://github.com/user-2\"><code>@​user-2</code></a>[bot] in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2738\">plantuml/plantuml#2738</a></li>\n</ul>\n<h2>New Contributors</h2>\n<ul>\n<li><a href=\"https://github.com/nanodeath\"><code>@​nanodeath</code></a> made their first contribution in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2741\">plantuml/plantuml#2741</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a href=\"https://github.com/plantuml/plantuml/compare/v1.2026.5...v1.2026.6\">https://github.com/plantuml/plantuml/compare/v1.2026.5...v1.2026.6</a></p>\n<h2>v1.2026.5</h2>\n<h2>What's Changed</h2>\n<ul>\n<li>🐛 fix HorizontalAlignment Right being ignored with MinimumWidth by <a href=\"https://github.com/rkdfx\"><code>@​rkdfx</code></a> in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2717\">plantuml/plantuml#2717</a></li>\n<li>🐛 accept decimal period, pulse and offset for timing clock by <a href=\"https://github.com/IgniparousTempest\"><code>@​IgniparousTempest</code></a> in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2714\">plantuml/plantuml#2714</a></li>\n<li>Fix 32-bit build failure caused by hardcoded JVM heap size by <a href=\"https://github.com/gbhavya07\"><code>@​gbhavya07</code></a> in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2721\">plantuml/plantuml#2721</a></li>\n</ul>\n<h2>New Contributors</h2>\n<ul>\n<li><a href=\"https://github.com/rkdfx\"><code>@​rkdfx</code></a> made their first contribution in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2717\">plantuml/plantuml#2717</a></li>\n<li><a href=\"https://github.com/IgniparousTempest\"><code>@​IgniparousTempest</code></a> made their first contribution in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2714\">plantuml/plantuml#2714</a></li>\n<li><a href=\"https://github.com/gbhavya07\"><code>@​gbhavya07</code></a> made their first contribution in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2721\">plantuml/plantuml#2721</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a href=\"https://github.com/plantuml/plantuml/compare/v1.2026.4...v1.2026.5\">https://github.com/plantuml/plantuml/compare/v1.2026.4...v1.2026.5</a></p>\n<h2>Release - Native Image (v1.2026.4)</h2>\n<h2>Version v1.2026.4 of the 2026-05-20 at 20:36:00 (UTC)</h2>\n<p>This is a <a href=\"https://www.graalvm.org/latest/reference-manual/native-image/\">Native Image</a> release of <a href=\"https://github.com/plantuml/plantuml/commits/\">the latest development work</a>.</p>\n<h2>Credit or GitHub Action used</h2>\n<ul>\n<li><a href=\"https://github.com/graalvm/setup-graalvm\"><code>graalvm/setup-graalvm</code></a></li>\n<li><a href=\"https://github.com/TheDoctor0/zip-release\"><code>thedoctor0/zip-release</code></a></li>\n<li><a href=\"https://github.com/svenstaro/upload-release-action\"><code>svenstaro/upload-release-action</code></a></li>\n</ul>\n<h2>v1.2026.4</h2>\n<h2>What's Changed</h2>\n<ul>\n<li>✅ [vega] Add vega packet test by <a href=\"https://github.com/The-Lum\"><code>@​The-Lum</code></a> in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2691\">plantuml/plantuml#2691</a></li>\n<li>🐛 fix(svg-parser): support space-separated coordinates in polygon/polyl… by <a href=\"https://github.com/npiper\"><code>@​npiper</code></a> in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2692\">plantuml/plantuml#2692</a></li>\n<li>📝 README.md: Add compilation instructions by <a href=\"https://github.com/bobham-ct\"><code>@​bobham-ct</code></a> in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2696\">plantuml/plantuml#2696</a></li>\n<li>📝 Fix doc and readme by <a href=\"https://github.com/The-Lum\"><code>@​The-Lum</code></a> in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2700\">plantuml/plantuml#2700</a></li>\n<li>👷 Refactor CI (add <code>plantuml-mit-light</code> on artefact, improve log, suppress <code>pom_version</code> management) by <a href=\"https://github.com/The-Lum\"><code>@​The-Lum</code></a> in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2703\">plantuml/plantuml#2703</a></li>\n<li>✅ vega: add SVG test (for <code>id</code>, <code>option</code>, and move <code>interaction</code>) by <a href=\"https://github.com/The-Lum\"><code>@​The-Lum</code></a> in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2705\">plantuml/plantuml#2705</a></li>\n<li>✨ Allow CSS style on single line by <a href=\"https://github.com/The-Lum\"><code>@​The-Lum</code></a> in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2713\">plantuml/plantuml#2713</a></li>\n<li>⬆️ Bump actions/add-to-project from 1.0.2 to 2.0.0 by <a href=\"https://github.com/user-2\"><code>@​user-2</code></a>[bot] in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2686\">plantuml/plantuml#2686</a></li>\n<li>⬆️ Bump org.graalvm.buildtools.native from 1.0.0 to 1.1.0 by <a href=\"https://github.com/user-2\"><code>@​user-2</code></a>[bot] in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2667\">plantuml/plantuml#2667</a></li>\n<li>⬆️ Bump org.sonarqube from 7.2.3.7755 to 7.3.0.8198 by <a href=\"https://github.com/user-2\"><code>@​user-2</code></a>[bot] in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2673\">plantuml/plantuml#2673</a></li>\n<li>⬆️ Bump org.junit.platform:junit-platform-launcher from 6.0.3 to 6.1.0 by <a href=\"https://github.com/user-2\"><code>@​user-2</code></a>[bot] in <a href=\"https://redirect.github.com/plantuml/plantuml/pull/2710\">plantuml/plantuml#2710</a></li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Changelog</summary>\n<p><em>Sourced from <a href=\"https://github.com/plantuml/plantuml/blob/master/CHANGES.md\">net.sourceforge.plantuml:plantuml's changelog</a>.</em></p>\n<blockquote>\n<h2>V1.2026.6 (Jun 8, 2026)</h2>\n<ul>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/4d6e913e4389da30e04f492d2e73de003f3319c6\">🍵 update standard library with JSON data and <em>examples</em></a></li>\n<li><a href=\"https://redirect.github.com/plantuml/plantuml/issues/2724\">🍵 allow <code>%load_json</code> on TeaVM</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/1f1c22f5b4c18383b9938d329e88125c4b72aef1\">🍵 fix <code>skinparam style strictuml</code> for TeaVM</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/3eb531a6c1dac2bb897fd3542607078d00a3d21f\">👷 fix release downstream jobs being silently skipped after upload</a></li>\n<li><a href=\"https://redirect.github.com/plantuml/plantuml/issues/2725\">🍵 allow <code>%get_all_theme</code> on TeaVM</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/06185256f2549d2aa6596d62fcb8d165d5975d31\">🚧 preparation for hour/minute/second precision gantts</a></li>\n<li><a href=\"https://redirect.github.com/plantuml/plantuml/issues/2656\">🐛 fix gui regression</a></li>\n<li>[🍵 enable TeaVM JS build for the MIT license flavor (<a href=\"https://redirect.github.com/plantuml/plantuml/issues/2741\">#2741</a>)](<a href=\"https://github.com/plantuml/plantuml/commit/269cba38ff8c53e71ab32a0a632af47847a5ca76\">https://github.com/plantuml/plantuml/commit/269cba38ff8c53e71ab32a0a632af47847a5ca76</a>)</li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/0043b6b7da2b74208296ce732be85b2bb2f8c0ca\">👷 add MIT-flavored npm package assembly for @​plantuml/core</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/52a8090af30dcb7dd2569ac2c8259aedc7bce3ae\">✨ add Node/JS MCP server (plantuml-mcp-js) and MCP engine plumbing</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/fb5d69df9c49992402c9f5d5f21a744b8731cc52\">🐾 add <code>errorLine</code> in MCP <code>check_syntax</code></a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/48c4b309ff500230740072096df0f4ec55283fb0\">⚗️ add experimental diagram_explain to the JS MCP server and flesh out command explanations</a></li>\n<li><a href=\"https://redirect.github.com/plantuml/plantuml/issues/2728\">🐛 fix NPE in SVG nested diagram</a></li>\n</ul>\n<h2>V1.2026.5 (May 27, 2026)</h2>\n<ul>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/10a5f40fd710da2fac2dd46247510e477d649019\">👷 improve Docker build</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/0ed64d3f36af1a645bf9f7ce7dcf36a689bb1ca0\">♻️ clean StringBounder code</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/d1d43c79073187c670423ccc3b46a78725edf1a5\">♻️ simplify dictionary loading for GraalVM</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/9077e47239c19cc70935d624b45522ab99619fc8\">👷 add native image builds (windows + linux amd64/arm64)</a></li>\n<li>[🍵 add npmPackage Gradle task to publish JS engine to npm (<a href=\"https://redirect.github.com/plantuml/plantuml/issues/2715\">#2715</a>)](<a href=\"https://github.com/plantuml/plantuml/commit/4dada3774a3f32559c055e7518f3c9d652f968b3\">https://github.com/plantuml/plantuml/commit/4dada3774a3f32559c055e7518f3c9d652f968b3</a>)</li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/04fcf5ca7b1b7f67af9eae213086c8a39e11d801\">👷 rename native images</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/6a8578b1fa7431e218ad90bd6df96b774aeb0c50\">🐛 add bitmap image support in PDF</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/b2edbe93c2834c59b2c10883077abd9cc17bbe49\">👷 add native image builds (macOS)</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/95c13c56e69305fc3522c0dc78a122442c1c40b9\">🔧 add config file for GraalVM build</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/830b6e4ec3c601b232facc6036634a057a7dea20\">📦️ add examples in standard library</a></li>\n<li>[🐛 fix HorizontalAlignment Right being ignored with MinimumWidth (<a href=\"https://redirect.github.com/plantuml/plantuml/issues/2717\">#2717</a>)](<a href=\"https://github.com/plantuml/plantuml/commit/f609859e3209e4e4c4a168fd5ed7913f1ca06a9a\">https://github.com/plantuml/plantuml/commit/f609859e3209e4e4c4a168fd5ed7913f1ca06a9a</a>)</li>\n<li>[🐛 accept decimal period, pulse and offset for timing clock (<a href=\"https://redirect.github.com/plantuml/plantuml/issues/2714\">#2714</a>)](<a href=\"https://redirect.github.com/plantuml/plantuml/issues/2711\">plantuml/plantuml#2711</a>)</li>\n<li>[👷 Fix 32-bit build failure caused by hardcoded JVM heap size (<a href=\"https://redirect.github.com/plantuml/plantuml/issues/2721\">#2721</a>)](<a href=\"https://github.com/plantuml/plantuml/commit/55b6a751bf935d85bcd02d279bac3226277f247f\">https://github.com/plantuml/plantuml/commit/55b6a751bf935d85bcd02d279bac3226277f247f</a>)</li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/711fb8019dcdb71334e55c67c4af04b86be4ce70\">📦️ update standard library</a></li>\n</ul>\n<h2>V1.2026.4 (May 20, 2026)</h2>\n<ul>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/4f0370800608acced36ac38d79335cbed87290cb\">♻️ use <code>UBrex</code> in Gantt diagram parsing</a></li>\n<li><a href=\"http://redirect.github.com/plantuml/plantuml/issues/2685#issuecomment-4415055785\">🍵 revert to TeaVM <code>0.13.1</code></a></li>\n<li>[🐛 fix(svg-parser): support space-separated coordinates in polygon/polyline sprites (<a href=\"https://redirect.github.com/plantuml/plantuml/issues/2692\">#2692</a>)](<a href=\"https://github.com/plantuml/plantuml/commit/5e9bc7e67aba8b973feb0c473b733452ca3d4342\">https://github.com/plantuml/plantuml/commit/5e9bc7e67aba8b973feb0c473b733452ca3d4342</a>)</li>\n<li><a href=\"https://redirect.github.com/plantuml/plantuml/issues/2685\">🐛 fix '!' separator not recognized in class relation identifiers</a></li>\n<li><a href=\"https://redirect.github.com/plantuml/plantuml/issues/2681\">🐛 improve CSS style for state diagrams</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/ff7a693e32e3328691772a72555933f81247164c\">🍵 add support of OpenIconic icons in TeaVM</a></li>\n<li><a href=\"https://redirect.github.com/plantuml/plantuml/issues/2080#issuecomment-4449493249\">🐛 improve unique id for SVG group elements</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/6737cc17eef967fc3ea0c4f0a6d995e7f63c2212\">✅ fix Vega tests with class drawing</a></li>\n<li><a href=\"https://redirect.github.com/plantuml/plantuml/issues/2527#issuecomment-4449429374\">🍵 fix SVG document background color</a></li>\n<li><a href=\"https://redirect.github.com/plantuml/plantuml/issues/2276\">🐛 color specific days on gantt diagram</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/8385d71dbfc7108d5a0099125cb427483334a900\">🍵 Add dark mode toggle and &quot;Copy as bitmap&quot; button to the Playground</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/141ab7624ab6ce681ea5a3585694997ecce57e60\">✨ online style in state diagram</a></li>\n<li>[✅ vega: add SVG test (for <code>id</code>, <code>option</code>, and move <code>interaction</code>) (<a href=\"https://redirect.github.com/plantuml/plantuml/issues/2705\">#2705</a>)](<a href=\"https://github.com/plantuml/plantuml/commit/f355dabd2d4305015e54a1cda97cc12ceac450f6\">https://github.com/plantuml/plantuml/commit/f355dabd2d4305015e54a1cda97cc12ceac450f6</a>)</li>\n<li><a href=\"https://redirect.github.com/plantuml/plantuml/issues/2681#issuecomment-4462057594\">🐛 manage CSS for empty description states</a></li>\n<li><a href=\"https://redirect.github.com/plantuml/plantuml/issues/2706\">🐛 improve SVG arrow drawing</a></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/c21e607ee4ed36fb9a7d637f2d8aee90d0717d5b\">🍵 playground: right-click menu to copy as bitmap or SVG</a></li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/6287b33c5d1be2f7b0d480687d0b5a1accbd7971\"><code>6287b33</code></a> 🎉 version 1.2026.6</li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/ea7ef9ffe204a4927003d75ad12fb497e3f0ecf3\"><code>ea7ef9f</code></a> 👷 fix npm package: ship LICENSE, correct sideEffects and exports map</li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/f85b3a00f6816b42cfcf2098a8e4d73128f83254\"><code>f85b3a0</code></a> 🐛 fix NPE in SVG nested diagram</li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/6021e2429137213cba5dedd1ee3b1aec6219b054\"><code>6021e24</code></a> 🚧 preparation for hour/minute/second precision gantts</li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/48c4b309ff500230740072096df0f4ec55283fb0\"><code>48c4b30</code></a> ⚗️ add experimental diagram_explain to the JS MCP server and flesh out comman...</li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/fb5d69df9c49992402c9f5d5f21a744b8731cc52\"><code>fb5d69d</code></a> 🐾 add <code>errorLine</code> in MCP <code>check_syntax</code></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/52a8090af30dcb7dd2569ac2c8259aedc7bce3ae\"><code>52a8090</code></a> ✨ add Node/JS MCP server (plantuml-mcp-js) and MCP engine plumbing</li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/0043b6b7da2b74208296ce732be85b2bb2f8c0ca\"><code>0043b6b</code></a> 👷 add MIT-flavored npm package assembly for <code>@​plantuml/core</code></li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/269cba38ff8c53e71ab32a0a632af47847a5ca76\"><code>269cba3</code></a> 🍵 enable TeaVM JS build for the MIT license flavor (<a href=\"https://redirect.github.com/plantuml/plantuml/issues/2741\">#2741</a>)</li>\n<li><a href=\"https://github.com/plantuml/plantuml/commit/c09f4b22c01631d71c4105d1edb92c1047ed37b2\"><code>c09f4b2</code></a> Bump org.sonarqube from 7.3.0.8198 to 7.3.1.8318 (<a href=\"https://redirect.github.com/plantuml/plantuml/issues/2738\">#2738</a>)</li>\n<li>Additional commits viewable in <a href=\"https://github.com/plantuml/plantuml/compare/v1.2025.2...v1.2026.6\">compare view</a></li>\n</ul>\n</details>\n<br />\n",
+        "url": "https://github.com/kieker-monitoring/kieker/pull/3106",
+        "state": "OPEN",
+        "createdAt": "2026-06-18T01:43:36Z",
+        "closedAt": null,
+        "mergedAt": null,
+        "author": {
+          "login": "user-2",
+          "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+        },
+        "labels": {
+          "nodes": [
+            {
+              "name": "dependencies"
+            },
+            {
+              "name": "java"
+            }
+          ]
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-06-19T08:07:15Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-06-26T13:27:59Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-07-03T10:06:02Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2026-07-06T07:56:26Z",
+                "author": {
+                  "email": "user-3@example.invalid",
+                  "user": {
+                    "login": "user-3",
+                    "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-07-06T07:56:27Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "PullRequest",
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "oid": "18b67a2384966ba602ff39d2027d4375919420df"
+              }
+            }
+          ]
+        },
+        "closingIssuesReferences": {
+          "nodes": []
+        },
+        "id": "PR_kwDOAkSj0c7nvPJN",
+        "number": 3105,
+        "title": "Bump com.rabbitmq:amqp-client from 5.29.0 to 5.33.0",
+        "body": "Bumps [com.rabbitmq:amqp-client](https://github.com/rabbitmq/rabbitmq-java-client) from 5.29.0 to 5.33.0.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/rabbitmq/rabbitmq-java-client/releases\">com.rabbitmq:amqp-client's releases</a>.</em></p>\n<blockquote>\n<h2>5.33.0</h2>\n<h1>Changes between 5.32.0 and 5.33.0</h1>\n<p>This is a maintenance release with bug fixes and dependency upgrades. It introduces minor breaking changes compared to 5.32.0 (see below for details). All users are encouraged to upgrade.</p>\n<p>The RabbitMQ team normally maintain strict backward compatibility in minor versions. However, this release includes exceptional breaking changes that were necessary to patch security gaps and enforce secure-by-default behavior.</p>\n<p>Breaking changes:</p>\n<ul>\n<li>Hostname verification is now enabled by default as soon as TLS is used.</li>\n<li><code>ConnectionFactory#useSslProtocol()</code> now utilizes the JVM's default <code>SSLContext</code>, which validates the server certificate.\n<ul>\n<li>Note: This should primarily affect test environments, as <code>useSslProtocol()</code> was never intended for production use.</li>\n<li>Action required: For test or development environments where certificate validation needs to be disabled, users can now explicitly switch to the new <code>ConnectionFactory#useTlsWithNoVerification()</code> method.</li>\n</ul>\n</li>\n<li>JSON-RPC support classes now introduce an &quot;allowlist&quot;. This change only impacts installations that explicitly utilize these classes.</li>\n</ul>\n<h2>Harden RPC support classes</h2>\n<p>GitHub PR: <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2002\">#2002</a></p>\n<h2>Enable hostname verification by default</h2>\n<p>GitHub issue: <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2005\">#2005</a></p>\n<h2>Introduce helper for dev/test TLS setup</h2>\n<p>GitHub PR: <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2001\">#2001</a></p>\n<h2>Enforce inbound frame max more strictly</h2>\n<p>GitHub PRs: <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/1995\">#1995</a> <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/1998\">#1998</a></p>\n<h2>Bump dependencies</h2>\n<p>GitHub issue: <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/1991\">#1991</a></p>\n<h1>Dependency</h1>\n<h2>Maven</h2>\n<pre lang=\"xml\"><code>&lt;dependency&gt;\r\n  &lt;groupId&gt;com.rabbitmq&lt;/groupId&gt;\r\n  &lt;artifactId&gt;amqp-client&lt;/artifactId&gt;\r\n  &lt;version&gt;5.33.0&lt;/version&gt;\r\n&lt;/dependency&gt;\r\n</code></pre>\n<h2>Gradle</h2>\n<pre lang=\"groovy\"><code>compile 'com.rabbitmq:amqp-client:5.33.0'\r\n&lt;/tr&gt;&lt;/table&gt; \n</code></pre>\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/a6ff07ecf96c1f001d611ea9b88ed8b6e045aa61\"><code>a6ff07e</code></a> [maven-release-plugin] prepare release v5.33.0</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/a3cbc200936a02cf321ab0f1ae311718a34c13c0\"><code>a3cbc20</code></a> Set release version to 5.33.0</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/7c33063f7f11433f620df70873b611cb4b2cd830\"><code>7c33063</code></a> Recommend against replacing SocketConfigurator</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/43263bc7cd4717e8b1ce073e61d6bf35accdb8b7\"><code>43263bc</code></a> Merge pull request <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2001\">#2001</a> from rabbitmq/mergify/bp/v5.x/pr-1999</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/fd34d84ddc79f93be0f3f9bbc14cfcc0639146dd\"><code>fd34d84</code></a> Document NIO configurators</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/4a05f2b774e3f7022c328228fbdb7c316cb61b70\"><code>4a05f2b</code></a> Fix NIO test</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/f02566a5040872b80f79b811c941c342b5308f25\"><code>f02566a</code></a> Merge pull request <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2002\">#2002</a> from rabbitmq/mergify/bp/v5.x/pr-2000</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/38ef88e78faf203e45255d1e8530f5da60b76622\"><code>38ef88e</code></a> Merge pull request <a href=\"https://redirect.github.com/rabbitmq/rabbitmq-java-client/issues/2004\">#2004</a> from rabbitmq/user-2/maven/v5.x/com.diffplug.spo...</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/66ef941fe058c436a32e1768a95960e3b1d62abc\"><code>66ef941</code></a> Bump com.diffplug.spotless:spotless-maven-plugin from 3.7.0 to 3.8.0</li>\n<li><a href=\"https://github.com/rabbitmq/rabbitmq-java-client/commit/c6089b0224e4486a1eebb8efb83bbd89f9e250a0\"><code>c6089b0</code></a> Fix conflicts</li>\n<li>Additional commits viewable in <a href=\"https://github.com/rabbitmq/rabbitmq-java-client/compare/v5.29.0...v5.33.0\">compare view</a></li>\n</ul>\n</details>\n<br />\n",
+        "url": "https://github.com/kieker-monitoring/kieker/pull/3105",
+        "state": "CLOSED",
+        "createdAt": "2026-06-18T01:42:52Z",
+        "closedAt": "2026-07-06T01:43:03Z",
+        "mergedAt": null,
+        "author": {
+          "login": "user-2",
+          "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+        },
+        "labels": {
+          "nodes": [
+            {
+              "name": "dependencies"
+            },
+            {
+              "name": "java"
+            }
+          ]
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-06-19T08:07:04Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-06-26T13:28:13Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2026-07-03T10:05:53Z",
+                "author": {
+                  "email": "user-3@example.invalid",
+                  "user": {
+                    "login": "user-3",
+                    "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "RenamedTitleEvent"
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2026-07-03T10:05:54Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2026-07-06T01:43:03Z",
+              "author": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            },
+            {
+              "__typename": "ClosedEvent",
+              "createdAt": "2026-07-06T01:43:03Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4"
+              }
+            },
+            {
+              "__typename": "HeadRefDeletedEvent"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "rateLimit": {
+    "cost": 4,
+    "remaining": 4920,
+    "resetAt": "2026-07-06T11:37:05Z"
+  }
+}

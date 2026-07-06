@@ -1,0 +1,149 @@
+{
+  "search": {
+    "pageInfo": {
+      "hasNextPage": false,
+      "endCursor": "Y3Vyc29yOjQ="
+    },
+    "nodes": [
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c7Vhkmr",
+        "number": 3011,
+        "title": "[GH-27] Remove GH Action for Java 11",
+        "body": "Remove GH Action for Java 11",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3011",
+        "state": "CLOSED",
+        "createdAt": "2025-11-03T14:32:28Z",
+        "closedAt": "2025-11-03T15:01:26Z",
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+          "name": "User 1",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2025-11-03T15:01:26Z",
+              "author": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "ClosedEvent",
+              "createdAt": "2025-11-03T15:01:26Z",
+              "actor": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4",
+                "email": ""
+              }
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c7VhN3v",
+        "number": 3010,
+        "title": "[GH-26] Update to Gradle 9.2",
+        "body": "Update to Gradle 9.2\n\n- [ ] Fix the deprecations\n- [ ] Update the wrappers",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3010",
+        "state": "OPEN",
+        "createdAt": "2025-11-03T14:10:53Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+          "name": "User 1",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "RenamedTitleEvent"
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c7VhJSi",
+        "number": 3008,
+        "title": "[GH-25] Delete Empty Tool runtime-analysis",
+        "body": "Delete empty tool runtime-analysis.",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3008",
+        "state": "CLOSED",
+        "createdAt": "2025-11-03T14:07:08Z",
+        "closedAt": "2025-11-03T15:01:15Z",
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+          "name": "User 1",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2025-11-03T15:01:15Z",
+              "author": {
+                "login": "user-1",
+                "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "ClosedEvent",
+              "createdAt": "2025-11-03T15:01:15Z",
+              "actor": {
+                "login": "user-1",
+                "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+                "email": ""
+              }
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c7UOPkf",
+        "number": 3006,
+        "title": "[GH-24] Set setLoggingTimestamp to false as default",
+        "body": "The property `kieker.monitoring.setLoggingTimestamp` triggers an automated adding of the current timestamp to each monitoring record: \nhttps://github.com/kieker-monitoring/kieker/blob/17182fb3cd5eafae521aaa0a3f5b2bb62480ea70/monitoring/core/src/kieker/monitoring/core/controller/MonitoringController.java#L314\n\nFor many records, like the `OperationExecutionRecord` with `tout` (https://github.com/kieker-monitoring/kieker/blob/17182fb3cd5eafae521aaa0a3f5b2bb62480ea70/common/src-gen/kieker/common/record/controlflow/OperationExecutionRecord.java#L87) and everything inherting from `AbstractEvent` with `timestamp` (https://github.com/kieker-monitoring/kieker/blob/17182fb3cd5eafae521aaa0a3f5b2bb62480ea70/common/src-gen/kieker/common/record/flow/AbstractEvent.java#L35), a time information is already given, and the  `loggingTimestamp` is not used (to my knowlege). Therefore, getting the logging timestamp only increases overhead.\n\nWe should have a two step approach of removing it:\n- [ ] First, we should set `kieker.monitoring.setLoggingTimestamp=false` in the default configurations\n- [ ] Afterwards, we should remove the `loggingTimetamp` from the data model. This will further speed up the process (since also the empty long is not sent), but it will require adapting the tools that are using the logging timestamp. Eventually, this could break compatibility with old traces, so we need to be careful here.",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3006",
+        "state": "OPEN",
+        "createdAt": "2025-10-28T09:05:44Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+          "name": "User 1",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": []
+        }
+      }
+    ]
+  },
+  "rateLimit": {
+    "cost": 4,
+    "remaining": 4932,
+    "resetAt": "2026-07-06T11:37:05Z"
+  }
+}
