@@ -10,6 +10,7 @@ import "contributor.proto";
 
 service TrackableResourceService {
   rpc persistTrackableResourceEvent (TrackableResourceEvent) returns (google.protobuf.Empty) {}
+  rpc relinkResources (RelinkResourcesRequest) returns (google.protobuf.Empty) {}
 }
 
 enum TrackableResourceType {
@@ -56,5 +57,12 @@ message TrackableResourceEvent {
   string description = 11;
   string web_url = 12;
   repeated string labels = 13;
+  repeated string commit_shas = 14;
+  repeated int32 referenced_issue_numbers = 15;
 
+}
+
+message RelinkResourcesRequest {
+  string landscape_token = 1;
+  string repository_name = 2;
 }

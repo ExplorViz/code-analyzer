@@ -17,12 +17,15 @@ import io.smallrye.graphql.client.core.Variable;
 import io.smallrye.graphql.client.dynamic.api.DynamicGraphQLClient;
 import io.smallrye.graphql.client.dynamic.api.DynamicGraphQLClientBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
@@ -31,25 +34,127 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import net.explorviz.code.analysis.export.DataExporter;
+import net.explorviz.code.analysis.git.RepositoryFileUrlBuilder;
 import net.explorviz.code.proto.AnnotationType;
 import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.ResourceState;
 import net.explorviz.code.proto.TrackableResourceEvent;
 import net.explorviz.code.proto.TrackableResourceType;
-import org.checkerframework.common.value.qual.StringVal;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * Service to fetch GitHub social data for a given repository.
  */
 @ApplicationScoped
-public class GithubCollaborationFetcherService {
+public class GithubFetcherService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(GithubCollaborationFetcherService.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(GithubFetcherService.class);
 
   final String githubUrl = "https://api.github.com/graphql";
+
+  Optional<CompletableFuture<Void>> fetchSocialData(
+      final AnalysisConfig config, final DataExporter exporter, ManagedExecutor managedExecutor) {
+    if (!config.fetchSocialData()) {
+      LOGGER.info("Skipping GitHub social data fetch, not enabled in config.");
+      return Optional.empty();
+    }
+
+    if (config.repoRemoteUrl().isEmpty()) {
+      LOGGER.info("Skipping GitHub social data fetch, no remote URL configured.");
+      return Optional.empty();
+    }
+
+    // determine repo sub string with format "owner/repo" needed for graphql query
+    final Optional<String> repoSubString = extractGithubRepoSubString(config.repoRemoteUrl().get());
+    if (repoSubString.isEmpty()) {
+      return Optional.empty();
+    }
+
+    // send state data before fetching to make sure precondition is met
+    preInitializeRemoteState(config, exporter, config.branch().orElse("main"), "");
+
+    // determine time frame to fetch
+    final int socialDataTimeFrameDays = config.socialDataTimeFrameDays().orElse(90);
+    final Date endDate = determineEndDate(config);
+    final Date startDate = Date.from(endDate.toInstant().minus(socialDataTimeFrameDays, ChronoUnit.DAYS));
+
+    return Optional.of(
+        managedExecutor.runAsync(() -> {
+              try {
+                LOGGER.info("Starting independent background fetch for GitHub Social Data (Last {} Days).",
+                    socialDataTimeFrameDays);
+                fetchSocialDataInRange(
+                    repoSubString.get(),
+                    startDate,
+                    endDate,
+                    exporter,
+                    config.landscapeToken(),
+                    config.gitPassword().orElse(""));
+              } catch (final Exception e) {
+                LOGGER.error("Background social fetch aborted: {}", e.getMessage());
+              }
+            }
+        )
+    );
+  }
+
+  private Optional<String> extractGithubRepoSubString(String remoteUrl) {
+    if (!remoteUrl.contains("github.com")) {
+      LOGGER.info("Skipping GitHub collaboration data fetch, not a GitHub repository: {}", remoteUrl);
+      return Optional.empty();
+    }
+    final String[] parts = remoteUrl.split("github.com[:/]");
+    if (parts.length < 2) {
+      LOGGER.warn("Could not extract repo name from GitHub URL: {}", remoteUrl);
+      return Optional.empty();
+    }
+    return Optional.of(parts[1].replace(".git", ""));
+  }
+
+  private Date determineEndDate(AnalysisConfig config) {
+
+    Date endDate = Date.from(Instant.now()); // Default fallback
+    if (config.fetchEndDate().isPresent() && !config.fetchEndDate().get().isBlank()) {
+      final String dateStr = config.fetchEndDate().get();
+      try {
+        // Try parsing ISO timestamp first
+        endDate = Date.from(Instant.parse(dateStr));
+      } catch (final DateTimeParseException e) {
+        // Fallback to simple date parsing "YYYY-MM-DD"
+        endDate = Date.from(LocalDate.parse(dateStr).atStartOfDay(ZoneId.systemDefault()).toInstant());
+      }
+    }
+    return endDate;
+  }
+
+  void preInitializeRemoteState(final AnalysisConfig config, final DataExporter exporter,
+      final String branch, final String repositoryUrl) {
+    if (exporter.isRemote()) {
+      try {
+        final String resolvedRepositoryUrl =
+            RepositoryFileUrlBuilder.resolveRepositoryUrl(
+                    repositoryUrl.isBlank()
+                        ? config.repoRemoteUrl()
+                        : Optional.of(repositoryUrl),
+                    "")
+                .orElse("");
+        exporter.getStateData(
+            config.getRepositoryName(),
+            branch,
+            config.landscapeToken(),
+            config.applicationPathsMap(),
+            resolvedRepositoryUrl,
+            true);
+      } catch (final Exception e) {
+        LOGGER.warn("Could not pre-initialize remote state: {}", e.getMessage());
+      }
+    }
+  }
 
   /**
    * Fetches social data for a given time range.
@@ -126,6 +231,14 @@ public class GithubCollaborationFetcherService {
 
         Response response = githubClient.executeSync(query, variables);
 
+//        String pathString = String.format("json/response%d.json", System.currentTimeMillis());
+//        java.nio.file.Path path = java.nio.file.Path.of(pathString);
+//        Files.createDirectories(path.getParent());
+//
+//        java.nio.file.Files.writeString(
+//            path,
+//            response.getData().toString());
+
         if (response.hasError() || isRateLimitExceeded(response)) {
           break;
         }
@@ -160,7 +273,7 @@ public class GithubCollaborationFetcherService {
     LOGGER.info("completed social data fetch for query {}", queryStr);
   }
 
-  private List<TrackableResourceEvent> mapToEvents(
+  List<TrackableResourceEvent> mapToEvents(
       JsonObject node, String landscapeToken, String repositoryName) {
 
     List<TrackableResourceEvent> events = new ArrayList<>();
@@ -194,7 +307,7 @@ public class GithubCollaborationFetcherService {
     return events;
   }
 
-  private TrackableResourceEvent.Builder parseBaseResource(
+  TrackableResourceEvent.Builder parseBaseResource(
       JsonObject node, String landscapeToken, String repositoryName) {
 
     String typeName = getJsonString(node, "__typename", "Unknown");
@@ -203,12 +316,7 @@ public class GithubCollaborationFetcherService {
         ? TrackableResourceType.ISSUE
         : TrackableResourceType.PULL_REQUEST;
 
-    String resourceId = String.valueOf(node.getInt("number"));
-    String title = getJsonString(node, "title", "");
-    String description = getJsonString(node, "body", "");
-    String webUrl = getJsonString(node, "url", "");
     //  String rawState = getJsonString(node, "state", "OPEN");
-    String repoName = repositoryName.split("/")[1];
 
     String authorLogin = "unknown";
     String authorEmail = "";
@@ -221,14 +329,6 @@ public class GithubCollaborationFetcherService {
       avatarUrl = getJsonString(authorObj, "avatarUrl", "");
     }
 
-    ContributorData actor = ContributorData.newBuilder()
-        .setLandscapeToken(landscapeToken)
-        .setRepositoryName(repoName)
-        .setEmail(authorEmail)
-        .setGithubLogin(authorLogin)
-        .setGitUsername(authorLogin)
-        .setAvatarUrl(avatarUrl)
-        .build();
 
     // Parse Labels
     List<String> labelNames = new ArrayList<>();
@@ -238,6 +338,40 @@ public class GithubCollaborationFetcherService {
         labelNames.add(labelNodes.getJsonObject(l).getString("name", "unknown"));
       }
     }
+    // Commit SHAs
+    List<String> commitShas = new ArrayList<>();
+    if (node.containsKey("commits") && !node.isNull("commits")) {
+      JsonArray commitsNodes = node.getJsonObject("commits").getJsonArray("nodes");
+      for (int c = 0; c < commitsNodes.size(); c++) {
+        commitShas.add(commitsNodes.getJsonObject(c).getJsonObject("commit").getString("oid", ""));
+      }
+    }
+    if (node.containsKey("mergeCommit") && !node.isNull("mergeCommit")) {
+      commitShas.add(node.getJsonObject("mergeCommit").getString("oid", ""));
+    }
+
+    List<Integer> closingIssuesReferences = new ArrayList<>();
+    if (node.containsKey("closingIssuesReferences") && !node.isNull("closingIssuesReferences")) {
+      JsonArray refNodes = node.getJsonObject("closingIssuesReferences").getJsonArray("nodes");
+      for (int c = 0; c < refNodes.size(); c++) {
+        closingIssuesReferences.add(refNodes.getJsonObject(c).getInt("number"));
+      }
+    }
+
+    String resourceId = String.valueOf(node.getInt("number"));
+    String title = getJsonString(node, "title", "");
+    String description = getJsonString(node, "body", "");
+    String webUrl = getJsonString(node, "url", "");
+    String repoName = repositoryName.split("/")[1];
+
+    ContributorData actor = ContributorData.newBuilder()
+        .setLandscapeToken(landscapeToken)
+        .setRepositoryName(repoName)
+        .setEmail(authorEmail)
+        .setGithubLogin(authorLogin)
+        .setGitUsername(authorLogin)
+        .setAvatarUrl(avatarUrl)
+        .build();
 
     return TrackableResourceEvent.newBuilder()
         .setLandscapeToken(landscapeToken)
@@ -248,7 +382,9 @@ public class GithubCollaborationFetcherService {
         .setTitle(title)
         .setDescription(description)
         .setWebUrl(webUrl)
-        .addAllLabels(labelNames);
+        .addAllLabels(labelNames)
+        .addAllCommitShas(commitShas)
+        .addAllReferencedIssueNumbers(closingIssuesReferences);
   }
 
   private List<TrackableResourceEvent> generateLifecycleEvents(
@@ -434,7 +570,7 @@ public class GithubCollaborationFetcherService {
                         field("labels", args(arg("first", 10)),
                             field("nodes", field("name"))
                         ),
-                        field("timelineItems", args(arg("first", 50)),
+                        field("timelineItems", args(arg("first", 100)),
                             field("nodes",
                                 field("__typename"),
                                 on("ClosedEvent", field("createdAt"),
@@ -450,6 +586,12 @@ public class GithubCollaborationFetcherService {
                         )
                     ),
                     on("PullRequest",
+                        field("commits", args(arg("first", 100)),
+                            field("nodes", field("commit", field("oid")))
+                            ),
+                        field("closingIssuesReferences", args(arg("first", 20)),
+                            field("nodes", field("number"))),
+                        field("mergeCommit", field("oid")),
                         field("id"),
                         field("number"),
                         field("title"),

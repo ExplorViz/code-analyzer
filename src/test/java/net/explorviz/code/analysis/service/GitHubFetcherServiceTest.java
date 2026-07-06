@@ -1,4 +1,4 @@
-package net.explorviz.code.analysis.git;
+package net.explorviz.code.analysis.service;
 
 import static org.mockito.Mockito.mock;
 
@@ -7,15 +7,14 @@ import jakarta.inject.Inject;
 import java.util.Calendar;
 import java.util.Date;
 import net.explorviz.code.analysis.export.DataExporter;
-import net.explorviz.code.analysis.service.GithubCollaborationFetcherService;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-public class GitHubSocialFetcherServiceTest {
+public class GitHubFetcherServiceTest {
 
   @Inject
-  GithubCollaborationFetcherService githubSocialFetcherService;
+  GithubFetcherService githubSocialFetcherService;
 
   @Disabled
   @Test

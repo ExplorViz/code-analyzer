@@ -11,6 +11,7 @@ import net.explorviz.code.proto.ContributorServiceGrpc;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.FileDataServiceGrpc;
 import net.explorviz.code.proto.MutinyFileDataServiceGrpc;
+import net.explorviz.code.proto.RelinkResourcesRequest;
 import net.explorviz.code.proto.StateData;
 import net.explorviz.code.proto.StateDataRequest;
 import net.explorviz.code.proto.StateDataServiceGrpc;
@@ -144,6 +145,22 @@ public final class GrpcExporter implements DataExporter {
         LOGGER.error("Failed to send trackable resource event {}: {}", trackableResourceEvent.getAnnotationId(),
             e.getMessage());
         LOGGER.debug("Detailed event data: {}", trackableResourceEvent);
+      }
+    }
+  }
+  
+  @Override
+  public void relinkResourceEvents(final String token, final String repoName) {
+    LOGGER.info("Sending relink request on {}", repoName);
+    try {
+      RelinkResourcesRequest request = RelinkResourcesRequest.newBuilder()
+          .setLandscapeToken(token)
+          .setRepositoryName(repoName)
+          .build();
+      trackableResourceGrpcClient.relinkResources(request);
+    } catch (final Exception e) {
+      if (LOGGER.isErrorEnabled()) {
+        LOGGER.error("Failed to send relink request on {}: {}", repoName,  e.getMessage());
       }
     }
   }

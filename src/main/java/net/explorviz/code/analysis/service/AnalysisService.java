@@ -4,16 +4,8 @@ import com.google.protobuf.Timestamp;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -25,8 +17,11 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import net.explorviz.code.analysis.FileLanguageResolver;
 import net.explorviz.code.analysis.exceptions.DebugFileWriter;
@@ -78,6 +73,7 @@ import org.slf4j.LoggerFactory;
 public class AnalysisService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AnalysisService.class);
+  private static final Long SOCIAL_FETCH_TIMEOUT_SECONDS = 900L; // should probably be in config
   private static final Set<String> TEXT_FILE_EXTENSIONS = Set.of(
       // Plain text & docs
       "txt", "md", "rst", "adoc", "log", "license", "notice", "readme",
@@ -135,7 +131,7 @@ public class AnalysisService {
   @Inject
   /* package */ AnalysisStatusService analysisStatusService;
   @Inject
-  /* package */ GithubCollaborationFetcherService socialFetcherService;
+  /* package */ GithubFetcherService socialFetcherService;
   @Inject
   /* package */ ManagedExecutor managedExecutor;
   @ConfigProperty(name = "explorviz.gitanalysis.save-crashed_files")
@@ -169,7 +165,8 @@ public class AnalysisService {
       throws IOException, GitAPIException, NotFoundException, PropertyNotDefinedException { // NOPMD
 
     // start social analysis to run async while repo is being cloned
-    fetchSocialData(config, exporter);
+    final Optional<CompletableFuture<Void>> socialFuture =
+        socialFetcherService.fetchSocialData(config, exporter, managedExecutor);
 
     try (Repository repository = this.gitRepositoryHandler.getGitRepository(config)) {
 
@@ -177,7 +174,7 @@ public class AnalysisService {
       final String branch = repository.getBranch();
       final String repositoryUrl = resolveRepositoryUrl(config, repository);
 
-      preInitializeRemoteState(config, exporter, branch, repositoryUrl);
+      socialFetcherService.preInitializeRemoteState(config, exporter, branch, repositoryUrl);
 
       // get fetch data from remote
       final AnalysisStartContext analysisStartContext =
@@ -317,103 +314,20 @@ public class AnalysisService {
       }
 
       LOGGER.atTrace().addArgument(commitCount).log("Analyzed {} commits");
+
+      socialFuture.ifPresent(f -> {
+        try {
+          f.get(SOCIAL_FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+          exporter.relinkResourceEvents(config.landscapeToken(), config.getRepositoryName());
+        } catch (TimeoutException | ExecutionException e) {
+          LOGGER.warn("Social fetch did not complete", e);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      });
+
       // checkout the branch, so not a single commit is checked out after the run
       Git.wrap(repository).checkout().setName(fullBranch).call();
-    }
-  }
-
-  private void fetchSocialData(final AnalysisConfig config, final DataExporter exporter) {
-    if (!config.fetchSocialData()) {
-      LOGGER.info("Skipping GitHub social data fetch, not enabled in config.");
-      return;
-    }
-
-    if (config.repoRemoteUrl().isEmpty()) {
-      LOGGER.info("Skipping GitHub social data fetch, no remote URL configured.");
-      return;
-    }
-
-    // determine repo sub string with format "owner/repo" needed for graphql query
-    final Optional<String> repoSubString = extractGithubRepoSubString(config.repoRemoteUrl().get());
-    if (repoSubString.isEmpty()) {
-      return;
-    }
-
-    // send state data before fetching to make sure precondition is met
-    preInitializeRemoteState(config, exporter, config.branch().orElse("main"), "");
-
-    // determine time frame to fetch
-    final int socialDataTimeFrameDays = config.socialDataTimeFrameDays().orElse(90);
-    final Date endDate = determineEndDate(config);
-    final Date startDate = Date.from(endDate.toInstant().minus(socialDataTimeFrameDays, ChronoUnit.DAYS));
-
-    managedExecutor.execute(() -> {
-      try {
-        LOGGER.info("Starting independent background fetch for GitHub Social Data (Last {} Days).",
-            socialDataTimeFrameDays);
-        socialFetcherService.fetchSocialDataInRange(
-            repoSubString.get(),
-            startDate,
-            endDate,
-            exporter,
-            config.landscapeToken(),
-            config.gitPassword().orElse(""));
-      } catch (final Exception e) {
-        LOGGER.error("Background social fetch aborted: {}", e.getMessage());
-      }
-    });
-  }
-
-  private Optional<String> extractGithubRepoSubString(String remoteUrl) {
-    if (!remoteUrl.contains("github.com")) {
-      LOGGER.info("Skipping GitHub collaboration data fetch, not a GitHub repository: {}", remoteUrl);
-      return Optional.empty();
-    }
-    final String[] parts = remoteUrl.split("github.com[:/]");
-    if (parts.length < 2) {
-      LOGGER.warn("Could not extract repo name from GitHub URL: {}", remoteUrl);
-      return Optional.empty();
-    }
-    return Optional.of(parts[1].replace(".git", ""));
-  }
-
-  private Date determineEndDate(AnalysisConfig config) {
-
-    Date endDate = Date.from(Instant.now()); // Default fallback
-    if (config.fetchEndDate().isPresent() && !config.fetchEndDate().get().isBlank()) {
-      final String dateStr = config.fetchEndDate().get();
-      try {
-        // Try parsing ISO timestamp first
-        endDate = Date.from(Instant.parse(dateStr));
-      } catch (final DateTimeParseException e) {
-        // Fallback to simple date parsing "YYYY-MM-DD"
-        endDate = Date.from(LocalDate.parse(dateStr).atStartOfDay(ZoneId.systemDefault()).toInstant());
-      }
-    }
-    return endDate;
-  }
-
-  private void preInitializeRemoteState(final AnalysisConfig config, final DataExporter exporter,
-      final String branch, final String repositoryUrl) {
-    if (exporter.isRemote()) {
-      try {
-        final String resolvedRepositoryUrl =
-            RepositoryFileUrlBuilder.resolveRepositoryUrl(
-                    repositoryUrl.isBlank()
-                        ? config.repoRemoteUrl()
-                        : Optional.of(repositoryUrl),
-                    "")
-                .orElse("");
-        exporter.getStateData(
-            config.getRepositoryName(),
-            branch,
-            config.landscapeToken(),
-            config.applicationPathsMap(),
-            resolvedRepositoryUrl,
-            true);
-      } catch (final Exception e) {
-        LOGGER.warn("Could not pre-initialize remote state: {}", e.getMessage());
-      }
     }
   }
 
