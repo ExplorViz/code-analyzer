@@ -57,6 +57,7 @@ public class AnalysisRequest {
   private List<ApplicationSpec> applications;
 
   private boolean fetchSocialData = false;
+  private boolean syncSocialWindow = true;
   private String fetchEndDate;
   private Integer socialDataTimeFrameDays;
 
@@ -215,6 +216,14 @@ public class AnalysisRequest {
     this.fetchSocialData = fetchSocialData;
   }
 
+  public boolean isSyncSocialWindow() {
+    return syncSocialWindow;
+  }
+
+  public void setSyncSocialWindow(final boolean syncSocialWindow) {
+    this.syncSocialWindow = syncSocialWindow;
+  }
+
   public String getFetchEndDate() {
     return fetchEndDate;
   }
@@ -265,6 +274,7 @@ public class AnalysisRequest {
         .landscapeToken((landscapeToken != null && !landscapeToken.isBlank()) ? landscapeToken : "mytokenvalue")
         .applicationRoot(Optional.ofNullable(applicationRoot))
         .fetchSocialData(fetchSocialData)
+        .syncSocialWindow(syncSocialWindow)
         .socialDataTimeFrameDays(Optional.ofNullable(socialDataTimeFrameDays))
         .fetchEndDate(Optional.ofNullable(fetchEndDate).filter(s -> !s.isEmpty()));
 

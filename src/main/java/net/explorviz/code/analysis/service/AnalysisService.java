@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -165,8 +166,11 @@ public class AnalysisService {
       throws IOException, GitAPIException, NotFoundException, PropertyNotDefinedException { // NOPMD
 
     // start social analysis to run async while repo is being cloned
-    final Optional<CompletableFuture<Void>> socialFuture =
-        socialFetcherService.fetchSocialData(config, exporter, managedExecutor);
+    Optional<CompletableFuture<Void>> socialFuture = Optional.empty();
+
+    if (!config.syncSocialWindow()) {
+      socialFuture = socialFetcherService.fetchSocialData(config, exporter, managedExecutor);
+    }
 
     try (Repository repository = this.gitRepositoryHandler.getGitRepository(config)) {
 
@@ -206,6 +210,22 @@ public class AnalysisService {
       analysisStatusService.markRunning(config.landscapeToken(), commitsToAnalyze, 0);
 
       final int commitsToSkipBeforeAnalyzing = totalCommitsInRange - commitsToAnalyze;
+
+      // find start and end dates for social analysis
+      final List<RevCommit> analyzedCommits = commitsInRange.subList(commitsToSkipBeforeAnalyzing, totalCommitsInRange);
+      if (config.syncSocialWindow() && !analyzedCommits.isEmpty()) {
+        long min = Long.MAX_VALUE;
+        long max = Long.MIN_VALUE;
+        for (final RevCommit c : analyzedCommits) {
+          final int t = c.getCommitTime();
+          min = Math.min(min, t);
+          max = Math.max(max, t);
+        }
+        final Date socialStart = new Date(min * 1000L);
+        final Date socialEnd = new Date(max * 1000L);
+        socialFuture = socialFetcherService.fetchSocialData(config, exporter, managedExecutor, socialStart, socialEnd);
+      }
+
       final Map<ObjectId, List<String>> tagsByCommitId = buildTagsByCommitId(repository);
 
       // Pre-compile patterns

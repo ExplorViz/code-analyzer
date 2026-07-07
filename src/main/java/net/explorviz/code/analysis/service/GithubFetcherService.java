@@ -63,7 +63,18 @@ public class GithubFetcherService {
 
 
   Optional<CompletableFuture<Void>> fetchSocialData(
-      final AnalysisConfig config, final DataExporter exporter, ManagedExecutor managedExecutor) {
+      final AnalysisConfig config, final DataExporter exporter, final ManagedExecutor managedExecutor) {
+    final int days = config.socialDataTimeFrameDays().orElse(365);
+    final Date endDate = determineEndDate(config);
+    final Date startDate = Date.from(endDate.toInstant().minus(days, ChronoUnit.DAYS));
+    return fetchSocialData(config, exporter, managedExecutor, startDate, endDate);
+  }
+
+  Optional<CompletableFuture<Void>> fetchSocialData(
+      final AnalysisConfig config,
+      final DataExporter exporter,
+      ManagedExecutor managedExecutor,
+      Date startDate, Date endDate) {
     if (!config.fetchSocialData()) {
       LOGGER.info("Skipping GitHub social data fetch, not enabled in config.");
       return Optional.empty();
@@ -83,16 +94,11 @@ public class GithubFetcherService {
     // send state data before fetching to make sure precondition is met
     preInitializeRemoteState(config, exporter, config.branch().orElse("main"), "");
 
-    // determine time frame to fetch
-    final int socialDataTimeFrameDays = config.socialDataTimeFrameDays().orElse(90);
-    final Date endDate = determineEndDate(config);
-    final Date startDate = Date.from(endDate.toInstant().minus(socialDataTimeFrameDays, ChronoUnit.DAYS));
-
     return Optional.of(
         managedExecutor.runAsync(() -> {
               try {
-                LOGGER.info("Starting independent background fetch for GitHub Social Data (Last {} Days).",
-                    socialDataTimeFrameDays);
+                LOGGER.info("Starting independent background fetch for GitHub Social Data from {} to {}",
+                    startDate, endDate);
                 fetchSocialDataInRange(
                     repoSubString.get(),
                     startDate,
