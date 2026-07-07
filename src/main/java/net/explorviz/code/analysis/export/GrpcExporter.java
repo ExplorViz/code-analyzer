@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.CommitServiceGrpc;
-import net.explorviz.code.proto.ContributorServiceGrpc;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.FileDataServiceGrpc;
 import net.explorviz.code.proto.MutinyFileDataServiceGrpc;
@@ -42,9 +41,6 @@ public final class GrpcExporter implements DataExporter {
 
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ StateDataServiceGrpc.StateDataServiceBlockingStub stateDataGrpcClient;
-
-  @GrpcClient(GRPC_CLIENT_NAME)
-  /* package */ ContributorServiceGrpc.ContributorServiceBlockingStub contributorDataGrpcClient;
 
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ TrackableResourceServiceGrpc.TrackableResourceServiceBlockingStub trackableResourceGrpcClient;
