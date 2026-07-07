@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.Map;
 import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.CommitServiceGrpc;
-import net.explorviz.code.proto.ContributorServiceGrpc;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.FileDataServiceGrpc;
 import net.explorviz.code.proto.MutinyFileDataServiceGrpc;
+import net.explorviz.code.proto.RelinkResourcesRequest;
 import net.explorviz.code.proto.StateData;
 import net.explorviz.code.proto.StateDataRequest;
 import net.explorviz.code.proto.StateDataServiceGrpc;
@@ -41,9 +41,6 @@ public final class GrpcExporter implements DataExporter {
 
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ StateDataServiceGrpc.StateDataServiceBlockingStub stateDataGrpcClient;
-
-  @GrpcClient(GRPC_CLIENT_NAME)
-  /* package */ ContributorServiceGrpc.ContributorServiceBlockingStub contributorDataGrpcClient;
 
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ TrackableResourceServiceGrpc.TrackableResourceServiceBlockingStub trackableResourceGrpcClient;
@@ -140,10 +137,25 @@ public final class GrpcExporter implements DataExporter {
     try {
       trackableResourceGrpcClient.persistTrackableResourceEvent(trackableResourceEvent);
     } catch (final Exception e) {
+      LOGGER.error("Failed to send trackable resource event {}: {}", trackableResourceEvent.getAnnotationId(),
+          e.getMessage());
+      throw new RuntimeException("Failed to send trackable resource event for "
+          + trackableResourceEvent.getAnnotationId(), e);
+    }
+  }
+  
+  @Override
+  public void relinkResourceEvents(final String token, final String repoName) {
+    LOGGER.info("Sending relink request on {}", repoName);
+    try {
+      RelinkResourcesRequest request = RelinkResourcesRequest.newBuilder()
+          .setLandscapeToken(token)
+          .setRepositoryName(repoName)
+          .build();
+      trackableResourceGrpcClient.relinkResources(request);
+    } catch (final Exception e) {
       if (LOGGER.isErrorEnabled()) {
-        LOGGER.error("Failed to send trackable resource event {}: {}", trackableResourceEvent.getAnnotationId(),
-            e.getMessage());
-        LOGGER.debug("Detailed event data: {}", trackableResourceEvent);
+        LOGGER.error("Failed to send relink request on {}: {}", repoName,  e.getMessage());
       }
     }
   }

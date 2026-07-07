@@ -164,9 +164,12 @@ public interface DataExporter {
     }
   }
 
+  default void relinkResourceEvents(String token, String repoName){}
+
   void persistCommit(final CommitData commitData);
 
   void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent);
+
 
   boolean isRemote();
 

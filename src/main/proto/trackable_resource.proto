@@ -10,6 +10,7 @@ import "contributor.proto";
 
 service TrackableResourceService {
   rpc persistTrackableResourceEvent (TrackableResourceEvent) returns (google.protobuf.Empty) {}
+  rpc relinkResources (RelinkResourcesRequest) returns (google.protobuf.Empty) {}
 }
 
 enum TrackableResourceType {
@@ -31,9 +32,10 @@ enum AnnotationType {
 }
 
 enum ResourceState {
-  OPEN = 0;
-  CLOSED = 1;
-  MERGED = 2;
+  UNCHANGED = 0;
+  OPEN = 1;
+  CLOSED = 2;
+  MERGED = 3;
 }
 
 message TrackableResourceEvent {
@@ -54,6 +56,13 @@ message TrackableResourceEvent {
   string title = 10;
   string description = 11;
   string web_url = 12;
-  string labels = 13;
+  repeated string labels = 13;
+  repeated string commit_shas = 14;
+  repeated int32 referenced_issue_numbers = 15;
 
+}
+
+message RelinkResourcesRequest {
+  string landscape_token = 1;
+  string repository_name = 2;
 }

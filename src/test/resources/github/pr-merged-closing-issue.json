@@ -1,0 +1,369 @@
+{
+  "search": {
+    "pageInfo": {
+      "hasNextPage": false,
+      "endCursor": "Y3Vyc29yOjI="
+    },
+    "nodes": [
+      {
+        "__typename": "PullRequest",
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "oid": "3e4e2bcc143d6c9b9e5e7dab0c51c7b0094744d0"
+              }
+            }
+          ]
+        },
+        "closingIssuesReferences": {
+          "nodes": []
+        },
+        "id": "PR_kwDOAkSj0c6Y7SIB",
+        "number": 2936,
+        "title": "Bump com.github.oshi:oshi-core from 6.8.1 to 6.8.2",
+        "body": "Bumps [com.github.oshi:oshi-core](https://github.com/oshi/oshi) from 6.8.1 to 6.8.2.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/oshi/oshi/releases\">com.github.oshi:oshi-core's releases</a>.</em></p>\n<blockquote>\n<h2>Release 6.8.2</h2>\n<h5>Bug fixes / Improvements</h5>\n<ul>\n<li><a href=\"https://redirect.github.com/oshi/oshi/pull/2889\">#2889</a>: Handle system date format on macOS getInstalledApps output parsing - <a href=\"https://github.com/dyorgio\"><code>@​dyorgio</code></a>.</li>\n</ul>\n<p><a href=\"https://github.com/oshi/oshi/blob/master/CHANGELOG.md\">Full change log</a></p>\n</blockquote>\n</details>\n<details>\n<summary>Changelog</summary>\n<p><em>Sourced from <a href=\"https://github.com/oshi/oshi/blob/master/CHANGELOG.md\">com.github.oshi:oshi-core's changelog</a>.</em></p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/oshi/oshi/commit/e6842910093729e7d0e19bed13476383fa8d1062\"><code>e684291</code></a> [maven-release-plugin] prepare release oshi-parent-6.8.2</li>\n<li><a href=\"https://github.com/oshi/oshi/commit/57ac15f17765df975e6edfbdbe7745212d75cfca\"><code>57ac15f</code></a> 6.8.2 Release</li>\n<li><a href=\"https://github.com/oshi/oshi/commit/17bd549735c985a75c200516316a862c7ffe74cb\"><code>17bd549</code></a> chore(deps): update dependency org.junit.jupiter:junit-jupiter-api to v5.13.0...</li>\n<li><a href=\"https://github.com/oshi/oshi/commit/c9424a0c3c3413587899f904b4543c5a1851f0ef\"><code>c9424a0</code></a> Handle locale-specific formats on macOS system_profiler output (<a href=\"https://redirect.github.com/oshi/oshi/issues/2890\">#2890</a>)</li>\n<li><a href=\"https://github.com/oshi/oshi/commit/134ee60e0453594d6715f26f420455aab7cca1ff\"><code>134ee60</code></a> chore(deps): update dependency com.diffplug.spotless:spotless-maven-plugin to...</li>\n<li><a href=\"https://github.com/oshi/oshi/commit/f802bc6e187fbc13c93c6b93d6fe9e3b0d63aaad\"><code>f802bc6</code></a> add missing = to a key-value pair (<a href=\"https://redirect.github.com/oshi/oshi/issues/2893\">#2893</a>)</li>\n<li><a href=\"https://github.com/oshi/oshi/commit/a8546ee71506af1e5dafb9504ed7f23a3e078dee\"><code>a8546ee</code></a> chore(deps): update dependency io.github.git-commit-id:git-commit-id-maven-pl...</li>\n<li><a href=\"https://github.com/oshi/oshi/commit/ac8ca78b4372468bbc86d11da4e15a71fed2a2ed\"><code>ac8ca78</code></a> fix(deps): update dependency org.jfree:jfreechart to v1.5.6 (<a href=\"https://redirect.github.com/oshi/oshi/issues/2888\">#2888</a>)</li>\n<li><a href=\"https://github.com/oshi/oshi/commit/5637d5e0f0f90a37836d0afd4fa71d28e8814df5\"><code>5637d5e</code></a> chore(deps): update dependency com.puppycrawl.tools:checkstyle to v10.24.0 (#...</li>\n<li><a href=\"https://github.com/oshi/oshi/commit/39a20d2d82245a9dd325395537ea24f94ed7d2be\"><code>39a20d2</code></a> chore(deps): update dependency com.puppycrawl.tools:checkstyle to v10.23.1 (#...</li>\n<li>Additional commits viewable in <a href=\"https://github.com/oshi/oshi/compare/oshi-parent-6.8.1...oshi-parent-6.8.2\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\n[![user-1 compatibility score](https://user-1-badges.githubapp.com/badges/compatibility_score?dependency-name=com.github.oshi:oshi-core&package-manager=gradle&previous-version=6.8.1&new-version=6.8.2)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-user-1-security-updates#about-compatibility-scores)\n\nuser-1 will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@user-1 rebase`.\n\n[//]: # (user-1-automerge-start)\n[//]: # (user-1-automerge-end)\n\n---\n\n<details>\n<summary>user-1 commands and options</summary>\n<br />\n\nYou can trigger user-1 actions by commenting on this PR:\n- `@user-1 rebase` will rebase this PR\n- `@user-1 recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@user-1 merge` will merge this PR after your CI passes on it\n- `@user-1 squash and merge` will squash and merge this PR after your CI passes on it\n- `@user-1 cancel merge` will cancel a previously requested merge and block automerging\n- `@user-1 reopen` will reopen this PR if it is closed\n- `@user-1 close` will close this PR and stop user-1 recreating it. You can achieve the same result by closing it manually\n- `@user-1 show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@user-1 ignore this major version` will close this PR and stop user-1 creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@user-1 ignore this minor version` will close this PR and stop user-1 creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@user-1 ignore this dependency` will close this PR and stop user-1 creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+        "url": "https://github.com/kieker-monitoring/kieker/pull/2936",
+        "state": "MERGED",
+        "createdAt": "2025-06-04T01:10:43Z",
+        "closedAt": "2025-06-12T09:59:02Z",
+        "mergedAt": "2025-06-12T09:59:02Z",
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4"
+        },
+        "labels": {
+          "nodes": [
+            {
+              "name": "dependencies"
+            },
+            {
+              "name": "java"
+            }
+          ]
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "LabeledEvent"
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2025-06-11T06:47:50Z",
+                "author": {
+                  "email": "user-2@example.invalid",
+                  "user": {
+                    "login": "user-2",
+                    "avatarUrl": "https://avatars.example.invalid/u/1?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2025-06-11T06:47:51Z",
+              "actor": {
+                "login": "user-1",
+                "avatarUrl": "https://avatars.example.invalid/u/1?v=4"
+              }
+            },
+            {
+              "__typename": "MergedEvent",
+              "createdAt": "2025-06-12T09:59:02Z",
+              "actor": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "ClosedEvent",
+              "createdAt": "2025-06-12T09:59:02Z",
+              "actor": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "HeadRefDeletedEvent"
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "PullRequest",
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "oid": "51322b4c81c8c0aa228f0f2c6b6717a49312de0c"
+              }
+            },
+            {
+              "commit": {
+                "oid": "32498a05ba795b0680b5a2570145cc699e3a39c5"
+              }
+            },
+            {
+              "commit": {
+                "oid": "9d12e077c080eedeb3d7142015cc42fe5f54b7b3"
+              }
+            },
+            {
+              "commit": {
+                "oid": "04e70d077f5d87876a5d70b30220cbdb7186ea10"
+              }
+            },
+            {
+              "commit": {
+                "oid": "bccc386f489a1e69a6eebb56fddae9b93502d058"
+              }
+            },
+            {
+              "commit": {
+                "oid": "363174858de076e994c4bad631c91f49a4cc0d98"
+              }
+            }
+          ]
+        },
+        "closingIssuesReferences": {
+          "nodes": [
+            {
+              "number": 2855
+            }
+          ]
+        },
+        "id": "PR_kwDOAkSj0c6GpOe5",
+        "number": 2868,
+        "title": "Update gradle wrapper to 8.14.1",
+        "body": "# Pull Request\r\n\r\n## Contribution\r\nThis pull request provides the following contribution to Kieker\r\n- Update of gradle wrapper to 8.14.1\r\n\r\n\r\n## Open Question\r\n- [x] Due to an error in the build process, an artifact block in the main _build.gradle_ had to be commented out. As far as I could see, it was not used. Is that correct? If it is indeed not needed, the code could be removed completely, otherwise it could be a solution to put it in a `afterEvaluate` (not tested yet).",
+        "url": "https://github.com/kieker-monitoring/kieker/pull/2868",
+        "state": "MERGED",
+        "createdAt": "2025-01-03T09:21:25Z",
+        "closedAt": "2025-06-11T06:46:49Z",
+        "mergedAt": "2025-06-11T06:46:49Z",
+        "author": {
+          "login": "user-4",
+          "avatarUrl": "https://avatars.example.invalid/u/4?v=4",
+          "name": null,
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "ConnectedEvent"
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2025-02-05T15:55:29Z",
+              "actor": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2025-02-21T15:42:09Z",
+              "actor": {
+                "login": "user-4",
+                "avatarUrl": "https://avatars.example.invalid/u/4?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "RenamedTitleEvent"
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2025-03-05T16:03:15Z",
+              "actor": {
+                "login": "user-4",
+                "avatarUrl": "https://avatars.example.invalid/u/4?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2025-04-01T09:44:16Z",
+              "actor": {
+                "login": "user-4",
+                "avatarUrl": "https://avatars.example.invalid/u/4?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "RenamedTitleEvent"
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2025-01-02T10:15:06Z",
+                "author": {
+                  "email": "user-4@example.invalid",
+                  "user": {
+                    "login": "user-4",
+                    "avatarUrl": "https://avatars.example.invalid/u/4?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2025-02-21T15:54:04Z",
+                "author": {
+                  "email": "user-4+alt1@example.invalid",
+                  "user": {
+                    "login": "user-4",
+                    "avatarUrl": "https://avatars.example.invalid/u/4?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2025-03-05T14:46:25Z",
+                "author": {
+                  "email": "user-4+alt1@example.invalid",
+                  "user": {
+                    "login": "user-4",
+                    "avatarUrl": "https://avatars.example.invalid/u/4?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2025-04-01T10:43:03Z",
+                "author": {
+                  "email": "user-4+alt1@example.invalid",
+                  "user": {
+                    "login": "user-4",
+                    "avatarUrl": "https://avatars.example.invalid/u/4?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "HeadRefForcePushedEvent",
+              "createdAt": "2025-05-27T08:19:01Z",
+              "actor": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2025-05-27T08:22:33Z",
+              "author": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "MentionedEvent"
+            },
+            {
+              "__typename": "SubscribedEvent"
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2025-05-27T12:16:52Z",
+                "author": {
+                  "email": "user-4+alt1@example.invalid",
+                  "user": {
+                    "login": "user-4",
+                    "avatarUrl": "https://avatars.example.invalid/u/4?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "RenamedTitleEvent"
+            },
+            {
+              "__typename": "PullRequestCommit",
+              "commit": {
+                "authoredDate": "2025-06-03T14:48:58Z",
+                "author": {
+                  "email": "user-4+alt1@example.invalid",
+                  "user": {
+                    "login": "user-4",
+                    "avatarUrl": "https://avatars.example.invalid/u/4?v=4"
+                  }
+                }
+              }
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2025-06-05T10:53:25Z",
+              "author": {
+                "login": "user-4",
+                "avatarUrl": "https://avatars.example.invalid/u/4?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "MentionedEvent"
+            },
+            {
+              "__typename": "SubscribedEvent"
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2025-06-11T06:46:35Z",
+              "author": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "MergedEvent",
+              "createdAt": "2025-06-11T06:46:49Z",
+              "actor": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "ClosedEvent",
+              "createdAt": "2025-06-11T06:46:49Z",
+              "actor": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "rateLimit": {
+    "cost": 4,
+    "remaining": 4992,
+    "resetAt": "2026-07-06T14:20:11Z"
+  }
+}

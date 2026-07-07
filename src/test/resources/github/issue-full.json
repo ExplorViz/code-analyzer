@@ -1,0 +1,504 @@
+{
+  "search": {
+    "pageInfo": {
+      "hasNextPage": false,
+      "endCursor": "Y3Vyc29yOjEz"
+    },
+    "nodes": [
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c8AAAABHy2Sjw",
+        "number": 3116,
+        "title": "[GH-40] Update to gradlew 8.14.5",
+        "body": "We should keep the gradle version up to date, even while we can't update the major version.",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3116",
+        "state": "OPEN",
+        "createdAt": "2026-07-06T10:04:29Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+          "name": "User 1",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": []
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c8AAAABHkGvVg",
+        "number": 3112,
+        "title": "[GH-39] Add TimeSource that returns zero",
+        "body": "Currently, there are two time sources, that use `System.nanoTime` and `System.currentTimeMillis`. To measure there overhead, a `ZeroTimeSource` should be created that only returns 0 (and therefore creates no overhead).",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3112",
+        "state": "OPEN",
+        "createdAt": "2026-07-03T10:13:12Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+          "name": "User 1",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": []
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c8AAAABG0WkJw",
+        "number": 3109,
+        "title": "[GH-38] Non-deterministic Failure of release-check-extended.sh",
+        "body": "On Jenkins, `release-check-extended.sh` fails with a log like follows:\n\n> [info] Output directory /home/jenkins-agent/workspace/kieker-dev_main/build/tmp.lcKhrd9eRV/kieker-2.0.4-SNAPSHOT/examples/userguide/ch5--trace-monitoring-aspectj/testdata/kieker-20141009-163010944-UTC-constructor-events-example-plots\n> [info] Comparing to reference file aggregatedAssemblyCallTree.dot ... \n> --- left.tmp\n> +++ right.tmp\n> @@ -37,49 +37,49 @@\n>  1->2[style=solid,arrowhead=none,label=\"1\" ]\n>  1->5[style=solid,arrowhead=none,label=\"1\" ]\n>  1->6[style=solid,arrowhead=none,label=\"1\" ]\n> -10[label =\"@2:..Catalog\\n.getBook(..)\",shape=none];\n> +10[label =\"@1:..Catalog\\n.getBook(..)\",shape=none];\n>  11->12[style=solid,arrowhead=none,label=\"1\" ]\n> -11[label =\"@3:..CRM\\n.getOffers()\",shape=none];\n> -12[label =\"@2:..Catalog\\n.getBook(..)\",shape=none];\n> +11[label =\"@2:..CRM\\n.getOffers()\",shape=none];\n> +12[label =\"@1:..Catalog\\n.getBook(..)\",shape=none];\n>  13->14[style=solid,arrowhead=none,label=\"1\" ]\n> -13[label =\"@4:..Bookstore\\n.<init>()\",shape=none];\n> +13[label =\"@3:..Bookstore\\n.<init>()\",shape=none];\n\nMost likely it is caused by non-determinisim in the TeeTime pipelines. ",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3109",
+        "state": "OPEN",
+        "createdAt": "2026-06-26T13:53:09Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+          "name": "User 1",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "MentionedEvent"
+            },
+            {
+              "__typename": "SubscribedEvent"
+            },
+            {
+              "__typename": "MentionedEvent"
+            },
+            {
+              "__typename": "MentionedEvent"
+            },
+            {
+              "__typename": "SubscribedEvent"
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2026-06-26T13:53:20Z",
+              "author": {
+                "login": "user-1",
+                "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "MentionedEvent"
+            },
+            {
+              "__typename": "SubscribedEvent"
+            },
+            {
+              "__typename": "AssignedEvent"
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2026-06-29T09:04:27Z",
+              "author": {
+                "login": "user-2",
+                "avatarUrl": "https://avatars.example.invalid/u/2?v=4",
+                "email": ""
+              }
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c8AAAABFg3_ww",
+        "number": 3102,
+        "title": "[GH-37] Add test cases for the new PlantUML-based Trace Analysis",
+        "body": "We have incorporated the PlantUML pipeline into Trace Analysis, but this lacks test cases in the `release-check-extended.sh`. We would at least need the same set of test cases for the new Trace Analysis.",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3102",
+        "state": "OPEN",
+        "createdAt": "2026-06-15T12:17:47Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-3",
+          "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+          "name": "User 3",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": []
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c8AAAABEv-FJg",
+        "number": 3100,
+        "title": "[GH-36] Uncomplete Example Command in Quick Start Guide",
+        "body": "In the [Quick Start Guide](https://kieker-monitoring.readthedocs.io/en/2.0.3/quick-start-guide.html) looks it like `bin\\trace-analysis.bat ... --plot-Assembly-Component-Dependency-Graph` would not need a parameter. Meanwhile it actually needs one, i. e. `responseTimes-ns`.\n\nAlso it can be misleading for new user that it is not mentioned that `trace-analysis` is a tool in the tool directory. The current guide can actually be read in such a way that `trace-analysis.bat` is in the same `bin`-directory as `dotPic-fileConverter.bat`.",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3100",
+        "state": "OPEN",
+        "createdAt": "2026-06-08T14:21:50Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-4",
+          "avatarUrl": "https://avatars.example.invalid/u/4?v=4",
+          "name": "User 4",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "RenamedTitleEvent"
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c8AAAABEv13eQ",
+        "number": 3099,
+        "title": "[GH-35] ClassCastException in Collector: Conflicting slf4j and logback versions?",
+        "body": "When trying to start the collector of Kieker 2.0.3 from the zip-archive (`collector -c <path to config>/collector.conf`), I'll get the following exception:\n\n> Starting collector\n[info] Wait for startup\nFailed to instantiate [ch.qos.logback.classic.LoggerContext]\nReported exception:\njava.lang.ClassCastException: class ch.qos.logback.classic.Level cannot be cast to class java.util.Iterator (ch.qos.logback.classic.Level is in unnamed module of loader 'app'; java.util.Iterator is in module java.base of loader 'bootstrap')\n\tat jdk.proxy1/jdk.proxy1.$Proxy17.iterator(Unknown Source)\n\tat org.codehaus.groovy.runtime.DefaultGroovyMethods.toList(DefaultGroovyMethods.java:3381)\n\tat org.codehaus.groovy.runtime.DefaultGroovyMethods.asCollection(DefaultGroovyMethods.java:11805)\n\tat org.codehaus.groovy.runtime.DefaultGroovyMethods.minus(DefaultGroovyMethods.java:13967)\n\tat org.codehaus.groovy.runtime.DefaultGroovyMethods.minus(DefaultGroovyMethods.java:13874)\n\tat org.codehaus.groovy.runtime.dgm$538.doMethodInvoke(Unknown Source)\n\tat org.codehaus.groovy.runtime.callsite.PojoMetaMethodSite$PojoMetaMethodSiteNoUnwrap.invoke(PojoMetaMethodSite.java:234)\n\tat org.codehaus.groovy.runtime.callsite.PojoMetaMethodSite.call(PojoMetaMethodSite.java:57)\n\tat org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:45)\n\tat org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:125)\n\tat org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:139)\n\tat ch.qos.logback.classic.gaffer.ComponentDelegate.analyzeArgs(ComponentDelegate.groovy:110)\n\tat ch.qos.logback.classic.gaffer.ComponentDelegate$analyzeArgs.callCurrent(Unknown Source)\n\tat org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCallCurrent(CallSiteArray.java:49)\n\tat org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:171)\n\tat org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:185)\n\tat ch.qos.logback.classic.gaffer.ComponentDelegate.methodMissing(ComponentDelegate.groovy:48)\n\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)\n\tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)\n\tat groovy.lang.MetaClassImpl.invokeMissingMethod(MetaClassImpl.java:925)\n\tat groovy.lang.MetaClassImpl.invokePropertyOrMissing(MetaClassImpl.java:1414)\n\tat groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1336)\n\tat groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1089)\n\tat groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1008)\n\tat org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:645)\n\tat org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:628)\n\tat org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeOnDelegationObjects(ClosureMetaClass.java:391)\n\tat org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:330)\n\tat groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1008)\n\tat org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)\n\tat Script1$_run_closure1.doCall(Script1.groovy:9)\n\tat Script1$_run_closure1.doCall(Script1.groovy)\n\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)\n\tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)\n\tat groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)\n\tat org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:279)\n\tat groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1008)\n\tat org.codehaus.groovy.runtime.callsite.PogoMetaClassSite.call(PogoMetaClassSite.java:39)\n\tat org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:45)\n\tat org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:125)\n\tat org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:130)\n\tat ch.qos.logback.classic.gaffer.ConfigurationDelegate.appender(ConfigurationDelegate.groovy:143)\n\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)\n\tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)\n\tat org.codehaus.groovy.runtime.metaclass.MixinInstanceMetaMethod.invoke(MixinInstanceMetaMethod.java:61)\n\tat groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)\n\tat org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)\n\tat Script1.run(Script1.groovy:8)\n\tat Script1$run.call(Unknown Source)\n\tat org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:45)\n\tat org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:125)\n\tat org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:130)\n\tat ch.qos.logback.classic.gaffer.GafferConfigurator.run(GafferConfigurator.groovy:77)\n\tat ch.qos.logback.classic.gaffer.GafferConfigurator$run.callCurrent(Unknown Source)\n\tat org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCallCurrent(CallSiteArray.java:49)\n\tat org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:171)\n\tat org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:185)\n\tat ch.qos.logback.classic.gaffer.GafferConfigurator.run(GafferConfigurator.groovy:44)\n\tat ch.qos.logback.classic.gaffer.GafferUtil.runGafferConfiguratorOn(GafferUtil.java:43)\n\tat ch.qos.logback.classic.util.ContextInitializer.configureByResource(ContextInitializer.java:67)\n\tat ch.qos.logback.classic.util.ContextInitializer.autoConfig(ContextInitializer.java:150)\n\tat org.slf4j.impl.StaticLoggerBinder.init(StaticLoggerBinder.java:84)\n\tat org.slf4j.impl.StaticLoggerBinder.<clinit>(StaticLoggerBinder.java:55)\n\tat org.slf4j.LoggerFactory.bind(LoggerFactory.java:150)\n\tat org.slf4j.LoggerFactory.performInitialization(LoggerFactory.java:124)\n\tat org.slf4j.LoggerFactory.getILoggerFactory(LoggerFactory.java:417)\n\tat org.slf4j.LoggerFactory.getLogger(LoggerFactory.java:362)\n\tat kieker.tools.common.AbstractLegacyTool.<init>(AbstractLegacyTool.java:53)\n\tat kieker.tools.common.AbstractService.<init>(AbstractService.java:58)\n\tat kieker.tools.collector.CollectorMain.<init>(CollectorMain.java:47)\n\tat kieker.tools.collector.CollectorMain.main(CollectorMain.java:58)\n",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3099",
+        "state": "OPEN",
+        "createdAt": "2026-06-08T14:04:12Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-4",
+          "avatarUrl": "https://avatars.example.invalid/u/4?v=4",
+          "name": "User 4",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "AssignedEvent"
+            },
+            {
+              "__typename": "RenamedTitleEvent"
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2026-06-15T12:23:07Z",
+              "author": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "MentionedEvent"
+            },
+            {
+              "__typename": "SubscribedEvent"
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2026-06-15T12:55:30Z",
+              "author": {
+                "login": "user-4",
+                "avatarUrl": "https://avatars.example.invalid/u/4?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "MentionedEvent"
+            },
+            {
+              "__typename": "SubscribedEvent"
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c8AAAABBVI9aA",
+        "number": 3092,
+        "title": "[GH-34] More hard-coded version names",
+        "body": "There are three `gradle.properties` files that are not affected by the Gradle task `replaceHardCodedVersionNames()` in `./build.gradle`\n\n```sh\nmonitoring/aspectj/integrationTest-resources/example-projects-aspectj/example-beforeafterconstructorevent/gradle.properties\nmonitoring/aspectj/integrationTest-resources/example-projects-aspectj/example-beforeafteroperationevent/gradle.properties\nmonitoring/aspectj/integrationTest-resources/example-projects-aspectj/example-operationexecutionrecord/gradle.properties\n```",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3092",
+        "state": "OPEN",
+        "createdAt": "2026-05-05T13:02:07Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-3",
+          "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+          "name": "User 3",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": []
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c77u2U1",
+        "number": 3079,
+        "title": "[GH-33] Use Static Initializer for ByteBuddy Variables",
+        "body": "Instead of initializing variables in `if`-blocks, they should be initialized by a static initializer. Before merging this, we should check whether this influences the performance. ",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3079",
+        "state": "OPEN",
+        "createdAt": "2026-04-08T09:04:41Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+          "name": "User 1",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": []
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c77uuRZ",
+        "number": 3078,
+        "title": "[GH-32] Update to Gradle 8.14.4.",
+        "body": "While we're waiting for the release issue to be resolved for a major Gradle version update, we should still update the patch version, so we should go to 8.14.4 (which shouldn't break anything). ",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3078",
+        "state": "OPEN",
+        "createdAt": "2026-04-08T08:59:07Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+          "name": "User 1",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": []
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c7hTR-g",
+        "number": 3018,
+        "title": "[GH-28] New Plantuml pipeline for visualization",
+        "body": "Integrate a new plantuml pipeline in trace analysis for creating diagrams. \n\n- For sequence diagrams we use plantuml syntax now, before it was PIC. \n- For other diagrams it was DOT, but now uses the integrated GraphVIZ engine from plantuml.",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/3018",
+        "state": "OPEN",
+        "createdAt": "2026-01-05T02:11:57Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-5",
+          "avatarUrl": "https://avatars.example.invalid/u/5?v=4",
+          "name": "User 5",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2026-06-03T13:38:57Z",
+              "author": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "ParentIssueAddedEvent"
+            },
+            {
+              "__typename": "BlockedByAddedEvent"
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c7KQeiI",
+        "number": 2973,
+        "title": "[GH-21] Refactorization of new Trace-Analysis",
+        "body": "Refactor the old trace analysis. Create a common folder for trace-analysis and move it into the existing source folder of trace analysis.",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/2973",
+        "state": "CLOSED",
+        "createdAt": "2025-09-08T09:10:00Z",
+        "closedAt": "2026-06-03T13:36:39Z",
+        "author": {
+          "login": "user-5",
+          "avatarUrl": "https://avatars.example.invalid/u/5?v=4",
+          "name": "User 5",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2026-01-05T10:21:00Z",
+              "author": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2026-06-03T13:36:39Z",
+              "author": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "ClosedEvent",
+              "createdAt": "2026-06-03T13:36:39Z",
+              "actor": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "BlockingAddedEvent"
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c7B2QTF",
+        "number": 2964,
+        "title": "[GH-17] Snapshot Publishing Failure",
+        "body": "The main branch has been failing to upload snapshots to the maven repository.\n\n```\n> Task :publishMavenJavaPublicationToMavenRepository FAILED\n\n[Incubating] Problems report is available at: file:///home/jenkins-agent/workspace/kieker-dev_main@2/build/reports/problems/problems-report.html\n\nFAILURE: Build failed with an exception.\n\n* What went wrong:\nExecution failed for task ':publishMavenJavaPublicationToMavenRepository'.\n> Failed to publish publication 'mavenJava' to repository 'maven'\n   > Could not PUT 'https://oss.sonatype.org/content/repositories/snapshots/net/kieker-monitoring/kieker/2.0.3-SNAPSHOT/kieker-2.0.3-20250722.074848-194.jar'. Received status code 403 from server: Forbidden\n```",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/2964",
+        "state": "CLOSED",
+        "createdAt": "2025-07-22T11:06:20Z",
+        "closedAt": "2026-04-24T13:47:54Z",
+        "author": {
+          "login": "user-3",
+          "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+          "name": "User 3",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2025-07-22T11:47:17Z",
+              "author": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2025-07-22T14:58:08Z",
+              "author": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2025-07-25T07:55:39Z",
+              "author": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "AssignedEvent"
+            },
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2025-09-03T14:43:04Z",
+              "author": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            },
+            {
+              "__typename": "ClosedEvent",
+              "createdAt": "2026-04-24T13:47:54Z",
+              "actor": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            }
+          ]
+        }
+      },
+      {
+        "__typename": "Issue",
+        "id": "I_kwDOAkSj0c6w1wpK",
+        "number": 2913,
+        "title": "[GH-10] Fix Release Process",
+        "body": "The release has a problem with signing again (see https://build.se.informatik.uni-kiel.de/view/Kieker/job/kieker-dev/job/2.0.3-RC/):\n\n```\n* What went wrong:\nExecution failed for task ':publishMavenJavaPublicationToMavenLocal'.\n> Failed to publish publication 'mavenJava' to repository 'mavenLocal'\n   > Invalid publication 'mavenJava': artifact file does not exist: '/home/jenkins-agent/workspace/kieker-dev_2.0.3-RC@3/build/publications/mavenJava/pom-default.xml.asc'\n```\n\nThis will require some debugging again.",
+        "url": "https://github.com/kieker-monitoring/kieker/issues/2913",
+        "state": "OPEN",
+        "createdAt": "2025-04-02T15:55:37Z",
+        "closedAt": null,
+        "author": {
+          "login": "user-1",
+          "avatarUrl": "https://avatars.example.invalid/u/1?v=4",
+          "name": "User 1",
+          "email": ""
+        },
+        "labels": {
+          "nodes": []
+        },
+        "timelineItems": {
+          "nodes": [
+            {
+              "__typename": "IssueComment",
+              "createdAt": "2026-04-24T14:07:49Z",
+              "author": {
+                "login": "user-3",
+                "avatarUrl": "https://avatars.example.invalid/u/3?v=4",
+                "email": ""
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "rateLimit": {
+    "cost": 4,
+    "remaining": 4916,
+    "resetAt": "2026-07-06T11:37:05Z"
+  }
+}

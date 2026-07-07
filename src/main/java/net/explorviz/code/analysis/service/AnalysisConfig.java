@@ -1,8 +1,5 @@
 package net.explorviz.code.analysis.service;
 
-import java.sql.Date;
-import java.time.Instant;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +20,8 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     Optional<Integer> maxLocForFullAnalysis,
     boolean firstParentCommitsOnly,
     String landscapeToken,
-    boolean fetchSocialData, Optional<String> fetchEndDate, Optional<Integer> socialDataTimeFrameDays) {
+    boolean fetchSocialData,
+     boolean syncSocialWindow, Optional<String> fetchEndDate, Optional<Integer> socialDataTimeFrameDays) {
 
   /**
    * Path filter passed to Git diffs: union of all application roots, or global filters when appropriate.
@@ -101,6 +99,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
 
     // Social data analysis
     private boolean fetchSocialData = false;
+    private boolean syncSocialWindow = true;
     private Optional<String> fetchEndDate = Optional.empty();
     private Optional<Integer> socialDataTimeFrameDays = Optional.empty();
 
@@ -189,6 +188,11 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       return this;
     }
 
+    public Builder syncSocialWindow(final boolean syncSocialWindow) {
+      this.syncSocialWindow = syncSocialWindow;
+      return this;
+    }
+
     public Builder fetchEndDate(final Optional<String> fetchEndDate) {
       this.fetchEndDate = fetchEndDate;
       return this;
@@ -230,6 +234,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
           firstParentCommitsOnly,
           landscapeToken,
           fetchSocialData,
+          syncSocialWindow,
           fetchEndDate,
           socialDataTimeFrameDays);
     }
