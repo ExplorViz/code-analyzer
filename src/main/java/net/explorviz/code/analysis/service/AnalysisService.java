@@ -178,11 +178,8 @@ public class AnalysisService {
       final String branch = repository.getBranch();
       final String repositoryUrl = resolveRepositoryUrl(config, repository);
 
-      socialFetcherService.preInitializeRemoteState(config, exporter, branch, repositoryUrl);
-
-      // get fetch data from remote
       final AnalysisStartContext analysisStartContext =
-          resolveAnalysisStartContext(config, exporter, branch, repositoryUrl);
+          initializeRemoteStateAndResolveStart(config, exporter, branch, repositoryUrl);
       final Optional<String> startCommit = analysisStartContext.startCommit();
 
       final Optional<String> endCommit = exporter.isRemote() ? Optional.empty() : config.endCommit();
@@ -351,6 +348,39 @@ public class AnalysisService {
     }
   }
 
+  private String resolveRepositoryUrlForStateRequest(final AnalysisConfig config,
+      final String repositoryUrl) {
+    return RepositoryFileUrlBuilder.resolveRepositoryUrl(
+            repositoryUrl.isBlank() ? config.repoRemoteUrl() : Optional.of(repositoryUrl), "")
+        .orElse("");
+  }
+
+  /**
+   * Sends a single state request that both registers landscape metadata and, in CI mode, resolves
+   * the latest fully persisted commit to resume from.
+   */
+  private AnalysisStartContext initializeRemoteStateAndResolveStart(final AnalysisConfig config,
+      final DataExporter exporter, final String branch, final String repositoryUrl) {
+    if (!exporter.isRemote()) {
+      return new AnalysisStartContext(config.startCommit(), false);
+    }
+
+    try {
+      final boolean ciMode = isCiMode();
+      final StateData remoteState = exporter.getStateData(
+          config.getRepositoryName(),
+          branch,
+          config.landscapeToken(),
+          config.applicationPathsMap(),
+          resolveRepositoryUrlForStateRequest(config, repositoryUrl),
+          !ciMode);
+      return resolveAnalysisStartContext(config, exporter, remoteState, ciMode, branch);
+    } catch (final Exception e) {
+      LOGGER.warn("Could not initialize remote state: {}", e.getMessage());
+      return new AnalysisStartContext(config.startCommit(), false);
+    }
+  }
+
   private void checkIfCommitsAreReachable(final Optional<String> startCommit,
       final Optional<String> endCommit, final String branch)
       throws NotFoundException {
@@ -370,17 +400,12 @@ public class AnalysisService {
    * commit for this repository branch.
    */
   private AnalysisStartContext resolveAnalysisStartContext(final AnalysisConfig config,
-      final DataExporter exporter, final String branch, final String repositoryUrl) {
-    final boolean ciMode = isCiMode();
-    final StateData remoteState = exporter.getStateData(
-        config.getRepositoryName(), branch,
-        config.landscapeToken(), config.applicationPathsMap(), repositoryUrl,
-        false);
-    final boolean landscapeHasPersistedCommits = exporter.isRemote()
-        && remoteState.getCommitId() != null
+      final DataExporter exporter, final StateData remoteState, final boolean ciMode,
+      final String branch) {
+    final boolean landscapeHasPersistedCommits = remoteState.getCommitId() != null
         && !remoteState.getCommitId().isBlank();
 
-    if (exporter.isRemote() && ciMode) {
+    if (ciMode) {
       if (!landscapeHasPersistedCommits) {
         LOGGER.info("No remote state found for branch {}. Starting analysis from the beginning.",
             branch);
