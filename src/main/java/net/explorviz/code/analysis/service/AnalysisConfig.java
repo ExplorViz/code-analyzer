@@ -17,6 +17,8 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     boolean includeDataStructures,
     Optional<String> startCommit, Optional<String> endCommit,
     Optional<Integer> commitAnalysisLimit,
+    Optional<Integer> commitSamplingInterval,
+    Optional<CommitSamplingPeriod> commitSamplingPeriod,
     Optional<Integer> maxLocForFullAnalysis,
     boolean firstParentCommitsOnly,
     String landscapeToken,
@@ -91,6 +93,8 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     private Optional<String> startCommit = Optional.empty();
     private Optional<String> endCommit = Optional.empty();
     private Optional<Integer> commitAnalysisLimit = Optional.empty();
+    private Optional<Integer> commitSamplingInterval = Optional.empty();
+    private Optional<CommitSamplingPeriod> commitSamplingPeriod = Optional.empty();
     private Optional<Integer> maxLocForFullAnalysis = Optional.empty();
     private boolean firstParentCommitsOnly = true;
     private String landscapeToken = "";
@@ -163,6 +167,16 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       return this;
     }
 
+    public Builder commitSamplingInterval(final Optional<Integer> commitSamplingInterval) {
+      this.commitSamplingInterval = commitSamplingInterval;
+      return this;
+    }
+
+    public Builder commitSamplingPeriod(final Optional<CommitSamplingPeriod> commitSamplingPeriod) {
+      this.commitSamplingPeriod = commitSamplingPeriod;
+      return this;
+    }
+
     public Builder maxLocForFullAnalysis(final Optional<Integer> maxLocForFullAnalysis) {
       this.maxLocForFullAnalysis = maxLocForFullAnalysis;
       return this;
@@ -230,6 +244,8 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
           startCommit,
           endCommit,
           commitAnalysisLimit,
+          commitSamplingInterval,
+          commitSamplingPeriod,
           maxLocForFullAnalysis,
           firstParentCommitsOnly,
           landscapeToken,

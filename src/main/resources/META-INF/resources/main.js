@@ -127,6 +127,12 @@ function collectPayload(formData) {
   if (payload.commitAnalysisLimit) {
     payload.commitAnalysisLimit = parseInt(payload.commitAnalysisLimit);
   }
+  if (payload.commitSamplingInterval) {
+    payload.commitSamplingInterval = parseInt(payload.commitSamplingInterval);
+  }
+  if (!payload.commitSamplingPeriod) {
+    delete payload.commitSamplingPeriod;
+  }
   if (payload.maxLocForFullAnalysis) {
     payload.maxLocForFullAnalysis = parseInt(payload.maxLocForFullAnalysis);
   }

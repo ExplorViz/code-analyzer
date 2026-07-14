@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import net.explorviz.code.analysis.service.AnalysisConfig;
 import net.explorviz.code.analysis.service.ApplicationPath;
+import net.explorviz.code.analysis.service.CommitSamplingPeriod;
 
 /**
  * Request object for triggering a Git analysis.
@@ -49,6 +50,8 @@ public class AnalysisRequest {
   private String startCommit;
   private String endCommit;
   private Integer commitAnalysisLimit;
+  private Integer commitSamplingInterval;
+  private String commitSamplingPeriod;
   private Integer maxLocForFullAnalysis;
   private boolean firstParentCommitsOnly = true;
   private String landscapeToken = "mytokenvalue";
@@ -192,6 +195,22 @@ public class AnalysisRequest {
     this.commitAnalysisLimit = commitAnalysisLimit;
   }
 
+  public Integer getCommitSamplingInterval() {
+    return commitSamplingInterval;
+  }
+
+  public void setCommitSamplingInterval(final Integer commitSamplingInterval) {
+    this.commitSamplingInterval = commitSamplingInterval;
+  }
+
+  public String getCommitSamplingPeriod() {
+    return commitSamplingPeriod;
+  }
+
+  public void setCommitSamplingPeriod(final String commitSamplingPeriod) {
+    this.commitSamplingPeriod = commitSamplingPeriod;
+  }
+
   public Integer getMaxLocForFullAnalysis() {
     return maxLocForFullAnalysis;
   }
@@ -269,6 +288,8 @@ public class AnalysisRequest {
         .startCommit(Optional.ofNullable(startCommit))
         .endCommit(Optional.ofNullable(endCommit))
         .commitAnalysisLimit(Optional.ofNullable(commitAnalysisLimit))
+        .commitSamplingInterval(Optional.ofNullable(commitSamplingInterval))
+        .commitSamplingPeriod(CommitSamplingPeriod.fromConfigValue(commitSamplingPeriod))
         .maxLocForFullAnalysis(Optional.ofNullable(maxLocForFullAnalysis))
         .firstParentCommitsOnly(firstParentCommitsOnly)
         .landscapeToken((landscapeToken != null && !landscapeToken.isBlank()) ? landscapeToken : "mytokenvalue")

@@ -17,8 +17,7 @@ class AnalysisServiceLandscapeParentTest {
   @Inject AnalysisService analysisService;
 
   @Test
-  void usesLastAnalyzedCommitAsPrimaryParentForLandscapeCopy() {
-    final RevCommit lastAnalyzed = commitWithId("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  void usesGitParentsForLandscapeTopology() {
     final RevCommit gitParent = commitWithId("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
     final RevCommit gitParent2 = commitWithId("cccccccccccccccccccccccccccccccccccccccc");
     final RevCommit commit = Mockito.mock(RevCommit.class);
@@ -26,29 +25,37 @@ class AnalysisServiceLandscapeParentTest {
     Mockito.doReturn(gitParent).when(commit).getParent(0);
     Mockito.doReturn(gitParent2).when(commit).getParent(1);
 
-    final List<String> parentIds =
-        analysisService.resolveLandscapeParentCommitIds(commit, lastAnalyzed);
+    final List<String> parentIds = analysisService.resolveLandscapeParentCommitIds(commit);
 
     Assertions.assertEquals(
         List.of(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
             "cccccccccccccccccccccccccccccccccccccccc"),
         parentIds);
   }
 
   @Test
-  void fallsBackToGitParentsForBootstrapCommit() {
+  void detectsGapWhenSkippedCommitsSitBetweenLastAnalyzedAndCurrentCommit() {
     final RevCommit gitParent = commitWithId("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
     final RevCommit commit = Mockito.mock(RevCommit.class);
     Mockito.when(commit.getParentCount()).thenReturn(1);
     Mockito.doReturn(gitParent).when(commit).getParent(0);
 
-    final List<String> parentIds =
-        analysisService.resolveLandscapeParentCommitIds(commit, null);
+    Assertions.assertTrue(
+        analysisService.hasGapSinceLastFullAnalysis(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", commit));
+  }
 
-    Assertions.assertEquals(
-        List.of("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"), parentIds);
+  @Test
+  void hasNoGapForConsecutiveAnalyzedCommits() {
+    final RevCommit gitParent = commitWithId("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    final RevCommit commit = Mockito.mock(RevCommit.class);
+    Mockito.when(commit.getParentCount()).thenReturn(1);
+    Mockito.doReturn(gitParent).when(commit).getParent(0);
+
+    Assertions.assertFalse(
+        analysisService.hasGapSinceLastFullAnalysis(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", commit));
   }
 
   private static RevCommit commitWithId(final String objectId) {

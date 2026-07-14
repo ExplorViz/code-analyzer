@@ -229,6 +229,39 @@
               </span>
               <input name="excludeFromAnalysisExpressions" placeholder="Exclude none" type="text" />
             </label>
+            <label style="grid-column: 1 / -1">
+              <span class="label-header">
+                Commit Sampling Interval
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text"
+                    >Analyze every Nth commit (e.g. 5 = commits 1, 6, 11, …). All commits are still
+                    stored in the history; only sampled commits receive full file analysis. Leave empty to
+                    disable interval sampling.</span
+                  >
+                </span>
+              </span>
+              <input min="2" name="commitSamplingInterval" placeholder="disabled" type="number" />
+            </label>
+            <label style="grid-column: 1 / -1">
+              <span class="label-header">
+                Commit Sampling Period
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text"
+                    >Alternative to interval sampling: analyze the first commit in each day, week, month, or
+                    year. All other commits are stored as metadata-only entries.</span
+                  >
+                </span>
+              </span>
+              <select name="commitSamplingPeriod">
+                <option value="">disabled</option>
+                <option value="DAY">Day</option>
+                <option value="WEEK">Week</option>
+                <option value="MONTH">Month</option>
+                <option value="YEAR">Year</option>
+              </select>
+            </label>
           </div>
           <div class="examples-table-container">
             <table class="examples-table">

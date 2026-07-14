@@ -30,6 +30,18 @@ class CommitReportHandlerTest {
   }
 
   @Test
+  void includesUnchangedFileIdentifiers() {
+    addSampleFiles();
+    handler.addUnchanged(file("2222222222222222222222222222222222222222", "src/Unchanged.java"));
+    handler.setAnalysisFileCount(3);
+
+    final CommitData commitData = handler.getCommitData();
+
+    Assertions.assertEquals(3, commitData.getAnalysisFileCount());
+    Assertions.assertEquals(1, commitData.getUnchangedFilesCount());
+  }
+
+  @Test
   void includesChangedFileIdentifiersAndAnalysisFileCount() {
     addSampleFiles();
 

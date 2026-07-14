@@ -15,6 +15,7 @@ import net.explorviz.code.analysis.export.JsonExporter;
 import net.explorviz.code.analysis.service.AnalysisConfig;
 import net.explorviz.code.analysis.service.AnalysisService;
 import net.explorviz.code.analysis.service.AnalysisStatusService;
+import net.explorviz.code.analysis.service.CommitSamplingPeriod;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -74,6 +75,12 @@ public class GitAnalysis { // NOPMD
   @ConfigProperty(name = "explorviz.gitanalysis.commit-analysis-limit")
   /* default */ Optional<Integer> commitAnalysisLimitProperty; // NOCS
 
+  @ConfigProperty(name = "explorviz.gitanalysis.commit-sampling-interval")
+  /* default */ Optional<Integer> commitSamplingIntervalProperty; // NOCS
+
+  @ConfigProperty(name = "explorviz.gitanalysis.commit-sampling-period")
+  /* default */ Optional<String> commitSamplingPeriodProperty; // NOCS
+
   @ConfigProperty(name = "explorviz.gitanalysis.max-loc-for-full-analysis")
   /* default */ Optional<Integer> maxLocForFullAnalysisProperty; // NOCS
 
@@ -114,6 +121,9 @@ public class GitAnalysis { // NOPMD
         .startCommit(startCommitProperty)
         .endCommit(endCommitProperty)
         .commitAnalysisLimit(commitAnalysisLimitProperty)
+        .commitSamplingInterval(commitSamplingIntervalProperty)
+        .commitSamplingPeriod(CommitSamplingPeriod.fromConfigValue(
+            commitSamplingPeriodProperty.orElse(null)))
         .maxLocForFullAnalysis(maxLocForFullAnalysisProperty)
         .firstParentCommitsOnly(firstParentCommitsOnlyProperty)
         .landscapeToken(landscapeTokenProperty)
