@@ -298,10 +298,6 @@ public class AnalysisService {
             .addArgument(descriptorModifiedList.size())
             .log("Files added: {}, files modified: {}");
 
-        analysisStatusService.setCurrentCommitFiles(
-            config.landscapeToken(),
-            descriptorAddedList.size() + descriptorModifiedList.size());
-
         final boolean retransmitAllFiles =
             hasGapSinceLastFullAnalysis(lastFullyAnalyzedCommitHash, commit);
         final List<FileDescriptor> unchangedFiles =
@@ -323,6 +319,10 @@ public class AnalysisService {
         filesToAnalyze.addAll(descriptorAddedList);
         filesToAnalyze.addAll(descriptorModifiedList);
         filesToAnalyze.addAll(unchangedFiles);
+
+        analysisStatusService.setCurrentCommitFiles(
+            config.landscapeToken(),
+            filesToAnalyze.size());
 
         if (filesToAnalyze.isEmpty()) {
           createCommitReport(
@@ -806,7 +806,8 @@ public class AnalysisService {
         Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),
-        tagsByCommitId);
+        tagsByCommitId,
+        true);
   }
 
   private void createCommitReport(final AnalysisConfig config, final RevCommit commit,
@@ -814,6 +815,25 @@ public class AnalysisService {
       final List<FileDescriptor> addedFiles, final List<FileDescriptor> modifiedFiles,
       final List<FileDescriptor> deletedFiles, final List<FileDescriptor> unchangedFiles,
       final Map<ObjectId, List<String>> tagsByCommitId)
+      throws NotFoundException, IOException, GitAPIException {
+    createCommitReport(
+        config,
+        commit,
+        exporter,
+        branchName,
+        addedFiles,
+        modifiedFiles,
+        deletedFiles,
+        unchangedFiles,
+        tagsByCommitId,
+        false);
+  }
+
+  private void createCommitReport(final AnalysisConfig config, final RevCommit commit,
+      final DataExporter exporter, final String branchName,
+      final List<FileDescriptor> addedFiles, final List<FileDescriptor> modifiedFiles,
+      final List<FileDescriptor> deletedFiles, final List<FileDescriptor> unchangedFiles,
+      final Map<ObjectId, List<String>> tagsByCommitId, final boolean metadataOnly)
       throws NotFoundException, IOException, GitAPIException {
     final CommitReportHandler commitReportHandler = new CommitReportHandler();
 
@@ -824,6 +844,7 @@ public class AnalysisService {
 
     commitReportHandler.setAnalysisFileCount(
         addedFiles.size() + modifiedFiles.size() + unchangedFiles.size());
+    commitReportHandler.setMetadataOnly(metadataOnly);
 
     commitReportHandler.setAuthorDate(Timestamp.newBuilder()
         .setSeconds(commit.getAuthorIdent().getWhen().getTime() / 1000).build());

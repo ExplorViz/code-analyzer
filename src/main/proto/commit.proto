@@ -36,6 +36,9 @@ message CommitData {
 
   // All git parent commits, oldest-to-newest analysis order is derived from these links.
   repeated string parent_commit_ids = 15;
+
+  // When true, only commit metadata is persisted; file linking and metric accumulation are skipped.
+  bool metadata_only = 16;
 }
 
 message FileIdentifier {

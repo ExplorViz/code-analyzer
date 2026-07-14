@@ -1,5 +1,7 @@
 package net.explorviz.code.analysis.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * In-memory representation of analysis state.
  */
@@ -9,5 +11,5 @@ public record AnalysisProgressState(
     int analyzedCommits,
     int totalFiles,
     int analyzedFiles,
-    String currentAnalysingFile) {
+    @JsonProperty("currentAnalyzingFile") String currentAnalysingFile) {
 }
