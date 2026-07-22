@@ -3,6 +3,9 @@ package net.explorviz.code.analysis.export;
 import io.quarkus.grpc.GrpcClient;
 import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import net.explorviz.code.proto.CommitData;
@@ -29,6 +32,9 @@ public final class GrpcExporter implements DataExporter {
   public static final Logger LOGGER = LoggerFactory.getLogger(GrpcExporter.class);
 
   private static final String GRPC_CLIENT_NAME = "codeAnalysisGrpcClient";
+
+  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+      .withZone(ZoneId.of("UTC"));
 
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ FileDataServiceGrpc.FileDataServiceBlockingStub fileDataGrpcClient;
@@ -128,11 +134,14 @@ public final class GrpcExporter implements DataExporter {
 
   @Override
   public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
+    Instant instant = Instant.ofEpochSecond(trackableResourceEvent.getEventTimestamp().getSeconds(),
+        trackableResourceEvent.getEventTimestamp().getNanos());
     LOGGER.info(
-        "Sending TrackableResourceEvent {} for {} #{}",
+        "Sending TrackableResourceEvent {} for {} #{} at timestamp {}",
         trackableResourceEvent.getAnnotationType(),
         trackableResourceEvent.getResourceType(),
-        trackableResourceEvent.getResourceId()
+        trackableResourceEvent.getResourceId(),
+        FORMATTER.format(instant)
     );
     try {
       trackableResourceGrpcClient.persistTrackableResourceEvent(trackableResourceEvent);

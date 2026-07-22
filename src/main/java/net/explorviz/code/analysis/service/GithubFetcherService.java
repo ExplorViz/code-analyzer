@@ -9,6 +9,7 @@ import static io.smallrye.graphql.client.core.Operation.operation;
 import static io.smallrye.graphql.client.core.Variable.var;
 import static io.smallrye.graphql.client.core.Variable.vars;
 import static io.smallrye.graphql.client.core.VariableType.nonNull;
+import static java.lang.Integer.parseInt;
 
 import com.google.protobuf.Timestamp;
 import io.smallrye.graphql.client.Response;
@@ -29,11 +30,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.explorviz.code.analysis.export.DataExporter;
 import net.explorviz.code.analysis.git.RepositoryFileUrlBuilder;
 import net.explorviz.code.proto.AnnotationType;
@@ -55,10 +59,10 @@ public class GithubFetcherService {
   private static final Logger LOGGER = LoggerFactory.getLogger(GithubFetcherService.class);
 
   private static final String GITHUB_URL = "https://api.github.com/graphql";
-  private static final Integer PAGE_SIZE = 100;
+  private static final Integer PAGE_SIZE = 50;
   private static final Integer NUM_LABELS = 10;
-  private static final Integer NUM_TIMELINE_ITEMS = 100;
-  private static final Integer NUM_COMMITS = 100;
+  private static final Integer NUM_TIMELINE_ITEMS = 25;
+  private static final Integer NUM_COMMITS = 25;
   private static final Integer NUM_ISSUE_REFERENCES = 20;
 
 
@@ -209,7 +213,7 @@ public class GithubFetcherService {
       LOGGER.info("Initiating Pull-Request search with query: {}", pullRequestQueryStr);
       executePaginatedSearch(pullRequestQueryStr, exporter, landscapeToken, repoOwnerAndName, githubClient);
 
-      LOGGER.info("✅ Completed all social fetch queries.");
+      LOGGER.info("✅ Completed all social fetch queries for time frame: {}", dateRange);
     } catch (Exception e) {
       if (e instanceof InterruptedException || e.getCause() instanceof InterruptedException) {
         Thread.currentThread().interrupt();
@@ -256,12 +260,12 @@ public class GithubFetcherService {
     String cursor = null;
 
     while (hasNextPage) {
+      Map<String, Object> variables = new HashMap<>();
+      variables.put("searchQuery", queryStr);
+      variables.put("searchType", "ISSUE");
+      variables.put("cursor", cursor);
       try {
 
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("searchQuery", queryStr);
-        variables.put("searchType", "ISSUE");
-        variables.put("cursor", cursor);
 
         Response response = githubClient.executeSync(query, variables);
 
@@ -305,6 +309,7 @@ public class GithubFetcherService {
 
       } catch (Exception e) {
         LOGGER.error("Error fetching data from GitHub: {}", e.getMessage(), e);
+        LOGGER.error("current query: {} {}", query.toString(), variables);
         break;
       }
     }
@@ -396,11 +401,25 @@ public class GithubFetcherService {
       }
     }
 
+
     String resourceId = String.valueOf(node.getInt("number"));
     String title = getJsonString(node, "title", "");
     String description = getJsonString(node, "body", "");
     String webUrl = getJsonString(node, "url", "");
     String repoName = repositoryName.split("/")[1];
+
+    final Set<Integer> referencedIssues = new HashSet<>(closingIssuesReferences);
+    if (resourceType == TrackableResourceType.PULL_REQUEST) {
+      final Matcher issueNumber = Pattern.compile("#(\\d+)").matcher(description);
+      while (issueNumber.find()) {
+        try {
+          final int num = Integer.parseInt(issueNumber.group(1));
+          referencedIssues.add(num);
+        } catch (NumberFormatException e) {
+          LOGGER.warn("failed parsing issue number " + issueNumber.group());
+        }
+      }
+    }
 
     ContributorData actor = ContributorData.newBuilder()
         .setLandscapeToken(landscapeToken)
@@ -422,7 +441,7 @@ public class GithubFetcherService {
         .setWebUrl(webUrl)
         .addAllLabels(labelNames)
         .addAllCommitShas(commitShas)
-        .addAllReferencedIssueNumbers(closingIssuesReferences);
+        .addAllReferencedIssueNumbers(referencedIssues);
   }
 
   private List<TrackableResourceEvent> generateLifecycleEvents(
