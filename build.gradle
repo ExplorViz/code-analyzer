@@ -22,6 +22,8 @@ dependencies {
     implementation 'io.quarkus:quarkus-rest'
     implementation 'io.quarkus:quarkus-rest-jackson'
     implementation 'io.quarkus:quarkus-grpc'
+    // javaparser für statische Abhängigkeiten
+    implementation 'com.github.javaparser:javaparser-core:3.25.8'
 
     // GraphQL Client
     implementation 'io.quarkus:quarkus-smallrye-graphql-client'

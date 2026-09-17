@@ -33,6 +33,7 @@ import net.explorviz.code.analysis.git.GitMetricCollector;
 import net.explorviz.code.analysis.git.GitRepositoryHandler;
 import net.explorviz.code.analysis.handler.AbstractFileDataHandler;
 import net.explorviz.code.analysis.handler.CommitReportHandler;
+import net.explorviz.code.analysis.handler.JavaFileDataHandler;
 import net.explorviz.code.analysis.handler.TextFileDataHandler;
 import net.explorviz.code.analysis.listener.CommonFileDataListener;
 import net.explorviz.code.analysis.parser.AntlrCParserService;
@@ -46,6 +47,7 @@ import net.explorviz.code.analysis.parser.AntlrPythonParserService;
 import net.explorviz.code.analysis.parser.AntlrRustParserService;
 import net.explorviz.code.analysis.parser.AntlrSwiftParserService;
 import net.explorviz.code.analysis.parser.AntlrTypeScriptParserService;
+import net.explorviz.code.analysis.service.staticanalysis.JavaStaticAnalyzer;
 import net.explorviz.code.analysis.types.FileDescriptor;
 import net.explorviz.code.analysis.types.Triple;
 import net.explorviz.code.proto.ContributorData;
@@ -786,6 +788,12 @@ public class AnalysisService {
         if (fileDataHandler != null) {
           // Add git metrics to the Java file handler
           GitMetricCollector.addFileGitMetrics(fileDataHandler, file);
+          // statische Abhängigkeiten analysieren
+          if (fileDataHandler instanceof JavaFileDataHandler javaHandler) {
+            JavaStaticAnalyzer.analyze(javaHandler, config, fileContent);
+          } else {
+            System.out.println("Not a  JavaFileDateHandler");
+          }
           LOGGER.atInfo()
               .addArgument(file.reportedPath)
               .log("✅ Successfully parsed Java file with ANTLR: {}");

@@ -122,6 +122,14 @@ function collectPayload(formData) {
   payload.sendToRemote = formData.get("sendToRemote") !== null;
   payload.fetchSocialData = formData.get("fetchSocialData") !== null;
 
+  //statische Abhängigkeiten
+    payload.analyzeImports = formData.get("analyzeImports") !== null;
+    payload.analyzeExtends = formData.get("analyzeExtends") !== null;
+    payload.analyzeImplements = formData.get("analyzeImplements") !== null;
+    payload.analyzeCalls = formData.get("analyzeCalls") !== null;
+    payload.analyzeUsesType = formData.get("analyzeUsesType") !== null;
+    payload.packageFilter = formData.get("packageFilter") || "";
+
   if (payload.commitAnalysisLimit) {
     payload.commitAnalysisLimit = parseInt(payload.commitAnalysisLimit);
   }

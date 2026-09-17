@@ -5,8 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import net.explorviz.code.proto.ClassData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
+import java.util.List;
 
 /**
  * FileData handler for Java files.
@@ -27,6 +29,21 @@ public class JavaFileDataHandler extends AbstractFileDataHandler
     this.rootClasses = new ArrayList<>();
   }
 
+  public void updateClassWithStaticDeps(
+      final String className,
+      final List<String> superClasses,
+      final List<String> interfaces) {
+    System.out.println("updateClassWithStaticDeps called for: " + className);
+    System.out.println("superClasses: " + superClasses);
+    System.out.println("interfaces: " + interfaces);
+    final ClassDataHandler handler = getClassData(className);
+    if (handler != null) {
+      if (!superClasses.isEmpty()) {
+        handler.setSuperClass(superClasses.get(0));
+      }
+      interfaces.forEach(handler::addImplementedInterface);
+    }
+  }
   public void enterClass(final String name, final String fqn) {
     final ClassDataHandler handler = new ClassDataHandler();
     handler.setName(name);
@@ -149,4 +166,49 @@ public class JavaFileDataHandler extends AbstractFileDataHandler
         + this.builder.getPackageName() + "\n" + "imports: " + this.builder.getImportNamesList()
         + "\n" + mapData;
   }
+
+  //statische Abhängigkeiten
+  /**
+   * Registers an outgoing method call from a method in the given class to a target class.
+   *
+   * @param classFqn        the fully qualified name of the calling class
+   * @param methodSimpleName the simple name of the calling method
+   * @param targetFqn       the target class name being called
+   */
+  public void addOutgoingMethodCall(final String classFqn, final String methodSimpleName,
+      final String targetFqn) {
+    final ClassDataHandler handler = getClassData(classFqn);
+    if (handler != null) {
+      handler.addOutgoingMethodCallToMethod(methodSimpleName, targetFqn);
+    }
+  }
+
+  public void clearImports() {
+    this.builder.clearImportNames();
+  }
+
+  /**
+   * Entfernt die vom (parallelen ANTLR-basierten) Struktur-Parser bereits gesetzten
+   * EXTENDS/IMPLEMENTS/Field-Daten für eine Klasse, falls diese Klasse laut
+   * Package-Filter nicht analysiert werden soll.
+   *
+   * @param classFqn die fully qualified name der Klasse
+   */
+  public void clearStaticDepsForClass(final String classFqn) {
+    final ClassDataHandler handler = getClassData(classFqn);
+    if (handler != null) {
+      handler.clearSuperClass();
+      handler.clearImplementedInterfaces();
+      handler.clearFields();
+    }
+  }
+
+  public void addFieldType(final String classFqn, final String fieldType) {
+    final ClassDataHandler handler = getClassData(classFqn);
+    if (handler != null) {
+      handler.addFieldType(fieldType);
+    }
+  }
+
+
 }

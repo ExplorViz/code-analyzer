@@ -53,6 +53,19 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
     }
   }
 
+  public void clearSuperClass() {
+    this.builder.clearSuperclasses();
+  }
+
+  public void clearImplementedInterfaces() {
+    this.builder.clearImplementedInterfaces();
+  }
+
+  public void clearFields() {
+    this.builder.clearFields();
+  }
+
+
   /**
    * Adds a constructor object.
    *
@@ -222,6 +235,30 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
         + "innerClasses: " + this.innerClassDataMap.keySet() + "\n"
         + "functions: \n" + methodDataString + "\n"
         + metricDataString + "\n}";
+  }
+
+  //statische Abhängigkeiten
+  /**
+   * Adds an outgoing method call to all methods matching the given simple name
+   * (overloads all receive the same call entry - acceptable simplification).
+   *
+   * @param methodSimpleName the simple (non-qualified) name of the calling method
+   * @param targetFqn        the target class name of the call
+   */
+  public void addOutgoingMethodCallToMethod(final String methodSimpleName, final String targetFqn) {
+    for (final Map.Entry<String, MethodDataHandler> entry : this.methodDataMap.entrySet()) {
+      final String fqn = entry.getKey();
+      final int hashIdx = fqn.indexOf('#');
+      final String withoutHash = hashIdx != -1 ? fqn.substring(0, hashIdx) : fqn;
+      final String namePart = withoutHash.substring(withoutHash.lastIndexOf('.') + 1);
+      if (namePart.equals(methodSimpleName)) {
+        entry.getValue().addOutgoingMethodCall(targetFqn);
+      }
+    }
+  }
+
+  public void addFieldType(final String fieldType) {
+    this.builder.addFields(FieldData.newBuilder().setType(fieldType));
   }
 
 }

@@ -35,6 +35,14 @@ public class AnalysisRequest {
     }
   }
 
+  //statische Abhängigkeiten --------------
+  private boolean analyzeImports;
+  private boolean analyzeExtends;
+  private boolean analyzeImplements;
+  private boolean analyzeCalls;
+  private boolean analyzeUsesType;
+  private String packageFilter;
+
   private String repoPath;
   private String repoRemoteUrl;
   private String remoteStoragePath;
@@ -59,6 +67,29 @@ public class AnalysisRequest {
   private Integer socialDataTimeFrameDays;
 
   public AnalysisRequest() {
+  }
+
+  //Getter und Setter für Statische Abhängigkeiten
+  public boolean isAnalyzeImports() { return analyzeImports; }
+  public void setAnalyzeImports(boolean analyzeImports) { this.analyzeImports = analyzeImports; }
+
+  public boolean isAnalyzeExtends() { return analyzeExtends; }
+  public void setAnalyzeExtends(boolean analyzeExtends) { this.analyzeExtends = analyzeExtends; }
+
+  public boolean isAnalyzeImplements() { return analyzeImplements; }
+  public void setAnalyzeImplements(boolean analyzeImplements) { this.analyzeImplements = analyzeImplements; }
+
+  public boolean isAnalyzeCalls() { return analyzeCalls; }
+  public void setAnalyzeCalls(boolean analyzeCalls) { this.analyzeCalls = analyzeCalls; }
+
+  public boolean isAnalyzeUsesType() { return analyzeUsesType; }
+  public void setAnalyzeUsesType(boolean analyzeUsesType) { this.analyzeUsesType = analyzeUsesType; }
+
+  public String getPackageFilter() {
+    return packageFilter;
+  }
+  public void setPackageFilter(final String packageFilter) {
+    this.packageFilter = packageFilter;
   }
 
   public String getRepoPath() {
@@ -246,7 +277,13 @@ public class AnalysisRequest {
         .applicationRoot(Optional.ofNullable(applicationRoot))
         .fetchSocialData(fetchSocialData)
         .socialDataTimeFrameDays(Optional.ofNullable(socialDataTimeFrameDays))
-        .fetchEndDate(Optional.ofNullable(fetchEndDate).filter(s -> !s.isEmpty()));
+        .fetchEndDate(Optional.ofNullable(fetchEndDate).filter(s -> !s.isEmpty()))
+        .analyzeImports(analyzeImports)
+        .analyzeExtends(analyzeExtends)
+        .analyzeImplements(analyzeImplements)
+        .analyzeCalls(analyzeCalls)
+        .analyzeUsesType(analyzeUsesType)
+        .packageFilterExpressions(Optional.ofNullable(packageFilter).filter(s -> !s.isBlank()));
 
     if (!paths.isEmpty()) {
       builder.applicationPaths(paths);

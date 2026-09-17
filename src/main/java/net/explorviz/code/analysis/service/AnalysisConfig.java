@@ -21,7 +21,14 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     Optional<String> startCommit, Optional<String> endCommit,
     Optional<Integer> commitAnalysisLimit,
     String landscapeToken,
-    boolean fetchSocialData, Optional<String> fetchEndDate, Optional<Integer> socialDataTimeFrameDays) {
+    boolean fetchSocialData, Optional<String> fetchEndDate, Optional<Integer> socialDataTimeFrameDays,
+    // statische Abhängigkeiten
+    boolean analyzeImports,
+    boolean analyzeExtends,
+    boolean analyzeImplements,
+    boolean analyzeCalls,
+    boolean analyzeUsesType,
+    Optional<String> packageFilterExpressions) {
 
   /**
    * Path filter passed to Git diffs: union of all application roots, or global filters when appropriate.
@@ -41,6 +48,25 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
         .map(String::trim)
         .filter(r -> !r.isEmpty())
         .collect(Collectors.joining(","));
+  }
+
+  /**
+   * Prüft, ob der gegebene Package-Name mit einem der konfigurierten
+   * Package-Filter-Präfixe beginnt. Ist kein Filter gesetzt, wird immer true zurückgegeben.
+   */
+  public boolean matchesPackageFilter(final String packageName) {
+    if (packageFilterExpressions == null || packageFilterExpressions.isEmpty()
+        || packageFilterExpressions.get().isBlank()) {
+      return true;
+    }
+    final String[] prefixes = packageFilterExpressions.get().split(",");
+    for (final String prefix : prefixes) {
+      final String trimmed = prefix.trim();
+      if (!trimmed.isEmpty() && packageName.startsWith(trimmed)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -97,6 +123,14 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
 
     // Social data analysis
     private boolean fetchSocialData = false;
+    // Statische Abhängigkeiten
+    private boolean analyzeImports = false;
+    private boolean analyzeExtends = false;
+    private boolean analyzeImplements = false;
+    private boolean analyzeCalls = false;
+    private boolean analyzeUsesType = false;
+    private Optional<String> packageFilterExpressions = Optional.empty();
+
     private Optional<String> fetchEndDate = Optional.empty();
     private Optional<Integer> socialDataTimeFrameDays = Optional.empty();
 
@@ -174,6 +208,36 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       this.fetchSocialData = fetchSocialData;
       return this;
     }
+    //Statische Abhängigkeiten
+    public Builder analyzeImports(final boolean analyzeImports) {
+      this.analyzeImports = analyzeImports;
+      return this;
+    }
+
+    public Builder analyzeExtends(final boolean analyzeExtends) {
+      this.analyzeExtends = analyzeExtends;
+      return this;
+    }
+
+    public Builder analyzeImplements(final boolean analyzeImplements) {
+      this.analyzeImplements = analyzeImplements;
+      return this;
+    }
+
+    public Builder analyzeCalls(final boolean analyzeCalls) {
+      this.analyzeCalls = analyzeCalls;
+      return this;
+    }
+
+    public Builder analyzeUsesType(final boolean analyzeUsesType) {
+      this.analyzeUsesType = analyzeUsesType;
+      return this;
+    }
+
+    public Builder packageFilterExpressions(final Optional<String> packageFilterExpressions) {
+      this.packageFilterExpressions = packageFilterExpressions;
+      return this;
+    }
 
     public Builder fetchEndDate(final Optional<String> fetchEndDate) {
       this.fetchEndDate = fetchEndDate;
@@ -215,7 +279,14 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
           landscapeToken,
           fetchSocialData,
           fetchEndDate,
-          socialDataTimeFrameDays);
+          socialDataTimeFrameDays,
+          analyzeImports,
+          analyzeExtends,
+          analyzeImplements,
+          analyzeCalls,
+          analyzeUsesType,
+          packageFilterExpressions);
+
     }
   }
 

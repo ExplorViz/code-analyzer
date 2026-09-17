@@ -324,6 +324,75 @@
               </span>
             </label>
           </div>
+
+          <div class="field-grid" style="margin-top: 1rem;">
+            <label>
+              <span class="label-header">
+                Package Filter (FQN Prefix)
+                  <span class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-text">Optional: restrict static dependency analysis to classes whose package starts with one of these prefixes (comma-separated, e.g. "net.explorviz.service, net.explorviz.model"). Leave empty to analyze all packages.</span>
+                  </span>
+              </span>
+              <input name="packageFilter" placeholder="e.g. net.explorviz.service" type="text" />
+            </label>
+          </div>
+
+
+          <span class="label-header" style="display: block; margin-top: 1rem; font-weight: 600 !important;">Static Dependencies</span>
+          <div class="toggle-row">
+            <label class="toggle">
+              <input name="analyzeImports" type="checkbox"/>
+              <span class="label-header">
+                Import
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text">Analyze import dependencies between Java classes.</span>
+                </span>
+              </span>
+            </label>
+            <label class="toggle">
+              <input name="analyzeExtends" type="checkbox"/>
+              <span class="label-header">
+                Extend
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text">Analyze inheritance relationships between Java classes.</span>
+                </span>
+              </span>
+            </label>
+            <label class="toggle">
+              <input name="analyzeImplements" type="checkbox"/>
+              <span class="label-header">
+                Implements
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text">Analyze interface implementations between Java classes.</span>
+                </span>
+              </span>
+            </label>
+            <label class="toggle">
+              <input name="analyzeCalls" type="checkbox"/>
+              <span class="label-header">
+                Method Call
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text">Analyze method call dependencies between Java classes.</span>
+                </span>
+              </span>
+            </label>
+            <label class="toggle">
+              <input name="analyzeUsesType" type="checkbox"/>
+              <span class="label-header">
+                Type Usages
+                <span class="tooltip-container">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text">Analyze field and type usage dependencies between Java classes.</span>
+                </span>
+              </span>
+            </label>
+          </div>
+
         </section>
 
         <section class="card">
