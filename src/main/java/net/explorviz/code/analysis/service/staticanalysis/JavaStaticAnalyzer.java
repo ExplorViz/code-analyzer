@@ -36,7 +36,6 @@ public class JavaStaticAnalyzer {
     final String packageName = cu.getPackageDeclaration()
         .map(pd -> pd.getNameAsString())
         .orElse("");
-    System.out.println("DEBUG: packageName=" + packageName + ", filterMatches=" + config.matchesPackageFilter(packageName));
     if (!config.matchesPackageFilter(packageName)) {
       cu.findAll(ClassOrInterfaceDeclaration.class).forEach(classDecl -> {
         final String classKey = classDecl.getFullyQualifiedName().orElse(classDecl.getNameAsString());
@@ -46,6 +45,15 @@ public class JavaStaticAnalyzer {
       return;
     }
 
+    // ANTLR liefert bei FileDateHandler die selbe Analyse für import, extend, implement und uses-Type ebenfalls
+    // JavaStaticAnalyzer soll die alleinige Quelle sein, deshalb werden die ANTLR-Werte hier verworfen,
+    // bevor die eigene Analyse sie neu aufbaut.
+    fileDataHandler.clearImports();
+    cu.findAll(ClassOrInterfaceDeclaration.class).forEach(classDecl -> {
+      final String classKey = classDecl.getFullyQualifiedName().orElse(classDecl.getNameAsString());
+      fileDataHandler.clearStaticDepsForClass(classKey);
+    });
+
     // IMPORT
     if (config.analyzeImports()) {
       cu.getImports().forEach(importDecl -> {
@@ -54,7 +62,7 @@ public class JavaStaticAnalyzer {
       });
     }
 
-    // EXTENDS, IMPLEMENTS, CALLS
+    // EXTENDS, IMPLEMENTS, CALLS, USES_TYPE
     cu.findAll(ClassOrInterfaceDeclaration.class).forEach(classDecl -> {
       final String className = classDecl.getNameAsString();
       final String classKey = classDecl.getFullyQualifiedName().orElse(className);
@@ -110,8 +118,8 @@ public class JavaStaticAnalyzer {
           });
         });
       }
-      // USES_TYPE (Feldtypen)
-      // USES_TYPE (Feldtypen)
+
+      // USES_TYPE
       if (config.analyzeUsesType()) {
         classDecl.getFields().forEach(fieldDecl -> {
           final String fieldType = fieldDecl.getElementType().asString();
