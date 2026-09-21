@@ -69,6 +69,7 @@ public class GithubFetcherService {
   private long tpersistTotal = 0;
   private long tqueryTotal = 0;
   private long numUpdates = 0;
+  private long eventsTotal = 0;
 
 
   Optional<CompletableFuture<Void>> fetchSocialData(
@@ -98,6 +99,13 @@ public class GithubFetcherService {
     if (repoSubString.isEmpty()) {
       return Optional.empty();
     }
+
+
+    tmapTotal = 0;
+    tpersistTotal = 0;
+    tqueryTotal = 0;
+    numUpdates = 0;
+    eventsTotal = 0;
 
     preInitializeRemoteState(config, exporter, config.branch().orElse("main"), "");
 
@@ -155,12 +163,14 @@ public class GithubFetcherService {
       long tqueryAvg = tqueryTotal / numUpdates;
       long tmapAvg =  tmapTotal / numUpdates;
       long tpersistAvg = tpersistTotal / numUpdates;
+      long eventsAvg = eventsTotal / numUpdates;
 
       LOGGER.info(
-          "tQuery avg: {}ms, tMap avg: {}ms, tPersist avg: {}ms, social analysis took {} seconds with PAGE_SIZE: {}",
+          "tQuery avg: {}ms, tMap avg: {}ms, tPersist avg: {}ms, {} events, social analysis took {} seconds with PAGE_SIZE: {}",
           TimeUnit.NANOSECONDS.toMillis(tqueryAvg),
           TimeUnit.NANOSECONDS.toMillis(tmapAvg),
           TimeUnit.NANOSECONDS.toMillis(tpersistAvg),
+          eventsAvg,
           String.format(Locale.ROOT, "%.2f", (System.nanoTime() - tStart) / 1_000_000_000.0),
           PAGE_SIZE);
 
@@ -299,6 +309,7 @@ public class GithubFetcherService {
     tmapTotal += tmap;
     tpersistTotal += tpersist;
     tqueryTotal += pager.getLastQueryNanos();
+    eventsTotal += batchSize;
     numUpdates += 1;
 
     LOGGER.debug(

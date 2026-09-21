@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -165,6 +166,7 @@ public class AnalysisService {
       throws IOException, GitAPIException, NotFoundException, PropertyNotDefinedException { // NOPMD
 
     // start social analysis to run async while repo is being cloned
+    final long timeStart = System.nanoTime();
     Optional<CompletableFuture<Void>> socialFuture = Optional.empty();
 
     if (!config.syncSocialWindow()) {
@@ -172,7 +174,7 @@ public class AnalysisService {
     }
 
     try (Repository repository = this.gitRepositoryHandler.getGitRepository(config)) {
-
+      final long timeRepoReady = System.nanoTime();
       final String fullBranch = repository.getFullBranch();
       final String branch = repository.getBranch();
       final String repositoryUrl = resolveRepositoryUrl(config, repository);
@@ -187,6 +189,8 @@ public class AnalysisService {
 
       final List<CommitWalkEntry> commitsInRange = collectCommitWalkEntries(repository, fullBranch, startCommit,
           endCommit, exporter.isRemote(), config.firstParentCommitsOnly());
+
+      final long timeWalkDone = System.nanoTime();
       final int totalCommitsInRange = commitsInRange.size();
       final boolean commitSamplingEnabled = CommitSampler.isEnabled(config);
 
@@ -391,6 +395,8 @@ public class AnalysisService {
 
       LOGGER.atTrace().addArgument(fullAnalysisCount).log("Analyzed {} commits");
 
+      final long timeAnalysisDone = System.nanoTime();
+
       socialFuture.ifPresent(f -> {
         try {
           f.get(SOCIAL_FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -401,10 +407,25 @@ public class AnalysisService {
           Thread.currentThread().interrupt();
         }
       });
+      final long timeSocialJoined = System.nanoTime();
+      LOGGER.info(
+          "Timings: clone {}s, prepare {}s, git analysis {}s ({} total commits), "
+          + "social wait {}s, total {}s (fetchSocialData: {})",
+          toSeconds(timeStart, timeRepoReady),
+          toSeconds(timeRepoReady, timeWalkDone),
+          toSeconds(timeWalkDone, timeAnalysisDone),
+          fullAnalysisCount,
+          (timeSocialJoined - timeAnalysisDone) > 0 ? toSeconds(timeAnalysisDone, timeSocialJoined) : 0,
+          toSeconds(timeStart, timeSocialJoined),
+          config.fetchSocialData());
 
       // checkout the branch, so not a single commit is checked out after the run
       Git.wrap(repository).checkout().setName(fullBranch).call();
     }
+  }
+
+  private static String toSeconds(final long fromNanos, final long toNanos) {
+    return String.format(Locale.ROOT, "%.2f", (toNanos - fromNanos) / 1_000_000_000.0);
   }
 
   private String resolveRepositoryUrlForStateRequest(final AnalysisConfig config,
