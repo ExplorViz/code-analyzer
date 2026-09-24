@@ -97,6 +97,12 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
       final int classLoc = calculateLoc(ctx);
       final var classData = fileDataHandler.getCurrentClassData();
       if (classData != null) {
+        if (ctx.Abstract() != null) {
+          classData.setIsAbstractClass();
+        } else {
+          classData.setIsClass();
+        }
+
         classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
         classData.addMetric(LINE_COUNT, String.valueOf(classLoc));
 
@@ -104,6 +110,14 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
           final String superClassFqn = ctx.classHeritage().classExtendsClause().typeReference().getText();
           classData.setSuperClass(getClassPathFromFqn(superClassFqn, fileExtension, fileDataHandler.getFileName(),
               fileDataHandler.getPackageName()) + "::" + getClassNameFromFqn(superClassFqn));
+        }
+
+        if (ctx.classHeritage() != null && ctx.classHeritage().implementsClause() != null
+            && ctx.classHeritage().implementsClause().classOrInterfaceTypeList() != null) {
+          for (final TypeScriptParser.TypeReferenceContext typeRef : ctx.classHeritage()
+              .implementsClause().classOrInterfaceTypeList().typeReference()) {
+            classData.addImplementedInterface(typeRef.getText());
+          }
         }
       }
     }
@@ -148,6 +162,111 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
 
   @Override
   public void exitInterfaceDeclaration(final TypeScriptParser.InterfaceDeclarationContext ctx) {
+    fileDataHandler.leaveClass();
+  }
+
+  @Override
+  public void enterPropertyDeclarationExpression(
+      final TypeScriptParser.PropertyDeclarationExpressionContext ctx) {
+    if (ctx.classElementName() == null || !fileDataHandler.isInClassContext()) {
+      return;
+    }
+
+    // Skip if this is actually a method-like signature without a body handled elsewhere
+    final var classData = fileDataHandler.getCurrentClassData();
+    if (classData == null) {
+      return;
+    }
+
+    final String fieldName = ctx.classElementName().getText();
+    final String fieldType = ctx.typeAnnotation() != null && ctx.typeAnnotation().type_() != null
+        ? ctx.typeAnnotation().type_().getText()
+        : UNTYPED_PARAMETER;
+
+    final List<String> modifiers = new ArrayList<>();
+    if (ctx.propertyMemberBase() != null) {
+      if (ctx.propertyMemberBase().Static() != null) {
+        modifiers.add("static");
+      }
+      if (ctx.propertyMemberBase().ReadOnly() != null) {
+        modifiers.add("readonly");
+      }
+      if (ctx.propertyMemberBase().accessibilityModifier() != null) {
+        modifiers.add(ctx.propertyMemberBase().accessibilityModifier().getText());
+      }
+    }
+
+    classData.addField(fieldName, fieldType, modifiers);
+    variableCount++;
+
+    LOGGER.atTrace()
+        .addArgument(fieldName)
+        .log("Class field: {}");
+  }
+
+  @Override
+  public void enterEnumDeclaration(final TypeScriptParser.EnumDeclarationContext ctx) {
+    if (ctx.identifier() == null) {
+      return;
+    }
+
+    final String enumName = ctx.identifier().getText();
+    final String fqn = fileDataHandler.buildFqn(enumName);
+    fileDataHandler.enterClass(enumName, fqn);
+
+    final var classData = fileDataHandler.getCurrentClassData();
+    if (classData != null) {
+      classData.setIsEnum();
+      if (ctx.Const() != null) {
+        classData.addModifier("const");
+      }
+      classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    }
+
+    LOGGER.atTrace()
+        .addArgument(enumName)
+        .log("Enum: {}");
+  }
+
+  @Override
+  public void exitEnumDeclaration(final TypeScriptParser.EnumDeclarationContext ctx) {
+    fileDataHandler.leaveClass();
+  }
+
+  @Override
+  public void enterEnumMember(final TypeScriptParser.EnumMemberContext ctx) {
+    if (ctx.propertyName() == null) {
+      return;
+    }
+
+    final var classData = fileDataHandler.getCurrentClassData();
+    if (classData != null) {
+      classData.addEnumConstant(ctx.propertyName().getText());
+    }
+  }
+
+  @Override
+  public void enterTypeAliasDeclaration(final TypeScriptParser.TypeAliasDeclarationContext ctx) {
+    if (ctx.identifier() == null) {
+      return;
+    }
+
+    final String aliasName = ctx.identifier().getText();
+    final String fqn = fileDataHandler.buildFqn(aliasName);
+    fileDataHandler.enterClass(aliasName, fqn);
+
+    final var classData = fileDataHandler.getCurrentClassData();
+    if (classData != null) {
+      classData.setIsInterface();
+      classData.addModifier("typealias");
+      classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    }
+  }
+
+  @Override
+  public void exitTypeAliasDeclaration(final TypeScriptParser.TypeAliasDeclarationContext ctx) {
     fileDataHandler.leaveClass();
   }
 

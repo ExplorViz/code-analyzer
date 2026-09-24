@@ -1,0 +1,337 @@
+{
+  "fileHash": "regression-hash",
+  "filePath": "ParserTestInput.kt",
+  "language": "KOTLIN",
+  "packageName": "net.explorviz.code.analysis.fixtures",
+  "importNames": ["java.io.Closeable", "java.io.IOException", "java.io.Serializable", "java.util.ArrayList", "java.util.HashMap", "java.util.List", "java.util.Map", "kotlin.math.abs"],
+  "classes": [{
+    "name": "ParserTestInput",
+    "type": "CLASS",
+    "implementedInterfaces": ["Serializable", "Runnable", "CallableMarker"],
+    "superclasses": ["AbstractBase.kt::AbstractBase"],
+    "fields": [{
+      "name": "protectedTransientField",
+      "type": "String?"
+    }, {
+      "name": "finalArrayField",
+      "type": "DoubleArray"
+    }, {
+      "name": "nestedGenericField",
+      "type": "Map<String,List<Int>>"
+    }],
+    "innerClasses": [{
+      "name": "NestedEnum",
+      "type": "ENUM",
+      "functions": [{
+        "name": "isAlpha",
+        "returnType": "Boolean",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 140,
+        "endLine": 140
+      }],
+      "enumValues": ["ALPHA", "BETA", "GAMMA"],
+      "metrics": {
+        "sloc": 6.0,
+        "lineCount": 7.0
+      }
+    }, {
+      "name": "Companion",
+      "type": "CLASS",
+      "fields": [{
+        "name": "PUBLIC_STATIC_FINAL_INT",
+        "type": "Int"
+      }, {
+        "name": "privateStaticVolatileFlag",
+        "type": "Boolean"
+      }],
+      "functions": [{
+        "name": "packagePrivateStaticMethod",
+        "returnType": "Unit",
+        "metrics": {
+          "sloc": 2.0,
+          "lineCount": 3.0
+        },
+        "startLine": 35,
+        "endLine": 37
+      }],
+      "metrics": {
+        "sloc": 7.0,
+        "lineCount": 10.0
+      }
+    }, {
+      "name": "NestedInterface",
+      "type": "INTERFACE",
+      "implementedInterfaces": ["Serializable"],
+      "functions": [{
+        "name": "abstractInterfaceMethod",
+        "returnType": "Unit",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 131,
+        "endLine": 131
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      }
+    }, {
+      "name": "StaticNested",
+      "type": "CLASS",
+      "fields": [{
+        "name": "nestedField",
+        "type": "Int"
+      }],
+      "functions": [{
+        "name": "getNestedField",
+        "returnType": "Int",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 126,
+        "endLine": 126
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      }
+    }],
+    "functions": [{
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "name",
+        "type": "String?"
+      }, {
+        "name": "values",
+        "type": "Int"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 52,
+      "endLine": 54
+    }, {
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 47,
+      "endLine": 49
+    }, {
+      "name": "run",
+      "returnType": "Unit",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 56,
+      "endLine": 59
+    }, {
+      "name": "call",
+      "returnType": "String",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 61,
+      "endLine": 63
+    }, {
+      "name": "abstractHook",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 120,
+      "endLine": 122
+    }, {
+      "name": "doWork",
+      "returnType": "Boolean",
+      "parameters": [{
+        "name": "flag",
+        "type": "Boolean"
+      }, {
+        "name": "b",
+        "type": "Byte"
+      }, {
+        "name": "s",
+        "type": "Short"
+      }, {
+        "name": "c",
+        "type": "Char"
+      }, {
+        "name": "i",
+        "type": "Int"
+      }, {
+        "name": "l",
+        "type": "Long"
+      }, {
+        "name": "f",
+        "type": "Float"
+      }, {
+        "name": "d",
+        "type": "Double"
+      }, {
+        "name": "obj",
+        "type": "Any?"
+      }],
+      "metrics": {
+        "sloc": 47.0,
+        "lineCount": 50.0
+      },
+      "startLine": 69,
+      "endLine": 118
+    }, {
+      "name": "genericMethod",
+      "returnType": "T",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 65,
+      "endLine": 67
+    }],
+    "metrics": {
+      "sloc": 91.0,
+      "lineCount": 126.0
+    }
+  }, {
+    "name": "AbstractBase",
+    "type": "CLASS",
+    "fields": [{
+      "name": "baseValue",
+      "type": "Int"
+    }],
+    "functions": [{
+      "name": "abstractHook",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 150,
+      "endLine": 150
+    }, {
+      "name": "getBaseValue",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 148,
+      "endLine": 148
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "CallableMarker",
+    "type": "INTERFACE",
+    "functions": [{
+      "name": "call",
+      "returnType": "String",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 157,
+      "endLine": 157
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "MarkerInterface",
+    "type": "INTERFACE",
+    "implementedInterfaces": ["Closeable"],
+    "functions": [{
+      "name": "mark",
+      "returnType": "Unit",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 161,
+      "endLine": 161
+    }, {
+      "name": "defaultMark",
+      "returnType": "Unit",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 163,
+      "endLine": 165
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 7.0
+    }
+  }, {
+    "name": "TopLevelEnum",
+    "type": "ENUM",
+    "enumValues": ["ONE", "TWO", "THREE"],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "PointData",
+    "type": "CLASS",
+    "fields": [{
+      "name": "x",
+      "type": "Int"
+    }, {
+      "name": "y",
+      "type": "Int"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
+  }, {
+    "name": "ModuleHelper",
+    "type": "CLASS",
+    "functions": [{
+      "name": "moduleHelper",
+      "returnType": "String",
+      "parameters": [{
+        "name": "path",
+        "type": "String"
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 186,
+      "endLine": 186
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }],
+  "metrics": {
+    "sloc": 122.0,
+    "cloc": 33.0,
+    "functionCount": 17.0,
+    "variableCount": 12.0,
+    "importCount": 8.0,
+    "classCount": 11.0
+  }
+}

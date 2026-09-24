@@ -30,7 +30,8 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
 
   @Override
   public void enterTranslationUnit(final CParser.TranslationUnitContext ctx) {
-    populateLexerMetrics();
+    // File-level SLOC/CLOC/includes are populated by AntlrCParserService via
+    // populateLexerMetrics() before the walk (also covers parse-tree failures).
   }
 
   /**
@@ -108,30 +109,22 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
 
   @Override
   public void enterStructOrUnionSpecifier(final CParser.StructOrUnionSpecifierContext ctx) {
-    if (ctx.structOrUnion() == null) {
+    if (ctx.structOrUnion() == null || ctx.Identifier() == null) {
       return;
     }
 
-    String typeName = null;
-    if (ctx.Identifier() != null) {
-      typeName = ctx.Identifier().getText();
-    }
-
-    if (typeName == null) {
+    // Bare "struct Tag" / "union Tag" mentions (e.g. in parameters) are not definitions.
+    if (ctx.LeftBrace() == null) {
       return;
     }
 
+    final String typeName = ctx.Identifier().getText();
     final String fqn = buildFqn(typeName);
     fileDataHandler.enterClass(typeName, fqn);
 
     final var classData = fileDataHandler.getCurrentClassData();
     if (classData != null) {
-      final boolean isUnion = ctx.structOrUnion().Union() != null;
-      if (isUnion) {
-        classData.setIsStruct();
-      } else {
-        classData.setIsStruct();
-      }
+      classData.setIsStruct();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
@@ -139,7 +132,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
 
   @Override
   public void exitStructOrUnionSpecifier(final CParser.StructOrUnionSpecifierContext ctx) {
-    if (ctx.Identifier() != null) {
+    if (ctx.Identifier() != null && ctx.LeftBrace() != null) {
       fileDataHandler.leaveClass();
     }
   }
@@ -147,6 +140,11 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
   @Override
   public void enterEnumSpecifier(final CParser.EnumSpecifierContext ctx) {
     if (ctx.Identifier() == null) {
+      return;
+    }
+
+    // Bare "enum Tag" mentions without a body are not definitions.
+    if (ctx.LeftBrace() == null) {
       return;
     }
 
@@ -164,7 +162,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
 
   @Override
   public void exitEnumSpecifier(final CParser.EnumSpecifierContext ctx) {
-    if (ctx.Identifier() != null) {
+    if (ctx.Identifier() != null && ctx.LeftBrace() != null) {
       fileDataHandler.leaveClass();
     }
   }

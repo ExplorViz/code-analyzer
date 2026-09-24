@@ -22,7 +22,9 @@ public final class TsxJsxNormalizer {
       }
       out.append(source, index, jsxStart);
       out.append("null");
-      index = skipJsxElement(source, jsxStart);
+      final int nextIndex = skipJsxElement(source, jsxStart);
+      // Guard against non-progress (e.g. unhandled `<Component<Type>` before fix).
+      index = nextIndex > jsxStart ? nextIndex : jsxStart + 1;
     }
     return out.toString();
   }
@@ -86,6 +88,7 @@ public final class TsxJsxNormalizer {
       return skipFragment(source, index + 1);
     }
     index = skipTagName(source, index);
+    index = skipTypeArguments(source, index);
     index = skipAttributes(source, index);
     if (index + 1 < source.length() && source.charAt(index) == '/' && source.charAt(index + 1) == '>') {
       return index + 2;
@@ -180,8 +183,20 @@ public final class TsxJsxNormalizer {
     return index;
   }
 
+  /**
+   * Skips TypeScript generic arguments on a JSX opening tag, e.g. {@code <DataTable<SubjectDto>}.
+   */
+  private static int skipTypeArguments(final String source, int from) {
+    from = skipWhitespaceForward(source, from);
+    if (from >= source.length() || source.charAt(from) != '<') {
+      return from;
+    }
+    return skipBalanced(source, from, '<', '>');
+  }
+
   private static int skipAttributes(final String source, int from) {
     while (from < source.length()) {
+      final int previous = from;
       from = skipWhitespaceForward(source, from);
       if (from >= source.length()) {
         return from;
@@ -189,6 +204,10 @@ public final class TsxJsxNormalizer {
       final char c = source.charAt(from);
       if (c == '/' || c == '>') {
         return from;
+      }
+      if (c == '<') {
+        from = skipTypeArguments(source, from);
+        continue;
       }
       if (c == '{') {
         from = skipBalanced(source, from, '{', '}');
@@ -209,6 +228,9 @@ public final class TsxJsxNormalizer {
             from++;
           }
         }
+      }
+      if (from <= previous) {
+        return from + 1;
       }
     }
     return from;

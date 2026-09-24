@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.parser;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import net.explorviz.code.analysis.antlr.generated.c.CLexer;
@@ -22,6 +23,9 @@ import org.slf4j.LoggerFactory;
 public class AntlrCParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrCParserService.class);
+
+  @Inject
+  AntlrParseSettings parseSettings;
 
   public CFileDataHandler parseFileContent(final String fileContent, final String fileName,
       final String fileHash) {
@@ -68,7 +72,7 @@ public class AntlrCParserService {
     ParseTree compilationUnit = null;
     try {
       compilationUnit = AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName,
-          parser::compilationUnit);
+          parseSettings.parseTimeoutMs(), parser::compilationUnit);
     } catch (Exception e) {
       LOGGER.warn("Could not build parse tree for {}: {}", fileName, e.getMessage());
     }

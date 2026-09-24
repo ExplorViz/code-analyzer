@@ -1,0 +1,215 @@
+{
+  "fileHash": "regression-hash",
+  "filePath": "ParserTestInput.jsx",
+  "language": "JAVASCRIPT",
+  "importNames": ["import*asReactfrom'react';", "import{basename}from'path';"],
+  "classes": [{
+    "name": "AbstractBase",
+    "type": "CLASS",
+    "functions": [{
+      "name": "abstractHook",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 31,
+      "endLine": 33
+    }, {
+      "name": "constructor",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "baseValue",
+        "type": "any"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 23,
+      "endLine": 25
+    }, {
+      "name": "getBaseValue",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 27,
+      "endLine": 29
+    }],
+    "metrics": {
+      "sloc": 11.0,
+      "lineCount": 13.0
+    }
+  }, {
+    "name": "ParserTestInput",
+    "type": "CLASS",
+    "superclasses": ["AbstractBase.jsx::AbstractBase"],
+    "fields": [{
+      "name": "PUBLIC_STATIC_FINAL_INT",
+      "type": "any",
+      "modifiers": ["static"]
+    }],
+    "functions": [{
+      "name": "genericMethod",
+      "returnType": "void",
+      "parameters": [{
+        "name": "value",
+        "type": "any"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 55,
+      "endLine": 57
+    }, {
+      "name": "mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 3.0
+      },
+      "startLine": 82,
+      "endLine": 84
+    }, {
+      "name": "abstractHook",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 78,
+      "endLine": 80
+    }, {
+      "name": "doWork",
+      "returnType": "void",
+      "parameters": [{
+        "name": "flag",
+        "type": "any"
+      }, {
+        "name": "i",
+        "type": "any"
+      }, {
+        "name": "obj",
+        "type": "any"
+      }],
+      "metrics": {
+        "sloc": 18.0,
+        "lineCount": 18.0
+      },
+      "startLine": 59,
+      "endLine": 76
+    }, {
+      "name": "run",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 49,
+      "endLine": 53
+    }, {
+      "name": "constructor",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "name",
+        "type": "any"
+      }],
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 43,
+      "endLine": 47
+    }],
+    "metrics": {
+      "sloc": 39.0,
+      "lineCount": 47.0
+    }
+  }, {
+    "name": "StaticNested",
+    "type": "CLASS",
+    "functions": [{
+      "name": "constructor",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "nestedField",
+        "type": "any"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 91,
+      "endLine": 93
+    }, {
+      "name": "getNestedField",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 95,
+      "endLine": 97
+    }],
+    "metrics": {
+      "sloc": 8.0,
+      "lineCount": 9.0
+    }
+  }],
+  "functions": [{
+    "name": "ParserTestInputView",
+    "returnType": "void",
+    "parameters": [{
+      "name": "props",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 8.0,
+      "lineCount": 9.0
+    },
+    "startLine": 110,
+    "endLine": 118
+  }, {
+    "name": "TinyBadge",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 121,
+    "endLine": 123
+  }, {
+    "name": "packagePrivateStaticMethod",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 2.0,
+      "lineCount": 3.0
+    },
+    "startLine": 126,
+    "endLine": 128
+  }, {
+    "name": "moduleHelper",
+    "returnType": "void",
+    "parameters": [{
+      "name": "path",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 131,
+    "endLine": 133
+  }],
+  "metrics": {
+    "sloc": 81.0,
+    "cloc": 30.0,
+    "functionCount": 15.0,
+    "variableCount": 7.0,
+    "importCount": 2.0,
+    "classCount": 3.0
+  }
+}

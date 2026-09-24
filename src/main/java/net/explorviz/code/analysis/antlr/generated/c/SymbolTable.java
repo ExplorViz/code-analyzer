@@ -54,6 +54,24 @@ public class SymbolTable {
     define(createSymbol("inline", TypeClassification.FunctionSpecifier_));
     define(createSymbol("_Noreturn", TypeClassification.FunctionSpecifier_));
     define(createSymbol("__inline__", TypeClassification.FunctionSpecifier_));
+
+    // Common typedefs from the C standard library (no preprocessor available).
+    define(createSymbol("size_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("ssize_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("ptrdiff_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("intptr_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("uintptr_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("FILE", TypeClassification.TypeSpecifier_));
+    define(createSymbol("va_list", TypeClassification.TypeSpecifier_));
+    define(createSymbol("wchar_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("int8_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("int16_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("int32_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("int64_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("uint8_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("uint16_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("uint32_t", TypeClassification.TypeSpecifier_));
+    define(createSymbol("uint64_t", TypeClassification.TypeSpecifier_));
   }
 
   private Symbol createSymbol(final String name, final TypeClassification... classifications) {

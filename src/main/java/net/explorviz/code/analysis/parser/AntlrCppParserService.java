@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.parser;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import net.explorviz.code.analysis.antlr.generated.cpp.CPP14Lexer;
@@ -22,6 +23,9 @@ import org.slf4j.LoggerFactory;
 public class AntlrCppParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrCppParserService.class);
+
+  @Inject
+  AntlrParseSettings parseSettings;
 
   public CppFileDataHandler parseFileContent(final String fileContent, final String fileName,
       final String fileHash) {
@@ -58,8 +62,9 @@ public class AntlrCppParserService {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final CPP14Parser parser = new CPP14Parser(tokens);
 
-    final ParseTree translationUnit =
-        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::translationUnit);
+    final ParseTree translationUnit = AntlrParserUtils.parseTwoStage(
+        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(),
+        parser::translationUnit);
 
     final CppFileDataHandler fileDataHandler = new CppFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

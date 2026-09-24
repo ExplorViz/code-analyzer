@@ -8,6 +8,7 @@ import net.explorviz.code.analysis.handler.CSharpFileDataHandler;
 import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -301,9 +302,35 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
 
   @Override
   public void enterConstant_declarator(final CSharpParser.Constant_declaratorContext ctx) {
-    if (ctx.identifier() != null) {
-      variableCount++;
+    if (ctx.identifier() == null) {
+      return;
     }
+
+    variableCount++;
+
+    if (!fileDataHandler.isInClassContext()) {
+      return;
+    }
+
+    final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
+    if (classData == null) {
+      return;
+    }
+
+    String fieldType = "unknown";
+    ParserRuleContext parent = ctx.getParent();
+    while (parent != null) {
+      if (parent instanceof CSharpParser.Constant_declarationContext constantDeclaration
+          && constantDeclaration.type_() != null) {
+        fieldType = constantDeclaration.type_().getText();
+        break;
+      }
+      parent = parent.getParent();
+    }
+
+    final List<String> modifiers = new ArrayList<>();
+    modifiers.add("const");
+    classData.addField(ctx.identifier().getText(), fieldType, modifiers);
   }
 
   @Override

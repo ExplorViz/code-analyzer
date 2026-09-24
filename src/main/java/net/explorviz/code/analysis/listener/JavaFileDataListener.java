@@ -168,6 +168,164 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   }
 
   @Override
+  public void enterRecordDeclaration(final JavaParser.RecordDeclarationContext ctx) {
+    if (ctx.identifier() == null) {
+      return;
+    }
+
+    final String recordName = ctx.identifier().getText();
+    final String fqn = buildFqn(recordName);
+
+    fileDataHandler.enterClass(recordName, fqn);
+    fileDataHandler.getCurrentClassData().setIsClass();
+    fileDataHandler.getCurrentClassData().addModifier("record");
+
+    addModifiers(getTypeModifiers(ctx));
+    fileDataHandler.getCurrentClassData().addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+    fileDataHandler.getCurrentClassData().addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
+
+    if (ctx.IMPLEMENTS() != null && ctx.typeList() != null) {
+      for (final JavaParser.TypeTypeContext typeCtx : ctx.typeList().typeType()) {
+        fileDataHandler.getCurrentClassData()
+            .addImplementedInterface(resolveTypeName(typeCtx.getText()));
+      }
+    }
+
+    if (ctx.recordHeader() != null && ctx.recordHeader().recordComponentList() != null) {
+      for (final JavaParser.RecordComponentContext component : ctx.recordHeader()
+          .recordComponentList().recordComponent()) {
+        if (component.identifier() == null || component.typeType() == null) {
+          continue;
+        }
+        final String fieldName = component.identifier().getText();
+        final String fieldType = resolveTypeName(component.typeType().getText());
+        fileDataHandler.getCurrentClassData()
+            .addField(fieldName, fieldType, List.of("private", "final"));
+        variableCount++;
+      }
+    }
+  }
+
+  @Override
+  public void exitRecordDeclaration(final JavaParser.RecordDeclarationContext ctx) {
+    fileDataHandler.leaveClass();
+  }
+
+  @Override
+  public void enterCompactConstructorDeclaration(
+      final JavaParser.CompactConstructorDeclarationContext ctx) {
+    if (ctx.identifier() == null || !fileDataHandler.isInClassContext()) {
+      return;
+    }
+
+    final String constructorName = ctx.identifier().getText();
+    final String constructorFqn = fileDataHandler.getCurrentClassFqn() + "." + constructorName + "#";
+    fileDataHandler.enterMethod(constructorFqn);
+    functionCount++;
+
+    final MethodDataHandler constructor = fileDataHandler.getCurrentClassData()
+        .addConstructor(constructorName, constructorFqn);
+    if (ctx.modifier() != null) {
+      for (final JavaParser.ModifierContext modCtx : ctx.modifier()) {
+        final String modText = modCtx.getText();
+        if (!modText.startsWith("@")) {
+          constructor.addModifier(modText);
+        }
+      }
+    }
+    if (ctx.start != null && ctx.stop != null) {
+      constructor.setLines(ctx.start.getLine(), ctx.stop.getLine());
+    }
+    constructor.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+    constructor.addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
+  }
+
+  @Override
+  public void exitCompactConstructorDeclaration(
+      final JavaParser.CompactConstructorDeclarationContext ctx) {
+    if (fileDataHandler.isInMethodContext()) {
+      fileDataHandler.leaveMethod();
+    }
+  }
+
+  @Override
+  public void enterAnnotationTypeDeclaration(
+      final JavaParser.AnnotationTypeDeclarationContext ctx) {
+    if (ctx.identifier() == null) {
+      return;
+    }
+
+    final String annotationName = ctx.identifier().getText();
+    final String fqn = buildFqn(annotationName);
+
+    fileDataHandler.enterClass(annotationName, fqn);
+    fileDataHandler.getCurrentClassData().setIsInterface();
+    fileDataHandler.getCurrentClassData().addModifier("annotation");
+
+    addModifiers(getTypeModifiers(ctx));
+    fileDataHandler.getCurrentClassData().addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+    fileDataHandler.getCurrentClassData().addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
+  }
+
+  @Override
+  public void exitAnnotationTypeDeclaration(
+      final JavaParser.AnnotationTypeDeclarationContext ctx) {
+    fileDataHandler.leaveClass();
+  }
+
+  @Override
+  public void enterAnnotationMethodRest(final JavaParser.AnnotationMethodRestContext ctx) {
+    if (ctx.identifier() == null || !fileDataHandler.isInClassContext()) {
+      return;
+    }
+
+    final String methodName = ctx.identifier().getText();
+    final String methodFqn = fileDataHandler.getCurrentClassFqn() + "." + methodName + "#";
+    fileDataHandler.enterMethod(methodFqn);
+    functionCount++;
+
+    String returnType = "Object";
+    final ParserRuleContext parent = ctx.getParent();
+    if (parent instanceof JavaParser.AnnotationTypeElementRestContext elementRest
+        && elementRest.typeType() != null) {
+      returnType = resolveTypeName(elementRest.typeType().getText());
+    }
+
+    final MethodDataHandler methodData = fileDataHandler.getCurrentClassData()
+        .addMethod(methodName, methodFqn, returnType);
+    if (ctx.start != null && ctx.stop != null) {
+      methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
+    }
+  }
+
+  @Override
+  public void exitAnnotationMethodRest(final JavaParser.AnnotationMethodRestContext ctx) {
+    if (fileDataHandler.isInMethodContext()) {
+      fileDataHandler.leaveMethod();
+    }
+  }
+
+  @Override
+  public void enterClassCreatorRest(final JavaParser.ClassCreatorRestContext ctx) {
+    if (ctx.classBody() == null) {
+      return;
+    }
+
+    final String anonymousName = "Anonymous$" + (fileDataHandler.getClassCount() + 1);
+    final String fqn = buildFqn(anonymousName);
+    fileDataHandler.enterAnonymousClass(anonymousName, fqn);
+    fileDataHandler.getCurrentClassData().addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+    fileDataHandler.getCurrentClassData().addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
+  }
+
+  @Override
+  public void exitClassCreatorRest(final JavaParser.ClassCreatorRestContext ctx) {
+    if (ctx.classBody() != null) {
+      fileDataHandler.leaveAnonymousClass();
+    }
+  }
+
+  @Override
   public void enterEnumConstant(final JavaParser.EnumConstantContext ctx) {
     if (ctx.identifier() != null) {
       fileDataHandler.getCurrentClassData().addEnumConstant(ctx.identifier().getText());
@@ -176,7 +334,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void enterFieldDeclaration(final JavaParser.FieldDeclarationContext ctx) {
-    if (ctx.variableDeclarators() == null || ctx.typeType() == null) {
+    if (ctx.variableDeclarators() == null || ctx.typeType() == null
+        || !fileDataHandler.isInClassContext()) {
       return;
     }
 
@@ -195,7 +354,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void enterMethodDeclaration(final JavaParser.MethodDeclarationContext ctx) {
-    if (ctx.identifier() == null || ctx.formalParameters() == null) {
+    if (ctx.identifier() == null || ctx.formalParameters() == null
+        || !fileDataHandler.isInClassContext()) {
       return;
     }
 
@@ -238,7 +398,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   @Override
   public void enterInterfaceMethodDeclaration(
       final JavaParser.InterfaceMethodDeclarationContext ctx) {
-    if (ctx.interfaceCommonBodyDeclaration() == null) {
+    if (ctx.interfaceCommonBodyDeclaration() == null || !fileDataHandler.isInClassContext()) {
       return;
     }
 
@@ -286,7 +446,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void enterConstructorDeclaration(final JavaParser.ConstructorDeclarationContext ctx) {
-    if (ctx.identifier() == null || ctx.formalParameters() == null) {
+    if (ctx.identifier() == null || ctx.formalParameters() == null
+        || !fileDataHandler.isInClassContext()) {
       return;
     }
 
@@ -347,6 +508,12 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     }
     if (parent instanceof JavaParser.LocalTypeDeclarationContext localTypeDeclarationContext) {
       return localTypeDeclarationContext.classOrInterfaceModifier();
+    }
+    if (parent instanceof JavaParser.MemberDeclarationContext) {
+      final ParseTree grandParent = parent.getParent();
+      if (grandParent instanceof JavaParser.ClassBodyDeclarationContext classBodyDeclarationContext) {
+        return classBodyDeclarationContext.modifier();
+      }
     }
     return List.of();
   }

@@ -1,0 +1,312 @@
+{
+  "fileHash": "regression-hash",
+  "filePath": "ParserTestInput.rs",
+  "language": "RUST",
+  "importNames": ["std::collections::HashMap", "std::io::{self,Write}"],
+  "classes": [{
+    "name": "AbstractBase",
+    "type": "INTERFACE",
+    "functions": [{
+      "name": "abstract_hook",
+      "returnType": "i32",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 16,
+      "endLine": 16
+    }, {
+      "name": "get_base_value",
+      "returnType": "i32",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 15,
+      "endLine": 15
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    }
+  }, {
+    "name": "MarkerInterface",
+    "type": "INTERFACE",
+    "functions": [{
+      "name": "default_mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 22,
+      "endLine": 24
+    }, {
+      "name": "mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 21,
+      "endLine": 21
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 6.0
+    }
+  }, {
+    "name": "NestedInterface",
+    "type": "INTERFACE",
+    "functions": [{
+      "name": "abstract_interface_method",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 29,
+      "endLine": 29
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "NestedEnum",
+    "type": "ENUM",
+    "functions": [{
+      "name": "is_alpha",
+      "returnType": "bool",
+      "metrics": {
+        "sloc": 6.0,
+        "lineCount": 6.0
+      },
+      "startLine": 41,
+      "endLine": 46
+    }],
+    "enumValues": ["Alpha", "Beta", "Gamma"],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "TopLevelEnum",
+    "type": "ENUM",
+    "enumValues": ["One", "Two", "Three"],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "ParserTestInput",
+    "type": "STRUCT",
+    "implementedInterfaces": ["AbstractBase", "MarkerInterface"],
+    "fields": [{
+      "name": "base_value",
+      "type": "i32"
+    }, {
+      "name": "protected_transient_field",
+      "type": "Option<String>"
+    }, {
+      "name": "nested_generic_field",
+      "type": "HashMap<String,Vec<i32>>"
+    }, {
+      "name": "final_array_field",
+      "type": "[f64;2]"
+    }],
+    "functions": [{
+      "name": "new",
+      "returnType": "Self",
+      "metrics": {
+        "sloc": 8.0,
+        "lineCount": 8.0
+      },
+      "startLine": 69,
+      "endLine": 76
+    }, {
+      "name": "with_name",
+      "returnType": "Self",
+      "parameters": [{
+        "name": "name",
+        "type": "String"
+      }, {
+        "name": "values",
+        "type": "&[i32]"
+      }],
+      "metrics": {
+        "sloc": 8.0,
+        "lineCount": 8.0
+      },
+      "startLine": 78,
+      "endLine": 85
+    }, {
+      "name": "generic_method",
+      "returnType": "T",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 96,
+      "endLine": 98
+    }, {
+      "name": "run",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 87,
+      "endLine": 89
+    }, {
+      "name": "call",
+      "returnType": "String",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 91,
+      "endLine": 94
+    }, {
+      "name": "abstract_hook",
+      "returnType": "i32",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 159,
+      "endLine": 161
+    }, {
+      "name": "mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 165,
+      "endLine": 165
+    }, {
+      "name": "do_work",
+      "returnType": "bool",
+      "parameters": [{
+        "name": "flag",
+        "type": "bool"
+      }, {
+        "name": "mutb",
+        "type": "u8"
+      }, {
+        "name": "muts",
+        "type": "i16"
+      }, {
+        "name": "c",
+        "type": "char"
+      }, {
+        "name": "i",
+        "type": "i32"
+      }, {
+        "name": "l",
+        "type": "i64"
+      }, {
+        "name": "f",
+        "type": "f32"
+      }, {
+        "name": "d",
+        "type": "f64"
+      }, {
+        "name": "obj",
+        "type": "Option<&str>"
+      }],
+      "metrics": {
+        "sloc": 52.0,
+        "lineCount": 52.0
+      },
+      "startLine": 100,
+      "endLine": 151
+    }, {
+      "name": "get_base_value",
+      "returnType": "i32",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 155,
+      "endLine": 157
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 7.0
+    }
+  }, {
+    "name": "StaticNested",
+    "type": "STRUCT",
+    "fields": [{
+      "name": "nested_field",
+      "type": "i32"
+    }],
+    "functions": [{
+      "name": "new",
+      "returnType": "Self",
+      "parameters": [{
+        "name": "nested_field",
+        "type": "i32"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 173,
+      "endLine": 175
+    }, {
+      "name": "get_nested_field",
+      "returnType": "i32",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 177,
+      "endLine": 179
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }],
+  "functions": [{
+    "name": "package_private_static_method",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 182,
+    "endLine": 182
+  }, {
+    "name": "module_helper",
+    "returnType": "io::Result<String>",
+    "parameters": [{
+      "name": "path",
+      "type": "&str"
+    }, {
+      "name": "out",
+      "type": "&mutdynWrite"
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    },
+    "startLine": 184,
+    "endLine": 187
+  }],
+  "metrics": {
+    "sloc": 149.0,
+    "cloc": 11.0,
+    "functionCount": 19.0,
+    "variableCount": 9.0,
+    "importCount": 2.0,
+    "classCount": 7.0
+  }
+}

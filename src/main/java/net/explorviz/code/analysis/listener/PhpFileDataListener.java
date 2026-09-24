@@ -217,6 +217,11 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
       return;
     }
 
+    if (ctx.Const() != null && ctx.identifierInitializer() != null) {
+      addClassConstants(ctx);
+      return;
+    }
+
     if (ctx.Function_() != null && ctx.identifier() != null) {
       functionCount++;
       final String methodName = ctx.identifier().getText();
@@ -228,6 +233,23 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
         }
         methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
         methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      }
+    }
+  }
+
+  private void addClassConstants(final PhpParser.ClassStatementContext ctx) {
+    final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
+    if (classData == null) {
+      return;
+    }
+
+    final String fieldType = ctx.typeHint() != null ? ctx.typeHint().getText() : "mixed";
+    final List<String> modifiers = new ArrayList<>();
+    modifiers.add("const");
+    for (final PhpParser.IdentifierInitializerContext initializer : ctx.identifierInitializer()) {
+      if (initializer.identifier() != null) {
+        variableCount++;
+        classData.addField(initializer.identifier().getText(), fieldType, modifiers);
       }
     }
   }

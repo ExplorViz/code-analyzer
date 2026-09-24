@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.parser;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import net.explorviz.code.analysis.antlr.generated.kotlin.KotlinLexer;
@@ -22,6 +23,9 @@ import org.slf4j.LoggerFactory;
 public class AntlrKotlinParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrKotlinParserService.class);
+
+  @Inject
+  AntlrParseSettings parseSettings;
 
   public KotlinFileDataHandler parseFileContent(final String fileContent, final String fileName,
       final String fileHash) {
@@ -60,6 +64,7 @@ public class AntlrKotlinParserService {
 
     final boolean isScript = fileName.toLowerCase().endsWith(".kts");
     final ParseTree tree = AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName,
+        parseSettings.parseTimeoutMs(),
         () -> isScript ? parser.script() : parser.kotlinFile());
 
     final KotlinFileDataHandler fileDataHandler = new KotlinFileDataHandler(fileName);

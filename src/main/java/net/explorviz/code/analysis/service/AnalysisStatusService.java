@@ -72,6 +72,23 @@ public class AnalysisStatusService {
             currentAnalysingFile));
   }
 
+  /**
+   * Clears {@code currentAnalysingFile} only when it still matches {@code filePath}, so a finished
+   * parallel task does not erase another in-flight file's path.
+   */
+  public void clearCurrentAnalyzingFile(final String landscapeToken, final String filePath) {
+    if (filePath == null) {
+      return;
+    }
+    updateExistingStateAndNotify(landscapeToken, state -> {
+      if (!filePath.equals(state.currentAnalysingFile())) {
+        return state;
+      }
+      return new AnalysisProgressState(state.status(), state.totalCommits(),
+          state.analyzedCommits(), state.totalFiles(), state.analyzedFiles(), null);
+    });
+  }
+
   public void incrementAnalyzedFile(final String landscapeToken) {
     updateExistingStateAndNotify(landscapeToken,
         state -> new AnalysisProgressState(state.status(), state.totalCommits(),

@@ -1,0 +1,459 @@
+{
+  "fileHash": "regression-hash",
+  "filePath": "ParserTestInput.java",
+  "language": "JAVA",
+  "packageName": "net.explorviz.code.analysis.fixtures",
+  "importNames": ["java.lang.Math.abs", "java.io.Closeable", "java.io.IOException", "java.io.Serializable", "java.util.ArrayList", "java.util.HashMap", "java.util.List", "java.util.Map", "java.util.concurrent.Callable"],
+  "classes": [{
+    "name": "ParserTestInput",
+    "type": "CLASS",
+    "modifiers": ["public", "strictfp"],
+    "implementedInterfaces": ["java.io.Serializable", "java.lang.Runnable", "java.util.concurrent.Callable<String>"],
+    "superclasses": ["net/explorviz/code/analysis/fixtures/AbstractBase.java::AbstractBase"],
+    "fields": [{
+      "name": "PUBLIC_STATIC_FINAL_INT",
+      "type": "int",
+      "modifiers": ["public", "static", "final"]
+    }, {
+      "name": "privateStaticVolatileFlag",
+      "type": "boolean",
+      "modifiers": ["private", "static", "volatile"]
+    }, {
+      "name": "protectedTransientField",
+      "type": "java.lang.String",
+      "modifiers": ["protected", "transient"]
+    }, {
+      "name": "finalArrayField",
+      "type": "double[]",
+      "modifiers": ["final"]
+    }, {
+      "name": "nestedGenericField",
+      "type": "java.util.Map<String,List<Integer>>",
+      "modifiers": ["private"]
+    }],
+    "innerClasses": [{
+      "name": "LocalHelper",
+      "type": "CLASS",
+      "functions": [{
+        "name": "help",
+        "returnType": "void",
+        "metrics": {
+          "sloc": 2.0,
+          "lineCount": 3.0
+        },
+        "startLine": 136,
+        "endLine": 138
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 5.0
+      }
+    }, {
+      "name": "InnerClass",
+      "type": "CLASS",
+      "modifiers": ["private"],
+      "functions": [{
+        "name": "innerMethod",
+        "returnType": "void",
+        "metrics": {
+          "sloc": 3.0,
+          "lineCount": 4.0
+        },
+        "startLine": 165,
+        "endLine": 168
+      }],
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 6.0
+      }
+    }, {
+      "name": "NestedAnnotation",
+      "type": "INTERFACE",
+      "modifiers": ["annotation", "public"],
+      "functions": [{
+        "name": "value",
+        "returnType": "Object",
+        "startLine": 197,
+        "endLine": 197
+      }, {
+        "name": "priority",
+        "returnType": "Object",
+        "startLine": 199,
+        "endLine": 199
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 5.0
+      }
+    }, {
+      "name": "StaticNested",
+      "type": "CLASS",
+      "modifiers": ["public", "static", "final"],
+      "fields": [{
+        "name": "nestedField",
+        "type": "int",
+        "modifiers": ["private"]
+      }],
+      "functions": [{
+        "name": "StaticNested",
+        "isConstructor": true,
+        "modifiers": ["public"],
+        "parameters": [{
+          "name": "nestedField",
+          "type": "int"
+        }],
+        "metrics": {
+          "sloc": 3.0,
+          "lineCount": 3.0
+        },
+        "startLine": 154,
+        "endLine": 156
+      }, {
+        "name": "getNestedField",
+        "returnType": "int",
+        "modifiers": ["public"],
+        "metrics": {
+          "sloc": 3.0,
+          "lineCount": 3.0
+        },
+        "startLine": 158,
+        "endLine": 160
+      }],
+      "metrics": {
+        "sloc": 9.0,
+        "lineCount": 11.0
+      }
+    }, {
+      "name": "NestedInterface",
+      "type": "INTERFACE",
+      "modifiers": ["public"],
+      "implementedInterfaces": ["java.io.Serializable"],
+      "functions": [{
+        "name": "defaultMethod",
+        "returnType": "void",
+        "modifiers": ["default"],
+        "metrics": {
+          "sloc": 2.0,
+          "lineCount": 3.0
+        },
+        "startLine": 173,
+        "endLine": 175
+      }, {
+        "name": "staticInterfaceMethod",
+        "returnType": "void",
+        "metrics": {
+          "sloc": 2.0,
+          "lineCount": 3.0
+        },
+        "startLine": 177,
+        "endLine": 179
+      }, {
+        "name": "abstractInterfaceMethod",
+        "returnType": "void",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 181,
+        "endLine": 181
+      }],
+      "metrics": {
+        "sloc": 7.0,
+        "lineCount": 11.0
+      }
+    }, {
+      "name": "NestedEnum",
+      "type": "ENUM",
+      "modifiers": ["public"],
+      "functions": [{
+        "name": "isAlpha",
+        "returnType": "boolean",
+        "modifiers": ["public"],
+        "metrics": {
+          "sloc": 3.0,
+          "lineCount": 3.0
+        },
+        "startLine": 190,
+        "endLine": 192
+      }],
+      "enumValues": ["ALPHA", "BETA", "GAMMA"],
+      "metrics": {
+        "sloc": 8.0,
+        "lineCount": 9.0
+      }
+    }],
+    "functions": [{
+      "name": "genericMethod",
+      "returnType": "net.explorviz.code.analysis.fixtures.T",
+      "parameters": [{
+        "name": "value",
+        "type": "net.explorviz.code.analysis.fixtures.T",
+        "modifiers": ["final"]
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 71,
+      "endLine": 73
+    }, {
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "modifiers": ["protected"],
+      "parameters": [{
+        "name": "name",
+        "type": "java.lang.String",
+        "modifiers": ["final"]
+      }, {
+        "name": "values",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 56,
+      "endLine": 59
+    }, {
+      "name": "doWork",
+      "returnType": "boolean",
+      "modifiers": ["protected", "synchronized"],
+      "parameters": [{
+        "name": "flag",
+        "type": "boolean"
+      }, {
+        "name": "b",
+        "type": "byte"
+      }, {
+        "name": "s",
+        "type": "short"
+      }, {
+        "name": "c",
+        "type": "char"
+      }, {
+        "name": "i",
+        "type": "int"
+      }, {
+        "name": "l",
+        "type": "long"
+      }, {
+        "name": "f",
+        "type": "float"
+      }, {
+        "name": "d",
+        "type": "double"
+      }, {
+        "name": "obj",
+        "type": "java.lang.Object"
+      }],
+      "metrics": {
+        "sloc": 57.0,
+        "lineCount": 63.0
+      },
+      "startLine": 81,
+      "endLine": 143
+    }, {
+      "name": "packagePrivateStaticMethod",
+      "returnType": "void",
+      "modifiers": ["static"],
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 3.0
+      },
+      "startLine": 77,
+      "endLine": 79
+    }, {
+      "name": "run",
+      "returnType": "void",
+      "modifiers": ["public", "synchronized"],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 62,
+      "endLine": 64
+    }, {
+      "name": "abstractHook",
+      "returnType": "int",
+      "modifiers": ["public"],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 146,
+      "endLine": 148
+    }, {
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "modifiers": ["public"],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 48,
+      "endLine": 51
+    }, {
+      "name": "nativeMethod",
+      "returnType": "void",
+      "modifiers": ["private", "static", "native"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 75,
+      "endLine": 75
+    }, {
+      "name": "call",
+      "returnType": "java.lang.String",
+      "modifiers": ["public"],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 67,
+      "endLine": 69
+    }],
+    "metrics": {
+      "sloc": 124.0,
+      "lineCount": 180.0
+    }
+  }, {
+    "name": "AbstractBase",
+    "type": "ABSTRACT_CLASS",
+    "modifiers": ["abstract"],
+    "fields": [{
+      "name": "baseValue",
+      "type": "int",
+      "modifiers": ["private", "final"]
+    }],
+    "functions": [{
+      "name": "AbstractBase",
+      "isConstructor": true,
+      "modifiers": ["protected"],
+      "parameters": [{
+        "name": "baseValue",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 209,
+      "endLine": 211
+    }, {
+      "name": "getBaseValue",
+      "returnType": "int",
+      "modifiers": ["public"],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 213,
+      "endLine": 215
+    }, {
+      "name": "abstractHook",
+      "returnType": "int",
+      "modifiers": ["public", "abstract"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 217,
+      "endLine": 217
+    }],
+    "metrics": {
+      "sloc": 10.0,
+      "lineCount": 13.0
+    }
+  }, {
+    "name": "MarkerInterface",
+    "type": "INTERFACE",
+    "implementedInterfaces": ["java.io.Closeable"],
+    "functions": [{
+      "name": "noop",
+      "returnType": "net.explorviz.code.analysis.fixtures.MarkerInterface",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 230,
+      "endLine": 232
+    }, {
+      "name": "mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 224,
+      "endLine": 224
+    }, {
+      "name": "defaultMark",
+      "returnType": "void",
+      "modifiers": ["default"],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 226,
+      "endLine": 228
+    }],
+    "metrics": {
+      "sloc": 9.0,
+      "lineCount": 11.0
+    }
+  }, {
+    "name": "TopLevelEnum",
+    "type": "ENUM",
+    "enumValues": ["ONE", "TWO", "THREE"],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "PointRecord",
+    "type": "CLASS",
+    "modifiers": ["record"],
+    "fields": [{
+      "name": "x",
+      "type": "int",
+      "modifiers": ["private", "final"]
+    }, {
+      "name": "y",
+      "type": "int",
+      "modifiers": ["private", "final"]
+    }],
+    "functions": [{
+      "name": "sum",
+      "returnType": "int",
+      "modifiers": ["public"],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 254,
+      "endLine": 256
+    }, {
+      "name": "PointRecord",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 248,
+      "endLine": 252
+    }],
+    "metrics": {
+      "sloc": 10.0,
+      "lineCount": 11.0
+    }
+  }],
+  "metrics": {
+    "sloc": 170.0,
+    "cloc": 41.0,
+    "functionCount": 27.0,
+    "variableCount": 10.0,
+    "importCount": 9.0,
+    "classCount": 11.0
+  }
+}

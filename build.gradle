@@ -138,4 +138,5 @@ tasks.withType(JavaCompile).configureEach {
 test {
     useJUnitPlatform()
     testLogging.showStandardStreams = true
+    systemProperty 'updateGoldenFiles', System.getProperty('updateGoldenFiles', 'false')
 }

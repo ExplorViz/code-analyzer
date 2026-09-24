@@ -846,6 +846,8 @@ public class AnalysisService {
           return toExportFileData(minimalHandler, config);
         } finally {
           inFlightTasks.release();
+          analysisStatusService.clearCurrentAnalyzingFile(config.landscapeToken(),
+              fileDescriptor.reportedPath);
           analysisStatusService.incrementAnalyzedFile(config.landscapeToken());
         }
       }));
@@ -1090,7 +1092,8 @@ public class AnalysisService {
 
       LOGGER.atDebug()
           .addArgument(file.reportedPath)
-          .log("Analyzing file {} with size {} bytes", file.reportedPath, fileContent.length());
+          .addArgument(fileContent.length())
+          .log("Analyzing file {} with size {} bytes");
 
       if (shouldUseMinimalSourceAnalysis(config, fileName, loc)) {
         LOGGER.atInfo()

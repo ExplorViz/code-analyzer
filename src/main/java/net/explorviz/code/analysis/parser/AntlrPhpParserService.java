@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.parser;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import net.explorviz.code.analysis.antlr.generated.php.PhpLexer;
@@ -22,6 +23,9 @@ import org.slf4j.LoggerFactory;
 public class AntlrPhpParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrPhpParserService.class);
+
+  @Inject
+  AntlrParseSettings parseSettings;
 
   public PhpFileDataHandler parseFileContent(final String fileContent, final String fileName,
       final String fileHash) {
@@ -58,8 +62,8 @@ public class AntlrPhpParserService {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final PhpParser parser = new PhpParser(tokens);
 
-    final ParseTree document =
-        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::htmlDocument);
+    final ParseTree document = AntlrParserUtils.parseTwoStage(
+        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::htmlDocument);
 
     final PhpFileDataHandler fileDataHandler = new PhpFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

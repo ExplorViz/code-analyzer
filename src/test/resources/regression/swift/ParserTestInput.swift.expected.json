@@ -1,0 +1,318 @@
+{
+  "fileHash": "regression-hash",
+  "filePath": "ParserTestInput.swift",
+  "language": "SWIFT",
+  "importNames": ["Foundation"],
+  "classes": [{
+    "name": "MarkerInterface",
+    "type": "INTERFACE",
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    }
+  }, {
+    "name": "CallableMarker",
+    "type": "INTERFACE",
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "NestedInterface",
+    "type": "INTERFACE",
+    "implementedInterfaces": ["MarkerInterface"],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "AbstractBase",
+    "type": "CLASS",
+    "fields": [{
+      "name": "baseValue",
+      "type": "unknown"
+    }],
+    "functions": [{
+      "name": "abstractHook",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 52,
+      "endLine": 54
+    }, {
+      "name": "AbstractBase",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "baseValue",
+        "type": "Int"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 44,
+      "endLine": 46
+    }, {
+      "name": "getBaseValue",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 48,
+      "endLine": 50
+    }],
+    "metrics": {
+      "sloc": 12.0,
+      "lineCount": 15.0
+    }
+  }, {
+    "name": "NestedEnum",
+    "type": "ENUM",
+    "functions": [{
+      "name": "isAlpha",
+      "returnType": "Bool",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 63,
+      "endLine": 65
+    }],
+    "enumValues": ["alpha", "beta", "gamma"],
+    "metrics": {
+      "sloc": 8.0,
+      "lineCount": 9.0
+    }
+  }, {
+    "name": "TopLevelEnum",
+    "type": "ENUM",
+    "enumValues": ["one", "two", "three"],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "StaticNested",
+    "type": "STRUCT",
+    "fields": [{
+      "name": "nestedField",
+      "type": "unknown"
+    }],
+    "functions": [{
+      "name": "getNestedField",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 83,
+      "endLine": 85
+    }, {
+      "name": "StaticNested",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "nestedField",
+        "type": "Int"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 79,
+      "endLine": 81
+    }],
+    "metrics": {
+      "sloc": 9.0,
+      "lineCount": 11.0
+    }
+  }, {
+    "name": "ParserTestInput",
+    "type": "CLASS",
+    "implementedInterfaces": ["MarkerInterface", "CallableMarker"],
+    "superclasses": ["AbstractBase.swift::AbstractBase"],
+    "fields": [{
+      "name": "publicStaticFinalInt",
+      "type": "unknown"
+    }, {
+      "name": "privateStaticVolatileFlag",
+      "type": "unknown"
+    }, {
+      "name": "internalTransientField",
+      "type": "unknown"
+    }, {
+      "name": "finalArrayField",
+      "type": "unknown"
+    }, {
+      "name": "nestedGenericField",
+      "type": "unknown"
+    }, {
+      "name": "shortCounter",
+      "type": "unknown"
+    }, {
+      "name": "byteCounter",
+      "type": "unknown"
+    }],
+    "functions": [{
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "name",
+        "type": "String?"
+      }, {
+        "name": "values",
+        "type": "[Int]"
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 108,
+      "endLine": 111
+    }, {
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 102,
+      "endLine": 105
+    }, {
+      "name": "run",
+      "returnType": "Void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 113,
+      "endLine": 115
+    }, {
+      "name": "call",
+      "returnType": "String",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 117,
+      "endLine": 119
+    }, {
+      "name": "abstractHook",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 173,
+      "endLine": 175
+    }, {
+      "name": "mark",
+      "returnType": "Void",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 3.0
+      },
+      "startLine": 177,
+      "endLine": 179
+    }, {
+      "name": "doWork",
+      "returnType": "Bool",
+      "parameters": [{
+        "name": "flag",
+        "type": "Bool"
+      }, {
+        "name": "b",
+        "type": "UInt8"
+      }, {
+        "name": "s",
+        "type": "Int16"
+      }, {
+        "name": "c",
+        "type": "Character"
+      }, {
+        "name": "i",
+        "type": "Int"
+      }, {
+        "name": "l",
+        "type": "Int64"
+      }, {
+        "name": "f",
+        "type": "Float"
+      }, {
+        "name": "d",
+        "type": "Double"
+      }, {
+        "name": "obj",
+        "type": "Any?"
+      }],
+      "metrics": {
+        "sloc": 44.0,
+        "lineCount": 47.0
+      },
+      "startLine": 125,
+      "endLine": 171
+    }, {
+      "name": "genericMethod",
+      "returnType": "T",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 121,
+      "endLine": 123
+    }],
+    "metrics": {
+      "sloc": 73.0,
+      "lineCount": 92.0
+    }
+  }],
+  "functions": [{
+    "name": "defaultMark",
+    "returnType": "Void",
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 25,
+    "endLine": 27
+  }, {
+    "name": "packagePrivateStaticMethod",
+    "returnType": "Void",
+    "metrics": {
+      "sloc": 2.0,
+      "lineCount": 3.0
+    },
+    "startLine": 183,
+    "endLine": 185
+  }, {
+    "name": "moduleHelper",
+    "returnType": "String",
+    "parameters": [{
+      "name": "path",
+      "type": "String"
+    }, {
+      "name": "ignored",
+      "type": "MarkerInterface"
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 188,
+    "endLine": 190
+  }],
+  "metrics": {
+    "sloc": 128.0,
+    "cloc": 27.0,
+    "functionCount": 17.0,
+    "variableCount": 25.0,
+    "importCount": 1.0,
+    "classCount": 8.0
+  }
+}

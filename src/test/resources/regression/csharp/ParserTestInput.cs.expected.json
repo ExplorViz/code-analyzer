@@ -1,0 +1,321 @@
+{
+  "fileHash": "regression-hash",
+  "filePath": "ParserTestInput.cs",
+  "language": "CSHARP",
+  "packageName": "",
+  "importNames": ["System", "System.Collections.Generic", "System.IO"],
+  "classes": [{
+    "name": "ParserTestInput",
+    "type": "CLASS",
+    "implementedInterfaces": ["ISerializableMarker", "IRunnable", "ICallable"],
+    "superclasses": ["AbstractBase.cs::AbstractBase"],
+    "fields": [{
+      "name": "PublicStaticFinalInt",
+      "type": "int",
+      "modifiers": ["const"]
+    }, {
+      "name": "privateStaticVolatileFlag",
+      "type": "bool"
+    }, {
+      "name": "protectedTransientField",
+      "type": "string"
+    }, {
+      "name": "finalArrayField",
+      "type": "double[]"
+    }, {
+      "name": "nestedGenericField",
+      "type": "Dictionary<string,List<int>>"
+    }],
+    "innerClasses": [{
+      "name": "NestedInterface",
+      "type": "INTERFACE",
+      "functions": [{
+        "name": "AbstractInterfaceMethod",
+        "returnType": "void",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 130,
+        "endLine": 130
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      }
+    }, {
+      "name": "StaticNested",
+      "type": "CLASS",
+      "fields": [{
+        "name": "nestedField",
+        "type": "int"
+      }],
+      "functions": [{
+        "name": "StaticNested",
+        "isConstructor": true,
+        "parameters": [{
+          "name": "nestedField",
+          "type": "int"
+        }],
+        "metrics": {
+          "sloc": 4.0,
+          "lineCount": 4.0
+        },
+        "startLine": 116,
+        "endLine": 119
+      }, {
+        "name": "GetNestedField",
+        "returnType": "int",
+        "metrics": {
+          "sloc": 4.0,
+          "lineCount": 4.0
+        },
+        "startLine": 121,
+        "endLine": 124
+      }],
+      "metrics": {
+        "sloc": 12.0,
+        "lineCount": 14.0
+      }
+    }, {
+      "name": "NestedEnum",
+      "type": "ENUM",
+      "enumValues": ["Alpha", "Beta", "Gamma"],
+      "metrics": {
+        "sloc": 6.0,
+        "lineCount": 6.0
+      }
+    }],
+    "functions": [{
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 36,
+      "endLine": 39
+    }, {
+      "name": "GenericMethod",
+      "returnType": "T",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 61,
+      "endLine": 64
+    }, {
+      "name": "Call",
+      "returnType": "string",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 56,
+      "endLine": 59
+    }, {
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "name",
+        "type": "string"
+      }],
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 42,
+      "endLine": 46
+    }, {
+      "name": "Run",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 7.0,
+        "lineCount": 7.0
+      },
+      "startLine": 48,
+      "endLine": 54
+    }, {
+      "name": "DoWork",
+      "returnType": "bool",
+      "parameters": [{
+        "name": "flag",
+        "type": "bool"
+      }, {
+        "name": "b",
+        "type": "byte"
+      }, {
+        "name": "s",
+        "type": "short"
+      }, {
+        "name": "c",
+        "type": "char"
+      }, {
+        "name": "i",
+        "type": "int"
+      }, {
+        "name": "l",
+        "type": "long"
+      }, {
+        "name": "f",
+        "type": "float"
+      }, {
+        "name": "d",
+        "type": "double"
+      }, {
+        "name": "obj",
+        "type": "object"
+      }],
+      "metrics": {
+        "sloc": 36.0,
+        "lineCount": 39.0
+      },
+      "startLine": 66,
+      "endLine": 104
+    }, {
+      "name": "AbstractHook",
+      "returnType": "int",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 106,
+      "endLine": 109
+    }],
+    "metrics": {
+      "sloc": 96.0,
+      "lineCount": 122.0
+    }
+  }, {
+    "name": "AbstractBase",
+    "type": "CLASS",
+    "fields": [{
+      "name": "baseValue",
+      "type": "int"
+    }],
+    "functions": [{
+      "name": "GetBaseValue",
+      "returnType": "int",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 152,
+      "endLine": 155
+    }, {
+      "name": "AbstractBase",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "baseValue",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 147,
+      "endLine": 150
+    }, {
+      "name": "AbstractHook",
+      "returnType": "int",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 157,
+      "endLine": 157
+    }],
+    "metrics": {
+      "sloc": 13.0,
+      "lineCount": 16.0
+    }
+  }, {
+    "name": "ISerializableMarker",
+    "type": "INTERFACE",
+    "functions": [{
+      "name": "Mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 160,
+      "endLine": 160
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
+  }, {
+    "name": "IRunnable",
+    "type": "INTERFACE",
+    "functions": [{
+      "name": "Run",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 161,
+      "endLine": 161
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
+  }, {
+    "name": "ICallable",
+    "type": "INTERFACE",
+    "functions": [{
+      "name": "Call",
+      "returnType": "string",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 162,
+      "endLine": 162
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
+  }, {
+    "name": "TopLevelEnum",
+    "type": "ENUM",
+    "enumValues": ["One", "Two", "Three"],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
+  }, {
+    "name": "ModuleHelper",
+    "type": "CLASS",
+    "functions": [{
+      "name": "PackagePrivateStaticMethod",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 168,
+      "endLine": 168
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    }
+  }],
+  "metrics": {
+    "sloc": 123.0,
+    "cloc": 0.0,
+    "functionCount": 17.0,
+    "variableCount": 8.0,
+    "importCount": 3.0,
+    "classCount": 10.0
+  }
+}

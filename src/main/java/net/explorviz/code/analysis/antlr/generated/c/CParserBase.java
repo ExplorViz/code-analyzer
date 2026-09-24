@@ -296,9 +296,11 @@ public abstract class CParserBase extends Parser {
         Symbol resolved = resolveWithOutput(lt1);
         boolean result = false;
         if (resolved == null) {
-            // Without preprocessor output, unknown identifiers are treated as typedef
-            // names so that header-defined types (e.g. size_t, arch_spinlock_t) parse.
-            result = true;
+            // Unknown identifiers are not assumed to be typedef names. Treating them as
+            // typedefs breaks ordinary function definitions (the function name is
+            // consumed as another type specifier). Common header types should be
+            // registered in SymbolTable instead.
+            result = false;
         } else if (resolved.getClassification().contains(TypeClassification.Variable_)) {
             result = false;
         } else if (resolved.getClassification().contains(TypeClassification.Function_)) {

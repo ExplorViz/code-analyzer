@@ -10,8 +10,29 @@ import org.antlr.v4.runtime.TokenStream;
  * to parser rules.
  */
 public abstract class TypeScriptParserBase extends Parser {
+
+  /**
+   * When true, TypeScript-only expression alternatives (generics cast, {@code as}, non-null
+   * assertions) are disabled. Plain {@code .js}/{@code .jsx} files use this to avoid exponential
+   * LL prediction on constructs that look like TS generics (e.g. {@code a < b}).
+   */
+  private boolean javaScriptMode;
+
   public TypeScriptParserBase(TokenStream input) {
     super(input);
+  }
+
+  public void setJavaScriptMode(final boolean javaScriptMode) {
+    this.javaScriptMode = javaScriptMode;
+  }
+
+  public boolean isJavaScriptMode() {
+    return javaScriptMode;
+  }
+
+  /** Semantic predicate: allow TypeScript-only alternatives. */
+  protected boolean isTypeScript() {
+    return !javaScriptMode;
   }
 
   /**

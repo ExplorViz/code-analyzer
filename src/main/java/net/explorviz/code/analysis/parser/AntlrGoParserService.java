@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.parser;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import net.explorviz.code.analysis.antlr.generated.golang.GoLexer;
@@ -22,6 +23,9 @@ import org.slf4j.LoggerFactory;
 public class AntlrGoParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrGoParserService.class);
+
+  @Inject
+  AntlrParseSettings parseSettings;
 
   public GoFileDataHandler parseFileContent(final String fileContent, final String fileName,
       final String fileHash) {
@@ -58,8 +62,8 @@ public class AntlrGoParserService {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final GoParser parser = new GoParser(tokens);
 
-    final ParseTree sourceFile =
-        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::sourceFile);
+    final ParseTree sourceFile = AntlrParserUtils.parseTwoStage(
+        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::sourceFile);
 
     final GoFileDataHandler fileDataHandler = new GoFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

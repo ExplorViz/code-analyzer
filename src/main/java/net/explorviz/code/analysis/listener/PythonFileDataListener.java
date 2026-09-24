@@ -129,14 +129,23 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
       methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       methodData.addMetric(LINE_COUNT, String.valueOf(functionLoc));
 
-      // Check for async - commented out for now
-      // TODO: Add async support to MethodDataHandler if needed
+      if (ctx.ASYNC() != null) {
+        methodData.addModifier("async");
+      }
+
+      if (ctx.start != null && ctx.stop != null) {
+        methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
+      }
     } else {
       // Global function
       final var funcBuilder = fileDataHandler.addGlobalFunction(
           functionName,
           "None" // TODO: Extract actual return type from type hints
       );
+
+      if (ctx.ASYNC() != null) {
+        funcBuilder.addModifier("async");
+      }
 
       // Set function location - find actual start/end lines
       int startLine = ctx.start != null ? ctx.start.getLine() : 0;

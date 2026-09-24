@@ -1,0 +1,278 @@
+{
+  "fileHash": "regression-hash",
+  "filePath": "ParserTestInput.go",
+  "language": "GO",
+  "packageName": "fixtures",
+  "importNames": ["fmt", "io", "math"],
+  "classes": [{
+    "name": "AbstractBase",
+    "type": "STRUCT",
+    "fields": [{
+      "name": "BaseValue",
+      "type": "int"
+    }],
+    "functions": [{
+      "name": "GetBaseValue",
+      "returnType": "int",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 24,
+      "endLine": 26
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 4.0
+    }
+  }, {
+    "name": "MarkerInterface",
+    "type": "INTERFACE",
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    }
+  }, {
+    "name": "NestedInterface",
+    "type": "INTERFACE",
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    }
+  }, {
+    "name": "NestedEnum",
+    "functions": [{
+      "name": "IsAlpha",
+      "returnType": "bool",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 50,
+      "endLine": 52
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
+  }, {
+    "name": "ParserTestInput",
+    "type": "STRUCT",
+    "fields": [{
+      "name": "ProtectedTransientField",
+      "type": "string"
+    }, {
+      "name": "nestedGenericField",
+      "type": "map[string][]int"
+    }, {
+      "name": "FinalArrayField",
+      "type": "[2]float64"
+    }],
+    "functions": [{
+      "name": "Call",
+      "returnType": "string",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 93,
+      "endLine": 96
+    }, {
+      "name": "GenericMethod",
+      "returnType": "interface{}",
+      "parameters": [{
+        "name": "value",
+        "type": "interface{}"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 98,
+      "endLine": 100
+    }, {
+      "name": "Run",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 89,
+      "endLine": 91
+    }, {
+      "name": "DoWork",
+      "returnType": "bool",
+      "parameters": [{
+        "name": "flag",
+        "type": "bool"
+      }, {
+        "name": "b",
+        "type": "byte"
+      }, {
+        "name": "s",
+        "type": "int16"
+      }, {
+        "name": "c",
+        "type": "rune"
+      }, {
+        "name": "i",
+        "type": "int"
+      }, {
+        "name": "l",
+        "type": "int64"
+      }, {
+        "name": "f",
+        "type": "float32"
+      }, {
+        "name": "d",
+        "type": "float64"
+      }, {
+        "name": "obj",
+        "type": "interface{}"
+      }],
+      "metrics": {
+        "sloc": 32.0,
+        "lineCount": 32.0
+      },
+      "startLine": 102,
+      "endLine": 133
+    }, {
+      "name": "Mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 139,
+      "endLine": 139
+    }, {
+      "name": "DefaultMark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 141,
+      "endLine": 143
+    }, {
+      "name": "AbstractHook",
+      "returnType": "int",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 135,
+      "endLine": 137
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 7.0
+    }
+  }, {
+    "name": "StaticNested",
+    "type": "STRUCT",
+    "fields": [{
+      "name": "nestedField",
+      "type": "int"
+    }],
+    "functions": [{
+      "name": "GetNestedField",
+      "returnType": "int",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 154,
+      "endLine": 156
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }],
+  "functions": [{
+    "name": "NewParserTestInput",
+    "returnType": "*ParserTestInput",
+    "metrics": {
+      "sloc": 7.0,
+      "lineCount": 7.0
+    },
+    "startLine": 68,
+    "endLine": 74
+  }, {
+    "name": "NewParserTestInputWithName",
+    "returnType": "*ParserTestInput",
+    "parameters": [{
+      "name": "name",
+      "type": "string"
+    }, {
+      "name": "values",
+      "type": "int"
+    }],
+    "metrics": {
+      "sloc": 11.0,
+      "lineCount": 11.0
+    },
+    "startLine": 77,
+    "endLine": 87
+  }, {
+    "name": "NewStaticNested",
+    "returnType": "*StaticNested",
+    "parameters": [{
+      "name": "nestedField",
+      "type": "int"
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 150,
+    "endLine": 152
+  }, {
+    "name": "PackagePrivateStaticMethod",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 158,
+    "endLine": 158
+  }, {
+    "name": "ModuleHelper",
+    "returnType": "(string,error)",
+    "parameters": [{
+      "name": "path",
+      "type": "string"
+    }, {
+      "name": "w",
+      "type": "io.Writer"
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    },
+    "startLine": 160,
+    "endLine": 163
+  }, {
+    "name": "assertPositive",
+    "returnType": "void",
+    "parameters": [{
+      "name": "v",
+      "type": "int"
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    },
+    "startLine": 165,
+    "endLine": 169
+  }],
+  "metrics": {
+    "sloc": 123.0,
+    "cloc": 18.0,
+    "functionCount": 16.0,
+    "variableCount": 5.0,
+    "importCount": 3.0,
+    "classCount": 6.0
+  }
+}

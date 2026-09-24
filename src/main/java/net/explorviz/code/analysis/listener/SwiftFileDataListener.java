@@ -225,11 +225,16 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
   public void enterVariable_declaration(final Swift5Parser.Variable_declarationContext ctx) {
     if (ctx.variable_name() != null && ctx.variable_name().identifier() != null) {
       variableCount++;
-      addPropertyField(ctx.variable_name().identifier().getText(), ctx.type_annotation());
+      if (fileDataHandler.isInClassContext()) {
+        addPropertyField(ctx.variable_name().identifier().getText(), ctx.type_annotation());
+      }
     } else if (ctx.pattern_initializer_list() != null) {
       for (final Swift5Parser.Pattern_initializerContext patternInit : ctx.pattern_initializer_list()
           .pattern_initializer()) {
         countPattern(patternInit.pattern());
+        if (fileDataHandler.isInClassContext()) {
+          addFieldFromPattern(patternInit.pattern(), null);
+        }
       }
     }
   }

@@ -12,7 +12,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +24,8 @@ public class AntlrPythonParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrPythonParserService.class);
 
-  @ConfigProperty(name = "explorviz.gitanalysis.assume-unresolved-types-from-wildcard-imports")
-  /* default */ boolean wildcardImportProperty; // NOCS
+  @Inject
+  AntlrParseSettings parseSettings;
 
   public PythonFileDataHandler parseFileContent(final String fileContent, final String fileName,
       final String fileHash) {
@@ -62,8 +62,8 @@ public class AntlrPythonParserService {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final PythonParser parser = new PythonParser(tokens);
 
-    final ParseTree fileInput =
-        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::file_input);
+    final ParseTree fileInput = AntlrParserUtils.parseTwoStage(
+        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::file_input);
 
     final PythonFileDataHandler fileDataHandler = new PythonFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

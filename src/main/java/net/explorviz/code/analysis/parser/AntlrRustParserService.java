@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.parser;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import net.explorviz.code.analysis.antlr.generated.rust.RustLexer;
@@ -22,6 +23,9 @@ import org.slf4j.LoggerFactory;
 public class AntlrRustParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrRustParserService.class);
+
+  @Inject
+  AntlrParseSettings parseSettings;
 
   public RustFileDataHandler parseFileContent(final String fileContent, final String fileName,
       final String fileHash) {
@@ -58,8 +62,8 @@ public class AntlrRustParserService {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final RustParser parser = new RustParser(tokens);
 
-    final ParseTree crate =
-        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::crate);
+    final ParseTree crate = AntlrParserUtils.parseTwoStage(
+        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::crate);
 
     final RustFileDataHandler fileDataHandler = new RustFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);
