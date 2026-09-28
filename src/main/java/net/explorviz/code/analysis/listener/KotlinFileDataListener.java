@@ -22,6 +22,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private int functionDepth = 0;
 
   public KotlinFileDataListener(final KotlinFileDataHandler fileDataHandler,
       final CommonTokenStream tokens) {
@@ -268,6 +269,11 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
   }
 
   private void addPropertyField(final KotlinParser.PropertyDeclarationContext ctx) {
+    // Local variables inside functions also parse as propertyDeclaration — skip those.
+    if (functionDepth > 0) {
+      return;
+    }
+
     final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
     if (classData == null || ctx.variableDeclaration() == null) {
       return;
@@ -301,6 +307,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
 
   @Override
   public void enterFunctionDeclaration(final KotlinParser.FunctionDeclarationContext ctx) {
+    functionDepth++;
     functionCount++;
 
     final String functionName = extractFunctionName(ctx);
@@ -319,6 +326,13 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+  }
+
+  @Override
+  public void exitFunctionDeclaration(final KotlinParser.FunctionDeclarationContext ctx) {
+    if (functionDepth > 0) {
+      functionDepth--;
+    }
   }
 
   @Override

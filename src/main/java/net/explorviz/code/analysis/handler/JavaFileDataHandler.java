@@ -110,7 +110,21 @@ public class JavaFileDataHandler extends AbstractFileDataHandler
   }
 
   public void leaveMethod() {
-    methodStack.pop();
+    if (!methodStack.isEmpty()) {
+      methodStack.pop();
+    }
+  }
+
+  public boolean isInClassContext() {
+    return !classStack.isEmpty();
+  }
+
+  public boolean isInMethodContext() {
+    return !methodStack.isEmpty();
+  }
+
+  public String getCurrentClassFqnOrNull() {
+    return classStack.isEmpty() ? null : classStack.peek();
   }
 
   public Map<String, Double> getMetrics() {

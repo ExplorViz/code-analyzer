@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.parser;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import net.explorviz.code.analysis.antlr.generated.typescript.TypeScriptLexer;
@@ -23,6 +24,9 @@ public class AntlrTypeScriptParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrTypeScriptParserService.class);
 
+  @Inject
+  AntlrParseSettings parseSettings = new AntlrParseSettings();
+
   public TypeScriptFileDataHandler parseFileContent(final String fileContent, final String fileName,
       final String fileHash) {
     try {
@@ -42,10 +46,8 @@ public class AntlrTypeScriptParserService {
     try {
       final Path path = Path.of(pathToFile);
       LOGGER.trace("Parsing TS/JS file for {}", pathToFile);
-      final CharStream charStream = CharStreams.fromPath(path);
-      final String fileName = path.getFileName().toString();
-      final String extension = getFileExtension(fileName);
-      return parse(charStream, fileName, fileHash, extension);
+      final String fileContent = java.nio.file.Files.readString(path);
+      return parseFileContent(fileContent, path.getFileName().toString(), fileHash);
     } catch (IOException e) {
       LOGGER.error("Failed to read TS/JS file {}: {}", pathToFile, e.getMessage());
       throw e;
@@ -61,15 +63,17 @@ public class AntlrTypeScriptParserService {
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final TypeScriptParser parser = new TypeScriptParser(tokens);
+    // Plain JS has no generics / `as` / non-null assertions; disabling those alts avoids
+    // catastrophic LL prediction on config-style object literals (e.g. webpack.*.js).
+    final boolean javaScript = ".js".equals(extension) || ".jsx".equals(extension);
+    parser.setJavaScriptMode(javaScript);
 
-    final ParseTree program =
-        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::program);
+    final ParseTree program = AntlrParserUtils.parseTwoStage(
+        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::program);
 
-    // Create TypeScript file data handler
     final TypeScriptFileDataHandler fileDataHandler = new TypeScriptFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);
 
-    // Create and execute the listener
     final TypeScriptFileDataListener listener = new TypeScriptFileDataListener(
         fileDataHandler,
         extension,
@@ -81,12 +85,22 @@ public class AntlrTypeScriptParserService {
   }
 
   private String getFileExtension(final String fileName) {
-    final int lastDot = fileName.lastIndexOf('.');
-    return lastDot > 0 ? fileName.substring(lastDot) : "";
+    if (fileName == null || fileName.isEmpty()) {
+      return "";
+    }
+    final String base = fileName.replace('\\', '/');
+    final int slash = base.lastIndexOf('/');
+    final String simple = slash >= 0 ? base.substring(slash + 1) : base;
+    final int lastDot = simple.lastIndexOf('.');
+    return lastDot > 0 ? simple.substring(lastDot) : "";
   }
 
   private static String normalizeTsx(final String fileContent, final String fileName) {
-    if (fileName != null && fileName.endsWith(".tsx")) {
+    if (fileName == null) {
+      return fileContent;
+    }
+    final String lower = fileName.toLowerCase();
+    if (lower.endsWith(".tsx") || lower.endsWith(".jsx")) {
       return TsxJsxNormalizer.replaceJsxWithNull(fileContent);
     }
     return fileContent;

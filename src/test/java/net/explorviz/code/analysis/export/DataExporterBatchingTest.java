@@ -66,7 +66,10 @@ class DataExporterBatchingTest {
     analysisFinished.countDown();
     batcher.join();
 
-    Assertions.assertEquals(List.of(500, 500, 200), exporter.batchSizes);
+    // Concurrent sends may complete out of order; assert on sizes, not dispatch order.
+    final List<Integer> sorted = new ArrayList<>(exporter.batchSizes);
+    Collections.sort(sorted);
+    Assertions.assertEquals(List.of(200, 500, 500), sorted);
   }
 
   private static final class RecordingExporter implements DataExporter {

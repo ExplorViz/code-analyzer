@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.parser;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import net.explorviz.code.analysis.antlr.generated.java.JavaLexer;
@@ -23,6 +24,9 @@ import org.slf4j.LoggerFactory;
 public class AntlrParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrParserService.class);
+
+  @Inject
+  AntlrParseSettings parseSettings = new AntlrParseSettings();
 
   @ConfigProperty(name = "explorviz.gitanalysis.assume-unresolved-types-from-wildcard-imports")
   /* default */ boolean wildcardImportProperty; // NOCS
@@ -62,8 +66,9 @@ public class AntlrParserService {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final JavaParser parser = new JavaParser(tokens);
 
-    final ParseTree compilationUnit =
-        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::compilationUnit);
+    final ParseTree compilationUnit = AntlrParserUtils.parseTwoStage(
+        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(),
+        parser::compilationUnit);
 
     final JavaFileDataHandler fileDataHandler = new JavaFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

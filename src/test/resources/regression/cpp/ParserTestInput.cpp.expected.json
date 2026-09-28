@@ -1,0 +1,370 @@
+{
+  "fileHash": "regression-hash",
+  "filePath": "ParserTestInput.cpp",
+  "language": "CPP",
+  "importNames": ["<cmath>", "<cstdlib>", "<cstdio>", "<map>", "<string>", "<vector>", "\"fixtures_support.hpp\""],
+  "classes": [{
+    "name": "NestedEnum",
+    "type": "ENUM",
+    "enumValues": ["NESTED_ALPHA", "NESTED_BETA", "NESTED_GAMMA"],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "TopLevelEnum",
+    "type": "ENUM",
+    "enumValues": ["TOP_ONE", "TOP_TWO", "TOP_THREE"],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "MarkerInterface",
+    "type": "CLASS",
+    "functions": [{
+      "name": "mark",
+      "returnType": "void",
+      "modifiers": ["virtual", "pure"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 39,
+      "endLine": 39
+    }, {
+      "name": "~MarkerInterface",
+      "returnType": "void",
+      "modifiers": ["virtual"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 38,
+      "endLine": 38
+    }, {
+      "name": "defaultMark",
+      "returnType": "void",
+      "modifiers": ["virtual"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 40,
+      "endLine": 40
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 6.0
+    }
+  }, {
+    "name": "CallableMarker",
+    "type": "CLASS",
+    "functions": [{
+      "name": "call",
+      "returnType": "std::string",
+      "modifiers": ["virtual", "pure"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 46,
+      "endLine": 46
+    }, {
+      "name": "~CallableMarker",
+      "returnType": "void",
+      "modifiers": ["virtual"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 45,
+      "endLine": 45
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "AbstractBase",
+    "type": "CLASS",
+    "fields": [{
+      "name": "baseValue",
+      "type": "int"
+    }],
+    "functions": [{
+      "name": "abstractHook",
+      "returnType": "int",
+      "modifiers": ["virtual", "pure"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 59,
+      "endLine": 59
+    }, {
+      "name": "~AbstractBase",
+      "returnType": "void",
+      "modifiers": ["virtual"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 57,
+      "endLine": 57
+    }, {
+      "name": "AbstractBase",
+      "isConstructor": true,
+      "modifiers": ["explicit"],
+      "parameters": [{
+        "name": "baseValue",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 54,
+      "endLine": 54
+    }, {
+      "name": "getBaseValue",
+      "returnType": "int",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 58,
+      "endLine": 58
+    }],
+    "metrics": {
+      "sloc": 10.0,
+      "lineCount": 12.0
+    }
+  }, {
+    "name": "ParserTestInput",
+    "type": "CLASS",
+    "superclasses": ["AbstractBase", "MarkerInterface", "CallableMarker"],
+    "fields": [{
+      "name": "PUBLIC_STATIC_FINAL_INT",
+      "type": "int"
+    }, {
+      "name": "privateStaticVolatileFlag",
+      "type": "bool"
+    }, {
+      "name": "protectedTransientField",
+      "type": "std::string"
+    }, {
+      "name": "finalArrayField",
+      "type": "double"
+    }, {
+      "name": "nestedGenericField",
+      "type": "std::map<std::string,std::vector<int>>"
+    }],
+    "innerClasses": [{
+      "name": "StaticNested",
+      "type": "CLASS",
+      "fields": [{
+        "name": "nestedField",
+        "type": "int"
+      }],
+      "functions": [{
+        "name": "getNestedField",
+        "returnType": "int",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 141,
+        "endLine": 141
+      }, {
+        "name": "StaticNested",
+        "isConstructor": true,
+        "modifiers": ["explicit"],
+        "parameters": [{
+          "name": "nestedField",
+          "type": "int"
+        }],
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 140,
+        "endLine": 140
+      }],
+      "metrics": {
+        "sloc": 7.0,
+        "lineCount": 7.0
+      }
+    }],
+    "functions": [{
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 77,
+      "endLine": 81
+    }, {
+      "name": "run",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 91,
+      "endLine": 95
+    }, {
+      "name": "call",
+      "returnType": "std::string",
+      "modifiers": ["virtual"],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 97,
+      "endLine": 99
+    }, {
+      "name": "abstractHook",
+      "returnType": "int",
+      "modifiers": ["virtual"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 133,
+      "endLine": 133
+    }, {
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "name",
+        "type": "std::string&",
+        "modifiers": ["const"]
+      }, {
+        "name": "values",
+        "type": "std::vector<int>&",
+        "modifiers": ["const"]
+      }],
+      "metrics": {
+        "sloc": 7.0,
+        "lineCount": 7.0
+      },
+      "startLine": 83,
+      "endLine": 89
+    }, {
+      "name": "mark",
+      "returnType": "void",
+      "modifiers": ["virtual"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 134,
+      "endLine": 134
+    }, {
+      "name": "genericMethod",
+      "returnType": "T",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 102,
+      "endLine": 104
+    }, {
+      "name": "doWork",
+      "returnType": "bool",
+      "parameters": [{
+        "name": "flag",
+        "type": "bool"
+      }, {
+        "name": "b",
+        "type": "unsigned char"
+      }, {
+        "name": "s",
+        "type": "short"
+      }, {
+        "name": "c",
+        "type": "char"
+      }, {
+        "name": "i",
+        "type": "int"
+      }, {
+        "name": "l",
+        "type": "long"
+      }, {
+        "name": "f",
+        "type": "float"
+      }, {
+        "name": "d",
+        "type": "double"
+      }, {
+        "name": "obj",
+        "type": "void*",
+        "modifiers": ["const"]
+      }],
+      "metrics": {
+        "sloc": 24.0,
+        "lineCount": 26.0
+      },
+      "startLine": 106,
+      "endLine": 131
+    }],
+    "metrics": {
+      "sloc": 67.0,
+      "lineCount": 79.0
+    }
+  }],
+  "functions": [{
+    "name": "packagePrivateStaticMethod",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 147,
+    "endLine": 147
+  }, {
+    "name": "moduleHelper",
+    "returnType": "std::string",
+    "parameters": [{
+      "name": "path",
+      "type": "std::string&",
+      "modifiers": ["const"]
+    }, {
+      "name": "ignored",
+      "type": "MarkerInterface*"
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    },
+    "startLine": 149,
+    "endLine": 152
+  }, {
+    "name": "nestedEnumIsAlpha",
+    "returnType": "bool",
+    "parameters": [{
+      "name": "value",
+      "type": "NestedEnum"
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 154,
+    "endLine": 156
+  }],
+  "metrics": {
+    "sloc": 107.0,
+    "cloc": 16.0,
+    "functionCount": 22.0,
+    "variableCount": 10.0,
+    "importCount": 7.0,
+    "classCount": 7.0
+  }
+}

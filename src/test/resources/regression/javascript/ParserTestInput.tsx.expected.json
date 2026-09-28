@@ -1,0 +1,195 @@
+{
+  "fileHash": "regression-hash",
+  "filePath": "ParserTestInput.tsx",
+  "language": "TYPESCRIPT",
+  "importNames": ["import*asReactfrom'react';", "import{basename}from'path';"],
+  "classes": [{
+    "name": "ParserTestInputProps",
+    "type": "INTERFACE",
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    }
+  }, {
+    "name": "MarkerInterface",
+    "type": "INTERFACE",
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "ParserTestInput",
+    "type": "CLASS",
+    "implementedInterfaces": ["MarkerInterface"],
+    "superclasses": ["AbstractBase.tsx::AbstractBase"],
+    "fields": [{
+      "name": "PUBLIC_STATIC_FINAL_INT",
+      "type": "number",
+      "modifiers": ["static", "readonly", "public"]
+    }, {
+      "name": "protectedTransientField",
+      "type": "string|null",
+      "modifiers": ["protected"]
+    }, {
+      "name": "nestedGenericField",
+      "type": "Map<string,number[]>",
+      "modifiers": ["private"]
+    }],
+    "functions": [{
+      "name": "constructor",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "name",
+        "type": "string"
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 65,
+      "endLine": 68
+    }, {
+      "name": "mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 3.0
+      },
+      "startLine": 103,
+      "endLine": 105
+    }, {
+      "name": "abstractHook",
+      "returnType": "number",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 99,
+      "endLine": 101
+    }, {
+      "name": "genericMethod",
+      "returnType": "T",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 76,
+      "endLine": 78
+    }, {
+      "name": "run",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 70,
+      "endLine": 74
+    }, {
+      "name": "doWork",
+      "returnType": "boolean",
+      "parameters": [{
+        "name": "flag",
+        "type": "boolean"
+      }, {
+        "name": "i",
+        "type": "number"
+      }, {
+        "name": "obj",
+        "type": "unknown"
+      }],
+      "metrics": {
+        "sloc": 18.0,
+        "lineCount": 18.0
+      },
+      "startLine": 80,
+      "endLine": 97
+    }],
+    "metrics": {
+      "sloc": 40.0,
+      "lineCount": 50.0
+    }
+  }, {
+    "name": "StaticNested",
+    "type": "CLASS",
+    "fields": [{
+      "name": "nestedField",
+      "type": "number",
+      "modifiers": ["private"]
+    }],
+    "functions": [{
+      "name": "constructor",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "nestedField",
+        "type": "number"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 114,
+      "endLine": 116
+    }, {
+      "name": "getNestedField",
+      "returnType": "number",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 118,
+      "endLine": 120
+    }],
+    "metrics": {
+      "sloc": 9.0,
+      "lineCount": 11.0
+    }
+  }],
+  "functions": [{
+    "name": "ParserTestInputView",
+    "returnType": "React.ReactElement",
+    "parameters": [{
+      "name": "props",
+      "type": "ParserTestInputProps"
+    }],
+    "metrics": {
+      "sloc": 8.0,
+      "lineCount": 9.0
+    },
+    "startLine": 126,
+    "endLine": 134
+  }, {
+    "name": "packagePrivateStaticMethod",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 2.0,
+      "lineCount": 3.0
+    },
+    "startLine": 137,
+    "endLine": 139
+  }, {
+    "name": "moduleHelper",
+    "returnType": "string",
+    "parameters": [{
+      "name": "path",
+      "type": "string"
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 142,
+    "endLine": 144
+  }],
+  "metrics": {
+    "sloc": 86.0,
+    "cloc": 31.0,
+    "functionCount": 11.0,
+    "variableCount": 12.0,
+    "importCount": 2.0,
+    "classCount": 4.0
+  }
+}

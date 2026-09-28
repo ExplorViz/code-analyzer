@@ -105,17 +105,20 @@ public class TypeScriptFileDataHandler extends AbstractFileDataHandler
   }
 
   public void enterClass(final String name, final String fqn) {
-    final ClassDataHandler handler = new ClassDataHandler();
-    handler.setName(name);
-    this.classDataMap.put(fqn, handler);
+    ClassDataHandler handler = this.classDataMap.get(fqn);
+    if (handler == null) {
+      handler = new ClassDataHandler();
+      handler.setName(name);
+      this.classDataMap.put(fqn, handler);
 
-    if (this.classStack.isEmpty()) {
-      this.rootClasses.add(fqn);
-    } else {
-      final String parentClassFqn = this.classStack.peek();
-      final ClassDataHandler parent = this.classDataMap.get(parentClassFqn);
-      if (parent != null) {
-        parent.addInnerClass(fqn, handler);
+      if (this.classStack.isEmpty()) {
+        this.rootClasses.add(fqn);
+      } else {
+        final String parentClassFqn = this.classStack.peek();
+        final ClassDataHandler parent = this.classDataMap.get(parentClassFqn);
+        if (parent != null) {
+          parent.addInnerClass(fqn, handler);
+        }
       }
     }
 

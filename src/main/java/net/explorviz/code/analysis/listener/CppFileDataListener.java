@@ -353,7 +353,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
 
   @Override
   public void enterMemberDeclaration(final CPP14Parser.MemberDeclarationContext ctx) {
-    // Only handle member fields; function definitions are handled separately
+    // Function definitions with bodies are handled by enterFunctionDefinition
     if (ctx.functionDefinition() != null) {
       return;
     }
@@ -369,20 +369,46 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
       return;
     }
 
-    // Extract the type from the declaration specifiers
-    final String fieldType = extractTypeFromDeclSpecifierSeq(ctx.declSpecifierSeq());
+    final String declaredType = extractTypeFromDeclSpecifierSeq(ctx.declSpecifierSeq());
 
-    // Extract field names from the member declarator list
     for (final CPP14Parser.MemberDeclaratorContext memberDecl : ctx.memberDeclaratorList()
         .memberDeclarator()) {
-      if (memberDecl.declarator() != null) {
-        final String fieldName = extractDeclaratorName(memberDecl.declarator());
-        if (fieldName != null && !fieldName.contains("(")) {
-          // It is a field, not a method declaration
-          final List<String> modifiers = new ArrayList<>();
-          classData.addField(fieldName, fieldType, modifiers);
-        }
+      if (memberDecl.declarator() == null) {
+        continue;
       }
+
+      final String name = extractFunctionName(memberDecl.declarator());
+      if (name == null) {
+        continue;
+      }
+
+      // Declarators with parameter lists are method declarations (incl. pure virtual).
+      if (findParametersAndQualifiers(memberDecl.declarator()) != null) {
+        functionCount++;
+        final String methodFqn = fileDataHandler.getCurrentClassFqnOrNull() + "::" + name;
+        final MethodDataHandler methodData = classData.addMethod(name, methodFqn, declaredType);
+        final List<String> modifiers = new ArrayList<>();
+        if (ctx.declSpecifierSeq().getText().contains("virtual")) {
+          modifiers.add("virtual");
+        }
+        if (memberDecl.pureSpecifier() != null || (memberDecl.getText() != null
+            && memberDecl.getText().contains("=0"))) {
+          modifiers.add("pure");
+        }
+        for (final String modifier : modifiers) {
+          methodData.addModifier(modifier);
+        }
+        addFunctionParameters(methodData, memberDecl.declarator());
+        if (ctx.start != null && ctx.stop != null) {
+          methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
+        }
+        methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+        methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+        continue;
+      }
+
+      final List<String> modifiers = new ArrayList<>();
+      classData.addField(name, declaredType, modifiers);
     }
   }
 

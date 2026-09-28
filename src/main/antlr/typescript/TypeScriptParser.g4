@@ -291,7 +291,7 @@ classOrInterfaceTypeList
 // A.7 Interface
 
 enumDeclaration
-    : Const? Enum identifier '{' enumBody? '}'
+    : Export? Const? Enum identifier '{' enumBody? '}'
     ;
 
 enumBody
@@ -355,11 +355,11 @@ statement
     | importStatement
     | exportStatement
     | emptyStatement_
-    | abstractDeclaration //ADDED
     | classDeclaration
     | functionDeclaration
     | expressionStatement
     | interfaceDeclaration //ADDED
+    | enumDeclaration      //ADDED — early so Enum keyword is not treated as an identifier expression
     | namespaceDeclaration //ADDED
     | ifStatement
     | iterationStatement
@@ -376,7 +376,7 @@ statement
     | arrowFunctionDeclaration
     | generatorFunctionDeclaration
     | typeAliasDeclaration //ADDED
-    | enumDeclaration      //ADDED
+    | abstractDeclaration //ADDED — after classDeclaration so "abstract class" wins
     | Export statement
     ;
 
@@ -459,6 +459,10 @@ declaration
     : variableStatement
     | classDeclaration
     | functionDeclaration
+    | interfaceDeclaration
+    | enumDeclaration
+    | typeAliasDeclaration
+    | namespaceDeclaration
     ;
 
 variableStatement
@@ -693,7 +697,8 @@ objectLiteral
     : '{' (propertyAssignment (',' propertyAssignment)* ','?)? '}'
     ;
 
-// MODIFIED
+// MODIFIED — Ellipsis is required so bare expressions are not also SpreadOperator alts
+// (optional Ellipsis caused exponential LL prediction on object literals).
 propertyAssignment
     : propertyName (':' | '=') singleExpression     # PropertyExpressionAssignment
     | '[' singleExpression ']' ':' singleExpression # ComputedPropertyExpressionAssignment
@@ -701,7 +706,7 @@ propertyAssignment
     | setAccessor                                   # PropertySetter
     | generatorMethod                               # MethodProperty
     | identifierOrKeyWord                           # PropertyShorthand
-    | Ellipsis? singleExpression                    # SpreadOperator
+    | Ellipsis singleExpression                     # SpreadOperator
     | restParameter                                 # RestParameterInObject
     ;
 
@@ -740,13 +745,13 @@ singleExpression
     : anonymousFunction                                           # FunctionExpression
     | Class identifier? typeParameters? classHeritage classTail   # ClassExpression
     | singleExpression QuestionMarkDot? '[' expressionSequence ']'  # MemberIndexExpression
-    | singleExpression QuestionMarkDot identifierName typeGeneric? arguments? # OptionalMemberExpression
+    | singleExpression QuestionMarkDot identifierName ({this.isTypeScript()}? typeGeneric)? arguments? # OptionalMemberExpression
     | singleExpression QuestionMarkDot arguments                    # OptionalCallExpression
     | singleExpression '?.' singleExpression                        # OptionalChainExpression
-    | singleExpression '!'? '.' '#'? identifierName typeGeneric?  # MemberDotExpression
+    | singleExpression '!'? '.' '#'? identifierName ({this.isTypeScript()}? typeGeneric)?  # MemberDotExpression
     // Split to try `new Date()` first, then `new Date`.
-    | New singleExpression typeArguments? arguments                   # NewExpression
-    | New singleExpression typeArguments?                             # NewExpression
+    | New singleExpression ({this.isTypeScript()}? typeArguments)? arguments                   # NewExpression
+    | New singleExpression ({this.isTypeScript()}? typeArguments)?                             # NewExpression
     | singleExpression arguments                                      # ArgumentsExpression
     | singleExpression {this.notLineTerminator()}? '++'               # PostIncrementExpression
     | singleExpression {this.notLineTerminator()}? '--'               # PostDecreaseExpression
@@ -783,16 +788,17 @@ singleExpression
     | generatorFunctionDeclaration                                    # GeneratorsFunctionExpression // ECMAScript 6
     | yieldStatement                                                  # YieldExpression              // ECMAScript 6
     | This                                                            # ThisExpression
-    | identifierName singleExpression?                                # IdentifierExpression
+    | identifierName                                                  # IdentifierExpression
     | Super                                                           # SuperExpression
     | literal                                                         # LiteralExpression
     | arrayLiteral                                                    # ArrayLiteralExpression
     | objectLiteral                                                   # ObjectLiteralExpression
     | '(' expressionSequence ')'                                      # ParenthesizedExpression
-    | typeArguments expressionSequence?                               # GenericTypes
-    | singleExpression As asExpression                                # CastAsExpression
+    // MODIFIED — gate TS-only alts so .js files do not explode on '<' / 'as' / '!'
+    | {this.isTypeScript()}? typeArguments expressionSequence?        # GenericTypes
+    | singleExpression {this.isTypeScript()}? As asExpression         # CastAsExpression
 // TypeScript v2.0
-    | singleExpression '!'                                            # NonNullAssertionExpression
+    | singleExpression {this.isTypeScript()}? '!'                     # NonNullAssertionExpression
     ;
 
 asExpression

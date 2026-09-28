@@ -1,0 +1,265 @@
+{
+  "fileHash": "regression-hash",
+  "filePath": "ParserTestInput.py",
+  "language": "PYTHON",
+  "importNames": ["importmath", "importos.pathasosp"],
+  "classes": [{
+    "name": "AbstractBase",
+    "functions": [{
+      "name": "__init__",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 5.0
+      },
+      "startLine": 27,
+      "endLine": 31
+    }, {
+      "name": "abstract_hook",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 5.0
+      },
+      "startLine": 35,
+      "endLine": 39
+    }, {
+      "name": "get_base_value",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 5.0
+      },
+      "startLine": 31,
+      "endLine": 35
+    }],
+    "metrics": {
+      "sloc": 9.0,
+      "lineCount": 16.0
+    }
+  }, {
+    "name": "MarkerMixin",
+    "functions": [{
+      "name": "default_mark",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 5.0
+      },
+      "startLine": 45,
+      "endLine": 49
+    }, {
+      "name": "mark",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 4.0
+      },
+      "startLine": 42,
+      "endLine": 45
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 11.0
+    }
+  }, {
+    "name": "ParserTestInput",
+    "superclasses": ["AbstractBase.py::AbstractBase", "MarkerMixin.py::MarkerMixin"],
+    "innerClasses": [{
+      "name": "StaticNested",
+      "functions": [{
+        "name": "__init__",
+        "returnType": "None",
+        "metrics": {
+          "sloc": 2.0,
+          "lineCount": 4.0
+        },
+        "startLine": 133,
+        "endLine": 136
+      }, {
+        "name": "get_nested_field",
+        "returnType": "None",
+        "metrics": {
+          "sloc": 2.0,
+          "lineCount": 4.0
+        },
+        "startLine": 136,
+        "endLine": 139
+      }],
+      "metrics": {
+        "sloc": 6.0,
+        "lineCount": 10.0
+      }
+    }, {
+      "name": "NestedEnum",
+      "functions": [{
+        "name": "is_alpha",
+        "returnType": "None",
+        "metrics": {
+          "sloc": 2.0,
+          "lineCount": 5.0
+        },
+        "startLine": 154,
+        "endLine": 158
+      }],
+      "metrics": {
+        "sloc": 8.0,
+        "lineCount": 13.0
+      }
+    }, {
+      "name": "LocalHelper",
+      "functions": [{
+        "name": "help",
+        "returnType": "None",
+        "metrics": {
+          "sloc": 2.0,
+          "lineCount": 5.0
+        },
+        "startLine": 120,
+        "endLine": 124
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 6.0
+      }
+    }, {
+      "name": "InnerClass",
+      "functions": [{
+        "name": "inner_method",
+        "returnType": "None",
+        "metrics": {
+          "sloc": 2.0,
+          "lineCount": 5.0
+        },
+        "startLine": 142,
+        "endLine": 146
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 8.0
+      }
+    }],
+    "functions": [{
+      "name": "do_work",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 44.0,
+        "lineCount": 52.0
+      },
+      "startLine": 76,
+      "endLine": 127
+    }, {
+      "name": "run",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 5.0
+      },
+      "startLine": 65,
+      "endLine": 69
+    }, {
+      "name": "__init__",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 7.0
+      },
+      "startLine": 59,
+      "endLine": 65
+    }, {
+      "name": "call",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 4.0
+      },
+      "startLine": 69,
+      "endLine": 72
+    }, {
+      "name": "abstract_hook",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 4.0
+      },
+      "startLine": 127,
+      "endLine": 130
+    }, {
+      "name": "generic_method",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 5.0
+      },
+      "startLine": 72,
+      "endLine": 76
+    }],
+    "metrics": {
+      "sloc": 79.0,
+      "lineCount": 110.0
+    }
+  }, {
+    "name": "Noop",
+    "superclasses": ["MarkerMixin.py::MarkerMixin"],
+    "functions": [{
+      "name": "mark",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 4.0
+      },
+      "startLine": 176,
+      "endLine": 179
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 5.0
+    }
+  }],
+  "functions": [{
+    "name": "async_helper",
+    "returnType": "None",
+    "modifiers": ["async"],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 158,
+    "endLine": 160
+  }, {
+    "name": "package_private_static_method",
+    "returnType": "None",
+    "metrics": {
+      "sloc": 2.0,
+      "lineCount": 3.0
+    },
+    "startLine": 163,
+    "endLine": 165
+  }, {
+    "name": "module_helper",
+    "returnType": "None",
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    },
+    "startLine": 168,
+    "endLine": 171
+  }, {
+    "name": "noop_factory",
+    "returnType": "None",
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 6.0
+    },
+    "startLine": 174,
+    "endLine": 179
+  }],
+  "metrics": {
+    "sloc": 115.0,
+    "cloc": 9.0,
+    "functionCount": 21.0,
+    "variableCount": 10.0,
+    "importCount": 2.0,
+    "classCount": 8.0
+  }
+}

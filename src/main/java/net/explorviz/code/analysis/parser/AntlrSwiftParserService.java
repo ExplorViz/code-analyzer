@@ -1,6 +1,7 @@
 package net.explorviz.code.analysis.parser;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import net.explorviz.code.analysis.antlr.generated.swift.Swift5Lexer;
@@ -22,6 +23,9 @@ import org.slf4j.LoggerFactory;
 public class AntlrSwiftParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrSwiftParserService.class);
+
+  @Inject
+  AntlrParseSettings parseSettings = new AntlrParseSettings();
 
   public SwiftFileDataHandler parseFileContent(final String fileContent, final String fileName,
       final String fileHash) {
@@ -58,8 +62,8 @@ public class AntlrSwiftParserService {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final Swift5Parser parser = new Swift5Parser(tokens);
 
-    final ParseTree topLevel =
-        AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName, parser::top_level);
+    final ParseTree topLevel = AntlrParserUtils.parseTwoStage(
+        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::top_level);
 
     final SwiftFileDataHandler fileDataHandler = new SwiftFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

@@ -1,0 +1,335 @@
+{
+  "fileHash": "regression-hash",
+  "filePath": "ParserTestInput.php",
+  "language": "PHP",
+  "importNames": ["ExplorViz.Code.Analysis.Fixtures.Support.Closeable", "ExplorViz.Code.Analysis.Fixtures.Support.IOException"],
+  "classes": [{
+    "name": "AbstractBase",
+    "type": "CLASS",
+    "fields": [{
+      "name": "baseValue",
+      "type": "mixed"
+    }],
+    "functions": [{
+      "name": "abstractHook",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 38,
+      "endLine": 38
+    }, {
+      "name": "getBaseValue",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 33,
+      "endLine": 36
+    }, {
+      "name": "__construct",
+      "returnType": "void",
+      "parameters": [{
+        "name": "baseValue",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 28,
+      "endLine": 31
+    }],
+    "metrics": {
+      "sloc": 13.0,
+      "lineCount": 17.0
+    }
+  }, {
+    "name": "MarkerInterface",
+    "type": "INTERFACE",
+    "functions": [{
+      "name": "mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 44,
+      "endLine": 44
+    }, {
+      "name": "defaultMark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 45,
+      "endLine": 45
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "NestedInterface",
+    "type": "INTERFACE",
+    "implementedInterfaces": ["MarkerInterface"],
+    "functions": [{
+      "name": "abstractInterfaceMethod",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 51,
+      "endLine": 51
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    }
+  }, {
+    "name": "TopLevelEnum",
+    "type": "ENUM",
+    "enumValues": ["ONE", "TWO", "THREE"],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 6.0
+    }
+  }, {
+    "name": "NestedEnum",
+    "type": "ENUM",
+    "functions": [{
+      "name": "isAlpha",
+      "returnType": "bool",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 69,
+      "endLine": 72
+    }],
+    "enumValues": ["ALPHA", "BETA", "GAMMA"],
+    "metrics": {
+      "sloc": 10.0,
+      "lineCount": 11.0
+    }
+  }, {
+    "name": "ParserTestInput",
+    "type": "CLASS",
+    "implementedInterfaces": ["MarkerInterface"],
+    "superclasses": ["AbstractBase.php::AbstractBase"],
+    "fields": [{
+      "name": "PUBLIC_STATIC_FINAL_INT",
+      "type": "mixed",
+      "modifiers": ["const"]
+    }, {
+      "name": "privateStaticVolatileFlag",
+      "type": "mixed"
+    }, {
+      "name": "protectedTransientField",
+      "type": "mixed"
+    }, {
+      "name": "finalArrayField",
+      "type": "mixed"
+    }, {
+      "name": "nestedGenericField",
+      "type": "mixed"
+    }],
+    "functions": [{
+      "name": "doWork",
+      "returnType": "void",
+      "parameters": [{
+        "name": "flag",
+        "type": "bool"
+      }, {
+        "name": "b",
+        "type": "int"
+      }, {
+        "name": "s",
+        "type": "int"
+      }, {
+        "name": "c",
+        "type": "string"
+      }, {
+        "name": "i",
+        "type": "int"
+      }, {
+        "name": "l",
+        "type": "int"
+      }, {
+        "name": "f",
+        "type": "float"
+      }, {
+        "name": "d",
+        "type": "float"
+      }, {
+        "name": "obj",
+        "type": "mixed"
+      }],
+      "metrics": {
+        "sloc": 29.0,
+        "lineCount": 32.0
+      },
+      "startLine": 126,
+      "endLine": 157
+    }, {
+      "name": "run",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 110,
+      "endLine": 113
+    }, {
+      "name": "call",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 115,
+      "endLine": 118
+    }, {
+      "name": "abstractHook",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 159,
+      "endLine": 162
+    }, {
+      "name": "mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 164,
+      "endLine": 164
+    }, {
+      "name": "__construct",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 95,
+      "endLine": 99
+    }, {
+      "name": "withName",
+      "returnType": "void",
+      "parameters": [{
+        "name": "name",
+        "type": "string"
+      }, {
+        "name": "values",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 7.0,
+        "lineCount": 7.0
+      },
+      "startLine": 102,
+      "endLine": 108
+    }, {
+      "name": "defaultMark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 166,
+      "endLine": 169
+    }, {
+      "name": "genericMethod",
+      "returnType": "void",
+      "parameters": [{
+        "name": "value",
+        "type": "mixed"
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 121,
+      "endLine": 124
+    }],
+    "metrics": {
+      "sloc": 70.0,
+      "lineCount": 93.0
+    }
+  }, {
+    "name": "StaticNested",
+    "type": "CLASS",
+    "fields": [{
+      "name": "nestedField",
+      "type": "mixed"
+    }],
+    "functions": [{
+      "name": "getNestedField",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 182,
+      "endLine": 185
+    }, {
+      "name": "__construct",
+      "returnType": "void",
+      "parameters": [{
+        "name": "nestedField",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 177,
+      "endLine": 180
+    }],
+    "metrics": {
+      "sloc": 12.0,
+      "lineCount": 15.0
+    }
+  }],
+  "functions": [{
+    "name": "package_private_static_method",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 188,
+    "endLine": 188
+  }, {
+    "name": "module_helper",
+    "returnType": "string",
+    "parameters": [{
+      "name": "path",
+      "type": "string"
+    }, {
+      "name": "ignored",
+      "type": "Closeable"
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    },
+    "startLine": 190,
+    "endLine": 193
+  }],
+  "metrics": {
+    "sloc": 128.0,
+    "cloc": 27.0,
+    "functionCount": 20.0,
+    "variableCount": 23.0,
+    "importCount": 2.0,
+    "classCount": 7.0
+  }
+}
