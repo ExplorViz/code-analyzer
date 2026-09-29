@@ -63,7 +63,9 @@ unit-test:
       set +e
       ./gradlew test jacocoTestReport --continue
       TEST_EXIT=$?
-      python3 code-analysis/ci/report-summary.py junit build/test-results/test
+      REPORT_TEST_EXIT_CODE=$TEST_EXIT \
+      python3 code-analysis/ci/report-summary.py junit build/test-results/test \
+        --jacoco build/reports/jacoco/test/jacocoTestReport.xml
       exit $TEST_EXIT
   artifacts:
     when: always

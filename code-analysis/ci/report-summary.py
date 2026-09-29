@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -74,102 +76,385 @@ def _iter_testsuites(root: ET.Element) -> list[ET.Element]:
 
 def _format_duration(seconds: float) -> str:
     if seconds < 60:
-        return f"{seconds:.1f} s"
+        return f"{seconds:.2f} s"
     minutes, remainder = divmod(seconds, 60)
-    return f"{int(minutes)} min {remainder:.1f} s"
+    return f"{int(minutes)} min {remainder:.2f} s"
 
 
-def _collect_test_failures(testsuite: ET.Element) -> list[tuple[str, str, str, str]]:
-    failures: list[tuple[str, str, str, str]] = []
-    for testcase in testsuite.findall("testcase"):
-        failure = testcase.find("failure")
-        error = testcase.find("error")
-        if failure is None and error is None:
-            continue
-        node = failure if failure is not None else error
-        kind = "Failed" if failure is not None else "Error"
-        name = testcase.get("name", "?")
-        classname = testcase.get("classname", "?")
-        message = (node.get("message") or "").strip()
-        if not message and node.text:
-            message = node.text.strip().splitlines()[0]
-        failures.append((kind, classname, name, message))
-    return failures
+def _format_test_duration(seconds: float) -> str:
+    if seconds < 1:
+        return f"{seconds * 1000:.0f} ms"
+    return f"{seconds:.2f} s"
 
 
-def summarize_junit(results_path: Path, limit: int) -> str:
+def _escape_table_cell(value: str) -> str:
+    return value.replace("|", "\\|").replace("\n", " ").strip()
+
+
+@dataclass
+class TestCaseResult:
+    classname: str
+    name: str
+    time: float
+    outcome: str
+    message: str = ""
+    details: str = ""
+
+
+@dataclass
+class JunitSummary:
+    test_cases: list[TestCaseResult]
+    total_duration: float
+
+    @property
+    def total(self) -> int:
+        return len(self.test_cases)
+
+    @property
+    def passed(self) -> int:
+        return sum(1 for test in self.test_cases if test.outcome == "passed")
+
+    @property
+    def failed(self) -> int:
+        return sum(1 for test in self.test_cases if test.outcome == "failed")
+
+    @property
+    def errors(self) -> int:
+        return sum(1 for test in self.test_cases if test.outcome == "error")
+
+    @property
+    def skipped(self) -> int:
+        return sum(1 for test in self.test_cases if test.outcome == "skipped")
+
+
+@dataclass
+class ReportMetadata:
+    commit_sha: str | None = None
+    branch: str | None = None
+    workflow_name: str | None = None
+    run_number: str | None = None
+    os_name: str | None = None
+    runtime: str | None = None
+    runtime_version: str | None = None
+    test_framework: str | None = None
+    test_framework_version: str | None = None
+    test_exit_code: int | None = None
+
+
+def _node_text(node: ET.Element | None) -> str:
+    if node is None:
+        return ""
+    message = (node.get("message") or "").strip()
+    body = (node.text or "").strip()
+    if message and body:
+        return f"{message}\n{body}"
+    return message or body
+
+
+def _parse_testcase(testcase: ET.Element) -> TestCaseResult:
+    name = testcase.get("name", "?")
+    classname = testcase.get("classname", "?")
+    time = float(testcase.get("time", 0) or 0)
+
+    skipped = testcase.find("skipped")
+    if skipped is not None:
+        message = _node_text(skipped) or "Skipped"
+        return TestCaseResult(classname, name, time, "skipped", message)
+
+    failure = testcase.find("failure")
+    if failure is not None:
+        message = (failure.get("message") or "").strip()
+        details = _node_text(failure)
+        if not message and details:
+            message = details.splitlines()[0]
+        return TestCaseResult(classname, name, time, "failed", message, details)
+
+    error = testcase.find("error")
+    if error is not None:
+        message = (error.get("message") or "").strip()
+        details = _node_text(error)
+        if not message and details:
+            message = details.splitlines()[0]
+        return TestCaseResult(classname, name, time, "error", message, details)
+
+    return TestCaseResult(classname, name, time, "passed")
+
+
+def load_junit_summary(results_path: Path) -> JunitSummary | None:
     if results_path.is_file():
         xml_files = [results_path]
     elif results_path.is_dir():
         xml_files = sorted(results_path.rglob("TEST-*.xml"))
     else:
-        return f"## Unit Tests\n\nNo test results found at `{results_path.as_posix()}`.\n"
+        return None
 
     if not xml_files:
-        return f"## Unit Tests\n\nNo JUnit XML reports found under `{results_path.as_posix()}`.\n"
+        return None
 
-    suites = 0
-    tests = 0
-    failures = 0
-    errors = 0
-    skipped = 0
-    duration = 0.0
-    failed_cases: list[tuple[str, str, str, str]] = []
+    test_cases: list[TestCaseResult] = []
+    total_duration = 0.0
 
     for xml_file in xml_files:
         try:
             tree = ET.parse(xml_file)
         except ET.ParseError:
             continue
-        file_suites = _iter_testsuites(tree.getroot())
-        if not file_suites:
-            continue
-        suites += len(file_suites)
-        for suite in file_suites:
-            tests += int(suite.get("tests", 0))
-            failures += int(suite.get("failures", 0))
-            errors += int(suite.get("errors", 0))
-            skipped += int(suite.get("skipped", 0))
-            duration += float(suite.get("time", 0) or 0)
-            failed_cases.extend(_collect_test_failures(suite))
+        for suite in _iter_testsuites(tree.getroot()):
+            total_duration += float(suite.get("time", 0) or 0)
+            for testcase in suite.findall("testcase"):
+                test_cases.append(_parse_testcase(testcase))
 
-    passed = max(tests - failures - errors - skipped, 0)
+    test_cases.sort(key=lambda test: (test.classname, test.name))
+    return JunitSummary(test_cases=test_cases, total_duration=total_duration)
+
+
+def _coverage_percent(missed: int, covered: int) -> float:
+    total = missed + covered
+    if total == 0:
+        return 0.0
+    return covered * 100.0 / total
+
+
+def load_jacoco_coverage(jacoco_path: Path) -> dict[str, float] | None:
+    if not jacoco_path.is_file():
+        return None
+
+    tree = ET.parse(jacoco_path)
+    root = tree.getroot()
+    if root.tag != "report":
+        return None
+
+    mapping = {
+        "LINE": "lines",
+        "BRANCH": "branches",
+        "METHOD": "functions",
+        "INSTRUCTION": "statements",
+    }
+    coverage: dict[str, float] = {}
+    for counter in root.findall("counter"):
+        counter_type = counter.get("type")
+        key = mapping.get(counter_type or "")
+        if not key:
+            continue
+        missed = int(counter.get("missed", 0))
+        covered = int(counter.get("covered", 0))
+        coverage[key] = _coverage_percent(missed, covered)
+
+    return coverage or None
+
+
+def _metadata_from_env() -> ReportMetadata:
+    commit_sha = os.environ.get("REPORT_COMMIT_SHA") or os.environ.get("GITHUB_SHA") or os.environ.get(
+        "CI_COMMIT_SHA"
+    )
+    branch = (
+        os.environ.get("REPORT_BRANCH")
+        or os.environ.get("GITHUB_HEAD_REF")
+        or os.environ.get("GITHUB_REF_NAME")
+        or os.environ.get("CI_COMMIT_REF_NAME")
+    )
+    workflow_name = os.environ.get("REPORT_WORKFLOW") or os.environ.get("GITHUB_WORKFLOW")
+    run_number = os.environ.get("REPORT_RUN_NUMBER") or os.environ.get("GITHUB_RUN_NUMBER")
+    os_name = os.environ.get("REPORT_OS") or os.environ.get("RUNNER_OS") or os.environ.get("CI_RUNNER_DESCRIPTION")
+    runtime = os.environ.get("REPORT_RUNTIME") or "Java"
+    runtime_version = os.environ.get("REPORT_RUNTIME_VERSION") or os.environ.get("JAVA_VERSION")
+    test_framework = os.environ.get("REPORT_TEST_FRAMEWORK") or "JUnit Jupiter"
+    test_framework_version = os.environ.get("REPORT_TEST_FRAMEWORK_VERSION")
+
+    exit_code_raw = os.environ.get("REPORT_TEST_EXIT_CODE")
+    test_exit_code = int(exit_code_raw) if exit_code_raw is not None and exit_code_raw != "" else None
+
+    return ReportMetadata(
+        commit_sha=commit_sha,
+        branch=branch,
+        workflow_name=workflow_name,
+        run_number=run_number,
+        os_name=os_name,
+        runtime=runtime,
+        runtime_version=runtime_version,
+        test_framework=test_framework,
+        test_framework_version=test_framework_version,
+        test_exit_code=test_exit_code,
+    )
+
+
+def _test_label(test: TestCaseResult) -> str:
+    return f"`{test.classname}.{test.name}`"
+
+
+def _resolve_status(summary: JunitSummary | None, metadata: ReportMetadata) -> str:
+    if summary is not None and summary.failed + summary.errors > 0:
+        return "Failed ❌"
+    if metadata.test_exit_code not in (None, 0):
+        return "Failed ❌"
+    if summary is None or summary.total == 0:
+        return "No tests executed"
+    return "Passed ✅"
+
+
+def _pass_rate(summary: JunitSummary) -> float:
+    executed = summary.passed + summary.failed + summary.errors
+    if executed == 0:
+        return 0.0
+    return summary.passed * 100.0 / executed
+
+
+def _append_report_context(lines: list[str], metadata: ReportMetadata) -> None:
+    context_lines: list[str] = []
+    if metadata.commit_sha:
+        context_lines.append(f"**Commit:** `{metadata.commit_sha}`")
+    if metadata.branch:
+        context_lines.append(f"**Branch:** `{metadata.branch}`")
+    if metadata.workflow_name:
+        context_lines.append(f"**Workflow:** {metadata.workflow_name}")
+    if metadata.run_number:
+        context_lines.append(f"**Run:** {metadata.run_number}")
+    if context_lines:
+        lines.append("  \n".join(context_lines))
+        lines.append("")
+
+
+def _render_missing_junit_report(results_path: Path, metadata: ReportMetadata) -> str:
+    status = _resolve_status(None, metadata)
     lines = [
-        "## Unit Tests",
+        "# Unit Test Report",
         "",
-        "| Metric | Count |",
-        "| --- | ---: |",
-        f"| Test suites | {suites} |",
-        f"| Tests (total) | {tests} |",
-        f"| Passed | {passed} |",
-        f"| Failed | {failures} |",
-        f"| Errors | {errors} |",
-        f"| Skipped | {skipped} |",
-        f"| Duration | {_format_duration(duration)} |",
+        "## Summary",
+        "",
+        "| Metric | Result |",
+        "| --- | --- |",
+        f"| Status | {status} |",
+        "",
+        f"No test results found at `{results_path.as_posix()}`.",
+        "",
+    ]
+    _append_report_context(lines, metadata)
+    return "\n".join(lines)
+
+
+def summarize_junit(
+    results_path: Path,
+    jacoco_path: Path | None = None,
+    metadata: ReportMetadata | None = None,
+) -> str:
+    metadata = metadata or _metadata_from_env()
+    summary = load_junit_summary(results_path)
+    if summary is None:
+        return _render_missing_junit_report(results_path, metadata)
+
+    coverage = load_jacoco_coverage(jacoco_path) if jacoco_path else None
+
+    failed_total = summary.failed + summary.errors
+    pass_rate = _pass_rate(summary)
+    status = _resolve_status(summary, metadata)
+
+    lines = [
+        "# Unit Test Report",
+        "",
+        "## Summary",
+        "",
+        "| Metric | Result |",
+        "| --- | --- |",
+        f"| Total tests | {summary.total} |",
+        f"| Passed | {summary.passed} ✅ |",
+        f"| Failed | {failed_total} ❌ |",
+        f"| Skipped | {summary.skipped} ⏭️ |",
+        f"| Pass rate | {pass_rate:.1f}% |",
+        f"| Duration | {_format_duration(summary.total_duration)} |",
+        f"| Status | {status} |",
         "",
     ]
 
-    if failed_cases:
+    _append_report_context(lines, metadata)
+
+    environment_items: list[str] = []
+    if metadata.os_name:
+        environment_items.append(f"- **OS:** {metadata.os_name}")
+    if metadata.runtime:
+        environment_items.append(f"- **Runtime:** {metadata.runtime}")
+    if metadata.runtime_version:
+        environment_items.append(f"- **Runtime version:** {metadata.runtime_version}")
+    if metadata.test_framework:
+        environment_items.append(f"- **Test framework:** {metadata.test_framework}")
+    if metadata.test_framework_version:
+        environment_items.append(f"- **Test framework version:** {metadata.test_framework_version}")
+
+    if environment_items:
+        lines.extend(["## Environment", ""])
+        lines.extend(environment_items)
+        lines.append("")
+
+    if coverage:
         lines.extend(
             [
-                "### Failures and errors",
+                "## Coverage",
                 "",
-                "| Result | Test class | Test | Message |",
-                "| --- | --- | --- | --- |",
+                "| Metric | Coverage |",
+                "| --- | ---: |",
             ]
         )
-        for kind, classname, name, message in failed_cases[:limit]:
-            safe_message = message.replace("|", "\\|")
-            lines.append(f"| {kind} | `{classname}` | `{name}` | {safe_message} |")
-        if len(failed_cases) > limit:
+        labels = {
+            "lines": "Lines",
+            "branches": "Branches",
+            "functions": "Functions",
+            "statements": "Statements",
+        }
+        for key, label in labels.items():
+            if key in coverage:
+                lines.append(f"| {label} | {coverage[key]:.1f}% |")
+        lines.append("")
+
+    lines.extend(["## Detailed Test Results", ""])
+
+    executed = [test for test in summary.test_cases if test.outcome != "skipped"]
+    if executed:
+        lines.extend(
+            [
+                "| Test | Duration |",
+                "| --- | ---: |",
+            ]
+        )
+        for test in executed:
+            lines.append(f"| {_test_label(test)} | {_format_test_duration(test.time)} |")
+        lines.append("")
+
+    error_cases = [test for test in summary.test_cases if test.outcome == "error"]
+    if error_cases:
+        lines.extend(
+            [
+                "| Test | Error |",
+                "| --- | --- |",
+            ]
+        )
+        for test in error_cases:
+            lines.append(f"| {_test_label(test)} | {_escape_table_cell(test.message)} |")
+        lines.append("")
+
+    detail_cases = [
+        test for test in summary.test_cases if test.outcome in {"failed", "error"}
+    ]
+    if detail_cases:
+        lines.append("### Failure Details")
+        lines.append("")
+        for test in detail_cases:
+            lines.append(f"**{_test_label(test)}**")
             lines.append("")
-            lines.append(f"_Showing {limit} of {len(failed_cases)} failures and errors._")
-        lines.append("")
-    elif tests == 0:
-        lines.append("_No tests were executed._")
-        lines.append("")
-    else:
-        lines.append("_All tests passed._")
+            trace = test.details or test.message or "_No failure details recorded._"
+            lines.append("```")
+            lines.append(trace)
+            lines.append("```")
+            lines.append("")
+
+    skipped_cases = [test for test in summary.test_cases if test.outcome == "skipped"]
+    if skipped_cases:
+        lines.extend(
+            [
+                "| Test | Reason |",
+                "| --- | --- |",
+            ]
+        )
+        for test in skipped_cases:
+            lines.append(f"| {_test_label(test)} | {_escape_table_cell(test.message)} |")
         lines.append("")
 
     return "\n".join(lines)
@@ -203,10 +488,9 @@ def main() -> int:
         help="Path to a JUnit XML file or a directory containing TEST-*.xml files.",
     )
     junit_parser.add_argument(
-        "--limit",
-        type=int,
-        default=25,
-        help="Maximum number of failures and errors to include in the table.",
+        "--jacoco",
+        type=Path,
+        help="Optional JaCoCo XML report for coverage metrics.",
     )
 
     parser.add_argument(
@@ -215,7 +499,6 @@ def main() -> int:
         help="Optional file to write markdown to (defaults to stdout).",
     )
 
-    # Legacy invocation: report-summary.py path/to/checkstyle.xml
     argv = sys.argv[1:]
     if argv and argv[0] not in {"checkstyle", "junit"} and not argv[0].startswith("-"):
         argv = ["checkstyle", *argv]
@@ -227,7 +510,7 @@ def main() -> int:
     if args.command == "checkstyle":
         markdown = summarize_checkstyle(args.xml, args.root.resolve(), args.limit)
     else:
-        markdown = summarize_junit(args.results, args.limit)
+        markdown = summarize_junit(args.results, args.jacoco)
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

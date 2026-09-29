@@ -129,16 +129,20 @@ jobs:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false"
       - name: Write Unit Test Summary
         if: always()
+        env:
+          REPORT_COMMIT_SHA: ${{ github.sha }}
+          REPORT_BRANCH: ${{ github.head_ref || github.ref_name }}
+          REPORT_WORKFLOW: ${{ github.workflow }}
+          REPORT_RUN_NUMBER: ${{ github.run_number }}
+          REPORT_OS: ${{ runner.os }}
+          REPORT_RUNTIME: GraalVM
+          REPORT_RUNTIME_VERSION: "21"
+          REPORT_TEST_FRAMEWORK: JUnit Jupiter (Quarkus)
+          REPORT_TEST_EXIT_CODE: ${{ steps.unit_tests.outputs.exit_code }}
         run: |
-          python3 code-analysis/ci/report-summary.py junit build/test-results/test >> "$GITHUB_STEP_SUMMARY"
-      - name: Publish Unit Test Results
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: build/test-results/test/**/*.xml
-          check_name: Unit Tests
-          comment_mode: off
-          job_summary: false
+          python3 code-analysis/ci/report-summary.py junit build/test-results/test \
+            --jacoco build/reports/jacoco/test/jacocoTestReport.xml \
+            >> "$GITHUB_STEP_SUMMARY"
       - name: Publish Test and Coverage Reports
         if: always()
         uses: actions/upload-artifact@v4
