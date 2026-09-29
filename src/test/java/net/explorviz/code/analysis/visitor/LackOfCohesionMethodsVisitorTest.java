@@ -1,13 +1,12 @@
 package net.explorviz.code.analysis.visitor;
 
-import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.utils.Pair;
 import io.quarkus.test.junit.QuarkusTest;
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import net.explorviz.code.analysis.TestResources;
 import net.explorviz.code.analysis.handler.JavaFileDataHandler;
 import net.explorviz.code.analysis.handler.MetricAppender;
 import net.explorviz.code.proto.ClassData;
@@ -22,11 +21,10 @@ public class LackOfCohesionMethodsVisitorTest {
   private static final String LCOM4 = "LCOM4";
 
   @Test()
-  void fileDataTest1() throws FileNotFoundException {
+  void fileDataTest1() throws IOException {
     JavaFileDataHandler fileDataHandler = new JavaFileDataHandler("LCOM4.java");
     FileDataVisitor visitor = new FileDataVisitor(Optional.empty(), false);
-    String path = "src/test/resources/files/LCOM4.java";
-    final CompilationUnit compilationUnit = StaticJavaParser.parse(new File(path));
+    final CompilationUnit compilationUnit = TestResources.parseJavaFixture("/files/LCOM4.java");
     visitor.visit(compilationUnit, fileDataHandler);
     LackOfCohesionMethodsVisitor lcom4Visitor = new LackOfCohesionMethodsVisitor();
     lcom4Visitor.visit(compilationUnit, new Pair<>(new MetricAppender(fileDataHandler), null));

@@ -5,10 +5,10 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import io.quarkus.test.junit.QuarkusTest;
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import net.explorviz.code.analysis.TestResources;
 import net.explorviz.code.analysis.handler.JavaFileDataHandler;
 import net.explorviz.code.proto.ClassData;
 import net.explorviz.code.proto.ClassType;
@@ -23,11 +23,10 @@ import org.junit.jupiter.api.Test;
 public class FileDataVisitorTest {
 
   @Test()
-  void fileDataTest1() throws FileNotFoundException {
+  void fileDataTest1() throws IOException {
     JavaFileDataHandler fileDataHandler = new JavaFileDataHandler("Nested.java");
     FileDataVisitor visitor = new FileDataVisitor(Optional.empty(), false);
-    String path = "src/test/resources/files/Nested.java";
-    final CompilationUnit compilationUnit = StaticJavaParser.parse(new File(path));
+    final CompilationUnit compilationUnit = TestResources.parseJavaFixture("/files/Nested.java");
     visitor.visit(compilationUnit, fileDataHandler);
     FileData data = fileDataHandler.getProtoBufObject();
     Assertions.assertEquals("com.easy.life", data.getPackageName());
@@ -45,11 +44,10 @@ public class FileDataVisitorTest {
   }
 
   @Test()
-  void fileDataTest2() throws FileNotFoundException {
+  void fileDataTest2() throws IOException {
     JavaFileDataHandler fileDataHandler = new JavaFileDataHandler("Happy.java");
     FileDataVisitor visitor = new FileDataVisitor(Optional.empty(), false);
-    String path = "src/test/resources/files/Happy.java";
-    final CompilationUnit compilationUnit = StaticJavaParser.parse(new File(path));
+    final CompilationUnit compilationUnit = TestResources.parseJavaFixture("/files/Happy.java");
     visitor.visit(compilationUnit, fileDataHandler);
     FileData data = fileDataHandler.getProtoBufObject();
     Assertions.assertEquals("com.easy.life", data.getPackageName());
@@ -63,11 +61,11 @@ public class FileDataVisitorTest {
   }
 
   @Test()
-  void fileDataEnumTest() throws FileNotFoundException {
+  void fileDataEnumTest() throws IOException {
     JavaFileDataHandler fileDataHandler = new JavaFileDataHandler("ColorParam.java");
     FileDataVisitor visitor = new FileDataVisitor(Optional.empty(), false);
-    String path = "src/test/resources/files/ColorParam.java";
-    final CompilationUnit compilationUnit = StaticJavaParser.parse(new File(path));
+    final CompilationUnit compilationUnit =
+        TestResources.parseJavaFixture("/files/ColorParam.java");
     visitor.visit(compilationUnit, fileDataHandler);
     FileData data = fileDataHandler.getProtoBufObject();
     Assertions.assertEquals("net.sourceforge.plantuml", data.getPackageName());
@@ -79,13 +77,13 @@ public class FileDataVisitorTest {
   }
 
   @Test()
-  void fileDataAnnotationTest() throws FileNotFoundException {
+  void fileDataAnnotationTest() throws IOException {
     JavaFileDataHandler fileDataHandler = new JavaFileDataHandler("SimpleJdbcClinic.java");
     FileDataVisitor visitor = new FileDataVisitor(Optional.empty(), false);
-    String path = "src/test/resources/files/SimpleJdbcClinic.java";
     StaticJavaParser.getParserConfiguration()
         .setSymbolResolver(new JavaSymbolSolver(new ReflectionTypeSolver(false)));
-    final CompilationUnit compilationUnit = StaticJavaParser.parse(new File(path));
+    final CompilationUnit compilationUnit =
+        TestResources.parseJavaFixture("/files/SimpleJdbcClinic.java");
     visitor.visit(compilationUnit, fileDataHandler);
     FileData data = fileDataHandler.getProtoBufObject();
     ClassData clazz = findClass(data.getClassesList(), "SimpleJdbcClinic");

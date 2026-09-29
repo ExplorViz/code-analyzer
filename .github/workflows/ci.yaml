@@ -33,7 +33,7 @@ jobs:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
   spotless:
-    name: Spotless Format Check
+    name: Spotless
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -57,7 +57,7 @@ jobs:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
   checkstyle:
-    name: Checkstyle Analysis
+    name: Checkstyle
     runs-on: ubuntu-latest
     needs: build
     steps:

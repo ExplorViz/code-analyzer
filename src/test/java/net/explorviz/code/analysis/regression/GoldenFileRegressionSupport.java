@@ -41,7 +41,11 @@ final class GoldenFileRegressionSupport {
   }
 
   static String readFixture(final String languageDir, final String fileName) throws IOException {
-    return Files.readString(Path.of(fixturePath(languageDir, fileName)));
+    final String resource = "/regression/" + languageDir + "/" + fileName;
+    try (InputStream in = GoldenFileRegressionSupport.class.getResourceAsStream(resource)) {
+      Assertions.assertNotNull(in, "Missing regression fixture resource: " + resource);
+      return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+    }
   }
 
   static String toJson(final Message message) throws IOException {
