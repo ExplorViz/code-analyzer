@@ -8,6 +8,7 @@ import os
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 
 
@@ -72,6 +73,71 @@ def _iter_testsuites(root: ET.Element) -> list[ET.Element]:
     if root.tag == "testsuite":
         return [root]
     return []
+
+
+def _parse_junit_seconds(raw: str | None) -> float:
+    if not raw:
+        return 0.0
+    normalized = raw.strip().replace(",", "")
+    try:
+        return float(normalized)
+    except ValueError:
+        return 0.0
+
+
+def _iter_testcases(suite: ET.Element):
+    for testcase in suite.findall("testcase"):
+        yield testcase
+    for nested in suite.findall("testsuite"):
+        yield from _iter_testcases(nested)
+
+
+def _effective_suite_duration(suite: ET.Element) -> float:
+    suite_time = _parse_junit_seconds(suite.get("time"))
+    if suite_time > 0:
+        return suite_time
+    return sum(_parse_junit_seconds(testcase.get("time")) for testcase in _iter_testcases(suite))
+
+
+def _suite_interval(suite: ET.Element) -> tuple[datetime, datetime] | None:
+    timestamp = suite.get("timestamp")
+    if not timestamp:
+        return None
+    try:
+        start = datetime.fromisoformat(timestamp)
+    except ValueError:
+        return None
+    duration = _effective_suite_duration(suite)
+    return start, start + timedelta(seconds=duration)
+
+
+def _total_execution_seconds(roots: list[ET.Element]) -> float:
+    intervals: list[tuple[datetime, datetime]] = []
+    fallback_sum = 0.0
+
+    for root in roots:
+        if root.tag == "testsuites":
+            root_time = _parse_junit_seconds(root.get("time"))
+            child_suites = root.findall("testsuite")
+            if root_time > 0 and child_suites:
+                child_suite_time = sum(_parse_junit_seconds(s.get("time")) for s in child_suites)
+                if child_suite_time <= 0:
+                    fallback_sum += root_time
+                    for suite in child_suites:
+                        interval = _suite_interval(suite)
+                        if interval:
+                            intervals.append(interval)
+                    continue
+
+        for suite in _iter_testsuites(root):
+            fallback_sum += _effective_suite_duration(suite)
+            interval = _suite_interval(suite)
+            if interval:
+                intervals.append(interval)
+
+    if intervals:
+        return (max(end for _, end in intervals) - min(start for start, _ in intervals)).total_seconds()
+    return fallback_sum
 
 
 def _format_duration(seconds: float) -> str:
@@ -154,7 +220,7 @@ def _node_text(node: ET.Element | None) -> str:
 def _parse_testcase(testcase: ET.Element) -> TestCaseResult:
     name = testcase.get("name", "?")
     classname = testcase.get("classname", "?")
-    time = float(testcase.get("time", 0) or 0)
+    time = _parse_junit_seconds(testcase.get("time"))
 
     skipped = testcase.find("skipped")
     if skipped is not None:
@@ -192,19 +258,21 @@ def load_junit_summary(results_path: Path) -> JunitSummary | None:
         return None
 
     test_cases: list[TestCaseResult] = []
-    total_duration = 0.0
+    roots: list[ET.Element] = []
 
     for xml_file in xml_files:
         try:
             tree = ET.parse(xml_file)
         except ET.ParseError:
             continue
-        for suite in _iter_testsuites(tree.getroot()):
-            total_duration += float(suite.get("time", 0) or 0)
-            for testcase in suite.findall("testcase"):
+        root = tree.getroot()
+        roots.append(root)
+        for suite in _iter_testsuites(root):
+            for testcase in _iter_testcases(suite):
                 test_cases.append(_parse_testcase(testcase))
 
     test_cases.sort(key=lambda test: (test.classname, test.name))
+    total_duration = _total_execution_seconds(roots)
     return JunitSummary(test_cases=test_cases, total_duration=total_duration)
 
 
