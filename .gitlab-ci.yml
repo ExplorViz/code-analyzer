@@ -59,7 +59,12 @@ checkstyle:
 unit-test:
   stage: test
   script:
-    - ./gradlew test jacocoTestReport --continue
+    - |
+      set +e
+      ./gradlew test jacocoTestReport --continue
+      TEST_EXIT=$?
+      python3 code-analysis/ci/report-summary.py junit build/test-results/test
+      exit $TEST_EXIT
   artifacts:
     when: always
     expire_in: 1 week
