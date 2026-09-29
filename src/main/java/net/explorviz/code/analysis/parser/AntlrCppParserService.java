@@ -16,19 +16,16 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR-based parser service for analyzing C/C++ source code.
- */
+/** ANTLR-based parser service for analyzing C/C++ source code. */
 @ApplicationScoped
 public class AntlrCppParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrCppParserService.class);
 
-  @Inject
-  AntlrParseSettings parseSettings = new AntlrParseSettings();
+  @Inject AntlrParseSettings parseSettings = new AntlrParseSettings();
 
-  public CppFileDataHandler parseFileContent(final String fileContent, final String fileName,
-      final String fileHash) {
+  public CppFileDataHandler parseFileContent(
+      final String fileContent, final String fileName, final String fileHash) {
     try {
       LOGGER.trace("Parsing C/C++ file content for {}", fileName);
       final CharStream charStream = CharStreams.fromString(fileContent);
@@ -55,16 +52,21 @@ public class AntlrCppParserService {
     }
   }
 
-  private CppFileDataHandler parse(final CharStream charStream, final String fileName,
-      final String fileHash) {
+  private CppFileDataHandler parse(
+      final CharStream charStream, final String fileName, final String fileHash) {
     final CPP14Lexer lexer = new CPP14Lexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final CPP14Parser parser = new CPP14Parser(tokens);
 
-    final ParseTree translationUnit = AntlrParserUtils.parseTwoStage(
-        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(),
-        parser::translationUnit);
+    final ParseTree translationUnit =
+        AntlrParserUtils.parseTwoStage(
+            parser,
+            tokens,
+            LOGGER,
+            fileName,
+            parseSettings.parseTimeoutMs(),
+            parser::translationUnit);
 
     final CppFileDataHandler fileDataHandler = new CppFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

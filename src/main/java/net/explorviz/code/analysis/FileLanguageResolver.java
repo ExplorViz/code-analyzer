@@ -3,9 +3,7 @@ package net.explorviz.code.analysis;
 import java.util.Locale;
 import net.explorviz.code.proto.Language;
 
-/**
- * Resolves the programming language of a source file from its name/extension.
- */
+/** Resolves the programming language of a source file from its name/extension. */
 public final class FileLanguageResolver {
 
   private FileLanguageResolver() {}
@@ -71,8 +69,11 @@ public final class FileLanguageResolver {
     if (lower.endsWith(".c") || lower.endsWith(".h")) {
       return Language.C;
     }
-    if (lower.endsWith(".cpp") || lower.endsWith(".cxx") || lower.endsWith(".cc")
-        || lower.endsWith(".hpp") || lower.endsWith(".hxx")) {
+    if (lower.endsWith(".cpp")
+        || lower.endsWith(".cxx")
+        || lower.endsWith(".cc")
+        || lower.endsWith(".hpp")
+        || lower.endsWith(".hxx")) {
       return Language.CPP;
     }
 

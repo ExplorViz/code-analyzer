@@ -8,8 +8,8 @@ import org.junit.jupiter.api.condition.EnabledIf;
 
 class TsxJsxNormalizerTest {
 
-  private static final Path SUBJECTS_PAGE = Path.of(
-      "cloned-repositories/wsp-3-1/frontend/src/pages/masterdata/SubjectsPage.tsx");
+  private static final Path SUBJECTS_PAGE =
+      Path.of("cloned-repositories/wsp-3-1/frontend/src/pages/masterdata/SubjectsPage.tsx");
 
   @Test
   @EnabledIf("wspRepoPresent")

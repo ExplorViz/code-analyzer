@@ -16,19 +16,16 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR-based parser service for analyzing Rust source code.
- */
+/** ANTLR-based parser service for analyzing Rust source code. */
 @ApplicationScoped
 public class AntlrRustParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrRustParserService.class);
 
-  @Inject
-  AntlrParseSettings parseSettings = new AntlrParseSettings();
+  @Inject AntlrParseSettings parseSettings = new AntlrParseSettings();
 
-  public RustFileDataHandler parseFileContent(final String fileContent, final String fileName,
-      final String fileHash) {
+  public RustFileDataHandler parseFileContent(
+      final String fileContent, final String fileName, final String fileHash) {
     try {
       LOGGER.trace("Parsing Rust file content for {}", fileName);
       final CharStream charStream = CharStreams.fromString(fileContent, fileName);
@@ -55,15 +52,16 @@ public class AntlrRustParserService {
     }
   }
 
-  private RustFileDataHandler parse(final CharStream charStream, final String fileName,
-      final String fileHash) {
+  private RustFileDataHandler parse(
+      final CharStream charStream, final String fileName, final String fileHash) {
     final RustLexer lexer = new RustLexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final RustParser parser = new RustParser(tokens);
 
-    final ParseTree crate = AntlrParserUtils.parseTwoStage(
-        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::crate);
+    final ParseTree crate =
+        AntlrParserUtils.parseTwoStage(
+            parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::crate);
 
     final RustFileDataHandler fileDataHandler = new RustFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

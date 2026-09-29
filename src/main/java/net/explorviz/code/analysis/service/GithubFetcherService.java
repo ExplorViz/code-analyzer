@@ -51,9 +51,7 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Service to fetch GitHub social data for a given repository.
- */
+/** Service to fetch GitHub social data for a given repository. */
 @ApplicationScoped
 public class GithubFetcherService {
   private static final Logger LOGGER = LoggerFactory.getLogger(GithubFetcherService.class);
@@ -70,9 +68,10 @@ public class GithubFetcherService {
   private long tqueryTotal = 0;
   private long numUpdates = 0;
 
-
   Optional<CompletableFuture<Void>> fetchSocialData(
-      final AnalysisConfig config, final DataExporter exporter, final ManagedExecutor managedExecutor) {
+      final AnalysisConfig config,
+      final DataExporter exporter,
+      final ManagedExecutor managedExecutor) {
     final int days = config.socialDataTimeFrameDays().orElse(365);
     final Date endDate = determineEndDate(config);
     final Date startDate = Date.from(endDate.toInstant().minus(days, ChronoUnit.DAYS));
@@ -83,7 +82,8 @@ public class GithubFetcherService {
       final AnalysisConfig config,
       final DataExporter exporter,
       ManagedExecutor managedExecutor,
-      Date startDate, Date endDate) {
+      Date startDate,
+      Date endDate) {
     if (!config.fetchSocialData()) {
       LOGGER.info("Skipping GitHub social data fetch, not enabled in config.");
       return Optional.empty();
@@ -102,10 +102,13 @@ public class GithubFetcherService {
     preInitializeRemoteState(config, exporter, config.branch().orElse("main"), "");
 
     return Optional.of(
-        managedExecutor.runAsync(() -> {
+        managedExecutor.runAsync(
+            () -> {
               try {
-                LOGGER.info("Starting independent background fetch for GitHub Social Data from {} to {}",
-                    startDate, endDate);
+                LOGGER.info(
+                    "Starting independent background fetch for GitHub Social Data from {} to {}",
+                    startDate,
+                    endDate);
                 fetchSocialDataInRange(
                     repoSubString.get(),
                     startDate,
@@ -116,9 +119,7 @@ public class GithubFetcherService {
               } catch (final Exception e) {
                 LOGGER.error("Background social fetch aborted: {}", e.getMessage());
               }
-            }
-        )
-    );
+            }));
   }
 
   /**
@@ -138,22 +139,30 @@ public class GithubFetcherService {
       final Date endDate,
       final DataExporter exporter,
       final String landscapeToken,
-      final String githubToken
-  ) {
-    try (DynamicGraphQLClient githubClient = DynamicGraphQLClientBuilder.newBuilder()
-        .url(GITHUB_URL)
-        .header("Authorization", "Bearer " + githubToken)
-        .build()) {
+      final String githubToken) {
+    try (DynamicGraphQLClient githubClient =
+        DynamicGraphQLClientBuilder.newBuilder()
+            .url(GITHUB_URL)
+            .header("Authorization", "Bearer " + githubToken)
+            .build()) {
       final long tStart = System.nanoTime();
       validateToken(githubClient);
 
-      fetchData(exporter, githubClient, landscapeToken, repoOwnerAndName, "issues", startDate, endDate);
-      fetchData(exporter, githubClient, landscapeToken, repoOwnerAndName, "pullRequests", startDate, endDate);
+      fetchData(
+          exporter, githubClient, landscapeToken, repoOwnerAndName, "issues", startDate, endDate);
+      fetchData(
+          exporter,
+          githubClient,
+          landscapeToken,
+          repoOwnerAndName,
+          "pullRequests",
+          startDate,
+          endDate);
 
       LOGGER.info("✅ Completed all social fetch queries.");
 
       long tqueryAvg = tqueryTotal / numUpdates;
-      long tmapAvg =  tmapTotal / numUpdates;
+      long tmapAvg = tmapTotal / numUpdates;
       long tpersistAvg = tpersistTotal / numUpdates;
 
       LOGGER.info(
@@ -181,7 +190,8 @@ public class GithubFetcherService {
         endDate = Date.from(Instant.parse(dateStr));
       } catch (final DateTimeParseException e) {
         // Fallback to simple date parsing "YYYY-MM-DD"
-        endDate = Date.from(LocalDate.parse(dateStr).atStartOfDay(ZoneId.systemDefault()).toInstant());
+        endDate =
+            Date.from(LocalDate.parse(dateStr).atStartOfDay(ZoneId.systemDefault()).toInstant());
       }
     }
     return endDate;
@@ -189,7 +199,8 @@ public class GithubFetcherService {
 
   private Optional<String> extractGithubRepoSubString(String remoteUrl) {
     if (!remoteUrl.contains("github.com")) {
-      LOGGER.info("Skipping GitHub collaboration data fetch, not a GitHub repository: {}", remoteUrl);
+      LOGGER.info(
+          "Skipping GitHub collaboration data fetch, not a GitHub repository: {}", remoteUrl);
       return Optional.empty();
     }
     final String[] parts = remoteUrl.split("github.com[:/]");
@@ -200,15 +211,16 @@ public class GithubFetcherService {
     return Optional.of(parts[1].replace(".git", ""));
   }
 
-  void preInitializeRemoteState(final AnalysisConfig config, final DataExporter exporter,
-      final String branch, final String repositoryUrl) {
+  void preInitializeRemoteState(
+      final AnalysisConfig config,
+      final DataExporter exporter,
+      final String branch,
+      final String repositoryUrl) {
     if (exporter.isRemote()) {
       try {
         final String resolvedRepositoryUrl =
             RepositoryFileUrlBuilder.resolveRepositoryUrl(
-                    repositoryUrl.isBlank()
-                        ? config.repoRemoteUrl()
-                        : Optional.of(repositoryUrl),
+                    repositoryUrl.isBlank() ? config.repoRemoteUrl() : Optional.of(repositoryUrl),
                     "")
                 .orElse("");
         exporter.getStateData(
@@ -226,27 +238,32 @@ public class GithubFetcherService {
 
   @SuppressWarnings("try")
   private void validateToken(DynamicGraphQLClient client) {
-    Document viewerQuery = document(
-        operation(
-            field("viewer",
-                field("login")
-            )
-        )
-    );
+    Document viewerQuery = document(operation(field("viewer", field("login"))));
     try {
       client.executeSync(viewerQuery);
     } catch (Exception e) {
-      throw new IllegalArgumentException("Invalid GitHub token, aborting GitHub Data fetching: " + e.getMessage(), e);
+      throw new IllegalArgumentException(
+          "Invalid GitHub token, aborting GitHub Data fetching: " + e.getMessage(), e);
     }
   }
 
-  private void fetchData(final DataExporter exporter, final DynamicGraphQLClient client, final String landscapeToken,
-      final String repoOwnerName, final String resourceType, final Date startDate, final Date endDate) {
+  private void fetchData(
+      final DataExporter exporter,
+      final DynamicGraphQLClient client,
+      final String landscapeToken,
+      final String repoOwnerName,
+      final String resourceType,
+      final Date startDate,
+      final Date endDate) {
     final String[] splits = repoOwnerName.split("/");
-    final GithubPager pager = new GithubPager(
-        client, buildQuery(resourceType), Map.of("owner", splits[0], "name", splits[1]), resourceType);
+    final GithubPager pager =
+        new GithubPager(
+            client,
+            buildQuery(resourceType),
+            Map.of("owner", splits[0], "name", splits[1]),
+            resourceType);
 
-    final Instant start =  startDate.toInstant();
+    final Instant start = startDate.toInstant();
     final Instant end = endDate.toInstant();
     Instant currentDate = end;
 
@@ -263,7 +280,8 @@ public class GithubFetcherService {
         if (date.isEmpty()) {
           LOGGER.warn("Could not parse date for node {}.", node.getInt("number", -1));
         } else {
-          final Instant nodeDate =  Instant.ofEpochSecond(date.get().getSeconds(), date.get().getNanos());
+          final Instant nodeDate =
+              Instant.ofEpochSecond(date.get().getSeconds(), date.get().getNanos());
           if (nodeDate.isAfter(end)) {
             continue;
           }
@@ -282,20 +300,34 @@ public class GithubFetcherService {
       logProgress(resourceType, pager, currentDate, start, end, events.size(), tmap, tpersist);
     }
     if (pager.isFailed()) {
-      LOGGER.error("{}: Fetch failed after {}/{} nodes", resourceType, pager.getSeen(), pager.getTotalCount());
+      LOGGER.error(
+          "{}: Fetch failed after {}/{} nodes",
+          resourceType,
+          pager.getSeen(),
+          pager.getTotalCount());
     }
   }
 
   private void logProgress(
-      final String resourceType, final GithubPager pager, final Instant currentTime,
-      final Instant startTime, final Instant endTime, final int batchSize, long tmap, long tpersist) {
+      final String resourceType,
+      final GithubPager pager,
+      final Instant currentTime,
+      final Instant startTime,
+      final Instant endTime,
+      final int batchSize,
+      long tmap,
+      long tpersist) {
     final double windowMs = Math.max(1, Duration.between(startTime, endTime).toMillis());
     final double estimatePercent =
         Math.clamp(100 * Duration.between(currentTime, endTime).toMillis() / windowMs, 0, 100);
     LOGGER.info(
         "{}: {}% of time window (at {}), {} nodes processed, sending {} events. Rate limit: {}",
-        resourceType, String.format("%.1f", estimatePercent), currentTime,
-        pager.getSeen(), batchSize, pager.getLastRateLimit());
+        resourceType,
+        String.format("%.1f", estimatePercent),
+        currentTime,
+        pager.getSeen(),
+        batchSize,
+        pager.getLastRateLimit());
     tmapTotal += tmap;
     tpersistTotal += tpersist;
     tqueryTotal += pager.getLastQueryNanos();
@@ -313,131 +345,182 @@ public class GithubFetcherService {
     final Variable name = var("name", nonNull("String"));
     final Variable cursor = var("cursor", "String");
 
-    return document(operation(
-        vars(owner, name, cursor),
-        field("repository",
-            args(arg("owner", owner), arg("name", name)),
-            field(resourceType,
-                args(
-                    arg("first", PAGE_SIZE),
-                    arg("after", cursor),
-                    arg("orderBy", inputObject(
-                        prop("field", gqlEnum("UPDATED_AT")),
-                        prop("direction", gqlEnum("DESC"))))),
-                field("totalCount"),
-                field("pageInfo",
-                    field("hasNextPage"),
-                    field("endCursor")),
-                field("nodes",
-                    field("__typename"),
-                    field("updatedAt"),
-                    "issues".equals(resourceType)
-                        ? on("Issue",
-                        field("id"),
-                        field("number"),
-                        field("title"),
-                        field("body"),
-                        field("url"),
-                        field("state"),
-                        field("createdAt"),
-                        field("closedAt"),
-                        field("author",
-                            field("login"),
-                            field("avatarUrl"),
-                            on("User",
-                                field("name"),
-                                field("email")
-                            )
-                        ),
-                        field("labels", args(arg("first", NUM_LABELS)),
-                            field("nodes", field("name"))
-                        ),
-                        field("timelineItems", args(arg("first", NUM_TIMELINE_ITEMS)),
-                            field("nodes",
-                                field("__typename"),
-                                on("ClosedEvent", field("createdAt"),
-                                    field("actor", field("login"), field("avatarUrl"),
-                                        on("User", field("email")))),
-                                on("ReopenedEvent", field("createdAt"),
-                                    field("actor", field("login"), field("avatarUrl"),
-                                        on("User", field("email")))),
-                                on("IssueComment", field("createdAt"),
-                                    field("author", field("login"), field("avatarUrl"),
-                                        on("User", field("email"))))
-                            )
-                        )
-                    )
-                        : on("PullRequest",
-                            field("commits", args(arg("first", NUM_COMMITS)),
-                                field("nodes", field("commit", field("oid")))
-                            ),
-                            field("closingIssuesReferences", args(arg("first", NUM_ISSUE_REFERENCES)),
-                                field("nodes", field("number"))),
-                            field("mergeCommit", field("oid")),
-                            field("id"),
-                            field("number"),
-                            field("title"),
-                            field("body"),
-                            field("url"),
-                            field("state"),
-                            field("createdAt"),
-                            field("closedAt"),
-                            field("mergedAt"),
-                            field("author",
-                                field("login"),
-                                field("avatarUrl"),
-                                on("User",
-                                    field("name"),
-                                    field("email")
-                                )
-                            ),
-                            field("labels", args(arg("first", NUM_LABELS)),
-                                field("nodes", field("name"))
-                            ),
-                            field("timelineItems", args(arg("first", NUM_TIMELINE_ITEMS)),
-                                field("nodes",
-                                    field("__typename"),
-                                    on("ClosedEvent", field("createdAt"),
-                                        field("actor", field("login"), field("avatarUrl"),
-                                            on("User", field("email")))),
-                                    on("MergedEvent", field("createdAt"),
-                                        field("actor", field("login"), field("avatarUrl"),
-                                            on("User", field("email")))),
-                                    on("ReopenedEvent", field("createdAt"),
-                                        field("actor", field("login"), field("avatarUrl"),
-                                            on("User", field("email")))),
-                                    on("IssueComment", field("createdAt"),
-                                        field("author", field("login"), field("avatarUrl"),
-                                            on("User", field("email")))),
-                                    on("HeadRefForcePushedEvent", field("createdAt"),
-                                        field("actor", field("login"), field("avatarUrl"),
-                                            on("User", field("email")))),
-                                    on("PullRequestCommit",
-                                        field("commit",
-                                            field("authoredDate"),
-                                            field("author",
-                                                field("email"),
-                                                field("user", field("login"), field("avatarUrl"))
-                                            )
-                                        )
-                                    ),
-                                    on("PullRequestReview", field("createdAt"),
-                                        field("author", field("login"), field("avatarUrl"),
-                                            on("User", field("email"))))
-                                )
-                            )
-                        )
-                )
-            )
-        ),
-        field("rateLimit", field("cost"), field("remaining"), field("resetAt"))));
+    return document(
+        operation(
+            vars(owner, name, cursor),
+            field(
+                "repository",
+                args(arg("owner", owner), arg("name", name)),
+                field(
+                    resourceType,
+                    args(
+                        arg("first", PAGE_SIZE),
+                        arg("after", cursor),
+                        arg(
+                            "orderBy",
+                            inputObject(
+                                prop("field", gqlEnum("UPDATED_AT")),
+                                prop("direction", gqlEnum("DESC"))))),
+                    field("totalCount"),
+                    field("pageInfo", field("hasNextPage"), field("endCursor")),
+                    field(
+                        "nodes",
+                        field("__typename"),
+                        field("updatedAt"),
+                        "issues".equals(resourceType)
+                            ? on(
+                                "Issue",
+                                field("id"),
+                                field("number"),
+                                field("title"),
+                                field("body"),
+                                field("url"),
+                                field("state"),
+                                field("createdAt"),
+                                field("closedAt"),
+                                field(
+                                    "author",
+                                    field("login"),
+                                    field("avatarUrl"),
+                                    on("User", field("name"), field("email"))),
+                                field(
+                                    "labels",
+                                    args(arg("first", NUM_LABELS)),
+                                    field("nodes", field("name"))),
+                                field(
+                                    "timelineItems",
+                                    args(arg("first", NUM_TIMELINE_ITEMS)),
+                                    field(
+                                        "nodes",
+                                        field("__typename"),
+                                        on(
+                                            "ClosedEvent",
+                                            field("createdAt"),
+                                            field(
+                                                "actor",
+                                                field("login"),
+                                                field("avatarUrl"),
+                                                on("User", field("email")))),
+                                        on(
+                                            "ReopenedEvent",
+                                            field("createdAt"),
+                                            field(
+                                                "actor",
+                                                field("login"),
+                                                field("avatarUrl"),
+                                                on("User", field("email")))),
+                                        on(
+                                            "IssueComment",
+                                            field("createdAt"),
+                                            field(
+                                                "author",
+                                                field("login"),
+                                                field("avatarUrl"),
+                                                on("User", field("email")))))))
+                            : on(
+                                "PullRequest",
+                                field(
+                                    "commits",
+                                    args(arg("first", NUM_COMMITS)),
+                                    field("nodes", field("commit", field("oid")))),
+                                field(
+                                    "closingIssuesReferences",
+                                    args(arg("first", NUM_ISSUE_REFERENCES)),
+                                    field("nodes", field("number"))),
+                                field("mergeCommit", field("oid")),
+                                field("id"),
+                                field("number"),
+                                field("title"),
+                                field("body"),
+                                field("url"),
+                                field("state"),
+                                field("createdAt"),
+                                field("closedAt"),
+                                field("mergedAt"),
+                                field(
+                                    "author",
+                                    field("login"),
+                                    field("avatarUrl"),
+                                    on("User", field("name"), field("email"))),
+                                field(
+                                    "labels",
+                                    args(arg("first", NUM_LABELS)),
+                                    field("nodes", field("name"))),
+                                field(
+                                    "timelineItems",
+                                    args(arg("first", NUM_TIMELINE_ITEMS)),
+                                    field(
+                                        "nodes",
+                                        field("__typename"),
+                                        on(
+                                            "ClosedEvent",
+                                            field("createdAt"),
+                                            field(
+                                                "actor",
+                                                field("login"),
+                                                field("avatarUrl"),
+                                                on("User", field("email")))),
+                                        on(
+                                            "MergedEvent",
+                                            field("createdAt"),
+                                            field(
+                                                "actor",
+                                                field("login"),
+                                                field("avatarUrl"),
+                                                on("User", field("email")))),
+                                        on(
+                                            "ReopenedEvent",
+                                            field("createdAt"),
+                                            field(
+                                                "actor",
+                                                field("login"),
+                                                field("avatarUrl"),
+                                                on("User", field("email")))),
+                                        on(
+                                            "IssueComment",
+                                            field("createdAt"),
+                                            field(
+                                                "author",
+                                                field("login"),
+                                                field("avatarUrl"),
+                                                on("User", field("email")))),
+                                        on(
+                                            "HeadRefForcePushedEvent",
+                                            field("createdAt"),
+                                            field(
+                                                "actor",
+                                                field("login"),
+                                                field("avatarUrl"),
+                                                on("User", field("email")))),
+                                        on(
+                                            "PullRequestCommit",
+                                            field(
+                                                "commit",
+                                                field("authoredDate"),
+                                                field(
+                                                    "author",
+                                                    field("email"),
+                                                    field(
+                                                        "user",
+                                                        field("login"),
+                                                        field("avatarUrl"))))),
+                                        on(
+                                            "PullRequestReview",
+                                            field("createdAt"),
+                                            field(
+                                                "author",
+                                                field("login"),
+                                                field("avatarUrl"),
+                                                on("User", field("email")))))))))),
+            field("rateLimit", field("cost"), field("remaining"), field("resetAt"))));
   }
 
   List<TrackableResourceEvent> mapToEvents(
       JsonObject node, String landscapeToken, String repositoryName) {
     List<TrackableResourceEvent> events = new ArrayList<>();
 
-    TrackableResourceEvent.Builder baseBuilder = parseBaseResource(node, landscapeToken, repositoryName);
+    TrackableResourceEvent.Builder baseBuilder =
+        parseBaseResource(node, landscapeToken, repositoryName);
     if (baseBuilder == null) {
       return events;
     }
@@ -469,9 +552,8 @@ public class GithubFetcherService {
       JsonObject node, String landscapeToken, String repositoryName) {
     String typeName = getJsonString(node, "__typename", "Unknown");
 
-    final TrackableResourceType resourceType = typeName.equals("Issue")
-        ? TrackableResourceType.ISSUE
-        : TrackableResourceType.PULL_REQUEST;
+    final TrackableResourceType resourceType =
+        typeName.equals("Issue") ? TrackableResourceType.ISSUE : TrackableResourceType.PULL_REQUEST;
 
     //  String rawState = getJsonString(node, "state", "OPEN");
 
@@ -485,7 +567,6 @@ public class GithubFetcherService {
       authorEmail = getJsonString(authorObj, "email", "");
       avatarUrl = getJsonString(authorObj, "avatarUrl", "");
     }
-
 
     // Parse Labels
     List<String> labelNames = new ArrayList<>();
@@ -534,13 +615,14 @@ public class GithubFetcherService {
       }
     }
 
-    ContributorData actor = ContributorData.newBuilder()
-        .setLandscapeToken(landscapeToken)
-        .setRepositoryName(repoName)
-        .setEmail(authorEmail)
-        .setGithubLogin(authorLogin)
-        .setAvatarUrl(avatarUrl)
-        .build();
+    ContributorData actor =
+        ContributorData.newBuilder()
+            .setLandscapeToken(landscapeToken)
+            .setRepositoryName(repoName)
+            .setEmail(authorEmail)
+            .setGithubLogin(authorLogin)
+            .setAvatarUrl(avatarUrl)
+            .build();
 
     return TrackableResourceEvent.newBuilder()
         .setLandscapeToken(landscapeToken)
@@ -566,12 +648,14 @@ public class GithubFetcherService {
       if (timestamp.isEmpty()) {
         LOGGER.warn("Skipping CREATE event for id={}: missing or invalid createdAt", id);
       } else {
-        events.add(baseBuilder.clone()
-            .setAnnotationType(AnnotationType.CREATE)
-            .setAnnotationId(id + "-" + AnnotationType.CREATE.name())
-            .setNewState(ResourceState.OPEN)
-            .setEventTimestamp(timestamp.get())
-            .build());
+        events.add(
+            baseBuilder
+                .clone()
+                .setAnnotationType(AnnotationType.CREATE)
+                .setAnnotationId(id + "-" + AnnotationType.CREATE.name())
+                .setNewState(ResourceState.OPEN)
+                .setEventTimestamp(timestamp.get())
+                .build());
       }
     }
 
@@ -580,24 +664,28 @@ public class GithubFetcherService {
       if (timestamp.isEmpty()) {
         LOGGER.warn("Skipping MERGE event for id={}: missing or invalid mergedAt", id);
       } else {
-        events.add(baseBuilder.clone()
-            .setAnnotationType(AnnotationType.MERGE)
-            .setAnnotationId(id + "-" + AnnotationType.MERGE.name())
-            .setNewState(ResourceState.MERGED)
-            .setEventTimestamp(timestamp.get())
-            .build());
+        events.add(
+            baseBuilder
+                .clone()
+                .setAnnotationType(AnnotationType.MERGE)
+                .setAnnotationId(id + "-" + AnnotationType.MERGE.name())
+                .setNewState(ResourceState.MERGED)
+                .setEventTimestamp(timestamp.get())
+                .build());
       }
     } else if (node.containsKey("closedAt") && !node.isNull("closedAt")) {
       Optional<Timestamp> timestamp = parseTimestamp(node.getString("closedAt"));
       if (timestamp.isEmpty()) {
         LOGGER.warn("Skipping CLOSE event for id={}: missing or invalid closedAt", id);
       } else {
-        events.add(baseBuilder.clone()
-            .setAnnotationType(AnnotationType.CLOSE)
-            .setAnnotationId(id + "-" + AnnotationType.CLOSE.name())
-            .setNewState(ResourceState.CLOSED)
-            .setEventTimestamp(timestamp.get())
-            .build());
+        events.add(
+            baseBuilder
+                .clone()
+                .setAnnotationType(AnnotationType.CLOSE)
+                .setAnnotationId(id + "-" + AnnotationType.CLOSE.name())
+                .setNewState(ResourceState.CLOSED)
+                .setEventTimestamp(timestamp.get())
+                .build());
       }
     }
     return events;
@@ -612,13 +700,16 @@ public class GithubFetcherService {
 
     // Process Timeline Items
     if (node.containsKey("timelineItems") && !node.isNull("timelineItems")) {
-      jakarta.json.JsonArray timelineNodes = node.getJsonObject("timelineItems").getJsonArray("nodes");
+      jakarta.json.JsonArray timelineNodes =
+          node.getJsonObject("timelineItems").getJsonArray("nodes");
       for (int i = 0; i < timelineNodes.size(); i++) {
         JsonObject eventNode = timelineNodes.getJsonObject(i);
         String type = eventNode.getString("__typename", "");
 
         // skip closedEvent if merged like generateLifecycleEvents
-        if ("ClosedEvent".equals(type) && node.containsKey("mergedAt") && !node.isNull("mergedAt")) {
+        if ("ClosedEvent".equals(type)
+            && node.containsKey("mergedAt")
+            && !node.isNull("mergedAt")) {
           continue;
         }
 
@@ -627,7 +718,8 @@ public class GithubFetcherService {
           continue;
         }
 
-        String timestamp = eventNode.containsKey("createdAt") ? eventNode.getString("createdAt") : "";
+        String timestamp =
+            eventNode.containsKey("createdAt") ? eventNode.getString("createdAt") : "";
 
         // Determine Actor
         String eventActorLogin = "";
@@ -645,7 +737,8 @@ public class GithubFetcherService {
           eventActorAvatarUrl = getJsonString(authorObj, "avatarUrl", "");
         }
 
-        ResourceState newState = ResourceState.UNCHANGED; // Default to unchanged and update on transition only
+        ResourceState newState =
+            ResourceState.UNCHANGED; // Default to unchanged and update on transition only
 
         // Special handling for PullRequestCommit
         if ("PullRequestCommit".equals(type)) {
@@ -671,25 +764,29 @@ public class GithubFetcherService {
           newState = ResourceState.MERGED;
         }
 
-        ContributorData eventActor = ContributorData.newBuilder()
-            .setLandscapeToken(baseActor.getLandscapeToken())
-            .setRepositoryName(baseActor.getRepositoryName())
-            .setGithubLogin(eventActorLogin)
-            .setAvatarUrl(eventActorAvatarUrl)
-            .setEmail(eventActorEmail)
-            .build();
+        ContributorData eventActor =
+            ContributorData.newBuilder()
+                .setLandscapeToken(baseActor.getLandscapeToken())
+                .setRepositoryName(baseActor.getRepositoryName())
+                .setGithubLogin(eventActorLogin)
+                .setAvatarUrl(eventActorAvatarUrl)
+                .setEmail(eventActorEmail)
+                .build();
 
         Optional<Timestamp> parsedTimestamp = parseTimestamp(timestamp);
         if (parsedTimestamp.isEmpty()) {
-          LOGGER.warn("Skipping {} event for id={}: missing or invalid timestamp", annotationType, id);
+          LOGGER.warn(
+              "Skipping {} event for id={}: missing or invalid timestamp", annotationType, id);
         } else {
-          events.add(baseBuilder.clone()
-              .setAnnotationType(annotationType)
-              .setAnnotationId(id + "-" + type + "-" + i)
-              .setEventTimestamp(parsedTimestamp.get())
-              .setActor(eventActor)
-              .setNewState(newState)
-              .build());
+          events.add(
+              baseBuilder
+                  .clone()
+                  .setAnnotationType(annotationType)
+                  .setAnnotationId(id + "-" + type + "-" + i)
+                  .setEventTimestamp(parsedTimestamp.get())
+                  .setActor(eventActor)
+                  .setNewState(newState)
+                  .build());
         }
       }
     }
@@ -722,10 +819,11 @@ public class GithubFetcherService {
 
     try {
       Instant instant = Instant.parse(isoTimestamp);
-      return Optional.of(Timestamp.newBuilder()
-          .setSeconds(instant.getEpochSecond())
-          .setNanos(instant.getNano())
-          .build());
+      return Optional.of(
+          Timestamp.newBuilder()
+              .setSeconds(instant.getEpochSecond())
+              .setNanos(instant.getNano())
+              .build());
     } catch (DateTimeParseException e) {
       return Optional.empty();
     }

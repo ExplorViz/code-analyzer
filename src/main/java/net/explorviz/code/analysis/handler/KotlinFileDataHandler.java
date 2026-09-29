@@ -8,9 +8,7 @@ import java.util.Stack;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
 
-/**
- * FileData handler for Kotlin source files.
- */
+/** FileData handler for Kotlin source files. */
 public class KotlinFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 

@@ -11,11 +11,9 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR Listener for extracting file data from TypeScript/JavaScript source
- * code.
- */
-public class TypeScriptFileDataListener extends TypeScriptParserBaseListener implements CommonFileDataListener {
+/** ANTLR Listener for extracting file data from TypeScript/JavaScript source code. */
+public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
+    implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TypeScriptFileDataListener.class);
   private static final String DEFAULT_RETURN_TYPE = "void";
@@ -27,8 +25,10 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
   private int functionCount = 0;
   private int variableCount = 0;
 
-  public TypeScriptFileDataListener(final TypeScriptFileDataHandler fileDataHandler,
-      final String fileExtension, final CommonTokenStream tokens) {
+  public TypeScriptFileDataListener(
+      final TypeScriptFileDataHandler fileDataHandler,
+      final String fileExtension,
+      final CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;
     this.fileExtension = fileExtension;
     this.tokens = tokens;
@@ -42,7 +42,8 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     fileDataHandler.addMetric(SLOC, String.valueOf(sloc));
     fileDataHandler.addMetric(CLOC, String.valueOf(cloc));
 
-    LOGGER.atTrace()
+    LOGGER
+        .atTrace()
         .addArgument(fileDataHandler.getFileName())
         .addArgument(sloc)
         .log("{} - SLOC: {}");
@@ -60,9 +61,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     if (ctx.getText() != null) {
       final String importText = ctx.getText();
       fileDataHandler.addImport(importText);
-      LOGGER.atTrace()
-          .addArgument(importText)
-          .log("Import: {}");
+      LOGGER.atTrace().addArgument(importText).log("Import: {}");
     }
   }
 
@@ -71,9 +70,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     if (ctx.namespaceName() != null) {
       final String namespaceName = ctx.namespaceName().getText();
       fileDataHandler.enterNamespace(namespaceName);
-      LOGGER.atTrace()
-          .addArgument(namespaceName)
-          .log("Namespace: {}");
+      LOGGER.atTrace().addArgument(namespaceName).log("Namespace: {}");
     }
   }
 
@@ -90,9 +87,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
 
       fileDataHandler.enterClass(className, fqn);
 
-      LOGGER.atTrace()
-          .addArgument(className)
-          .log("Class: {}");
+      LOGGER.atTrace().addArgument(className).log("Class: {}");
 
       final int classLoc = calculateLoc(ctx);
       final var classData = fileDataHandler.getCurrentClassData();
@@ -107,15 +102,23 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
         classData.addMetric(LINE_COUNT, String.valueOf(classLoc));
 
         if (ctx.classHeritage() != null && ctx.classHeritage().classExtendsClause() != null) {
-          final String superClassFqn = ctx.classHeritage().classExtendsClause().typeReference().getText();
-          classData.setSuperClass(getClassPathFromFqn(superClassFqn, fileExtension, fileDataHandler.getFileName(),
-              fileDataHandler.getPackageName()) + "::" + getClassNameFromFqn(superClassFqn));
+          final String superClassFqn =
+              ctx.classHeritage().classExtendsClause().typeReference().getText();
+          classData.setSuperClass(
+              getClassPathFromFqn(
+                      superClassFqn,
+                      fileExtension,
+                      fileDataHandler.getFileName(),
+                      fileDataHandler.getPackageName())
+                  + "::"
+                  + getClassNameFromFqn(superClassFqn));
         }
 
-        if (ctx.classHeritage() != null && ctx.classHeritage().implementsClause() != null
+        if (ctx.classHeritage() != null
+            && ctx.classHeritage().implementsClause() != null
             && ctx.classHeritage().implementsClause().classOrInterfaceTypeList() != null) {
-          for (final TypeScriptParser.TypeReferenceContext typeRef : ctx.classHeritage()
-              .implementsClause().classOrInterfaceTypeList().typeReference()) {
+          for (final TypeScriptParser.TypeReferenceContext typeRef :
+              ctx.classHeritage().implementsClause().classOrInterfaceTypeList().typeReference()) {
             classData.addImplementedInterface(typeRef.getText());
           }
         }
@@ -144,19 +147,22 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
         classData.addMetric(LINE_COUNT, String.valueOf(interfaceLoc));
 
         if (ctx.interfaceExtendsClause() != null) {
-          for (final TypeScriptParser.TypeReferenceContext typeRef : ctx.interfaceExtendsClause()
-              .classOrInterfaceTypeList().typeReference()) {
+          for (final TypeScriptParser.TypeReferenceContext typeRef :
+              ctx.interfaceExtendsClause().classOrInterfaceTypeList().typeReference()) {
             final String superClassFqn = typeRef.getText();
             classData.addImplementedInterface(
-                getClassPathFromFqn(superClassFqn, fileExtension, fileDataHandler.getFileName(),
-                    fileDataHandler.getPackageName()) + "::" + getClassNameFromFqn(superClassFqn));
+                getClassPathFromFqn(
+                        superClassFqn,
+                        fileExtension,
+                        fileDataHandler.getFileName(),
+                        fileDataHandler.getPackageName())
+                    + "::"
+                    + getClassNameFromFqn(superClassFqn));
           }
         }
       }
 
-      LOGGER.atTrace()
-          .addArgument(interfaceName)
-          .log("Interface: {}");
+      LOGGER.atTrace().addArgument(interfaceName).log("Interface: {}");
     }
   }
 
@@ -179,9 +185,10 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     }
 
     final String fieldName = ctx.classElementName().getText();
-    final String fieldType = ctx.typeAnnotation() != null && ctx.typeAnnotation().type_() != null
-        ? ctx.typeAnnotation().type_().getText()
-        : UNTYPED_PARAMETER;
+    final String fieldType =
+        ctx.typeAnnotation() != null && ctx.typeAnnotation().type_() != null
+            ? ctx.typeAnnotation().type_().getText()
+            : UNTYPED_PARAMETER;
 
     final List<String> modifiers = new ArrayList<>();
     if (ctx.propertyMemberBase() != null) {
@@ -199,9 +206,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     classData.addField(fieldName, fieldType, modifiers);
     variableCount++;
 
-    LOGGER.atTrace()
-        .addArgument(fieldName)
-        .log("Class field: {}");
+    LOGGER.atTrace().addArgument(fieldName).log("Class field: {}");
   }
 
   @Override
@@ -224,9 +229,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
     }
 
-    LOGGER.atTrace()
-        .addArgument(enumName)
-        .log("Enum: {}");
+    LOGGER.atTrace().addArgument(enumName).log("Enum: {}");
   }
 
   @Override
@@ -280,7 +283,8 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     functionCount++;
     final String methodName = ctx.classElementName().getText();
     final List<ParameterInfo> parameters = extractParameters(ctx.callSignature());
-    final String methodFqn = fileDataHandler.buildMethodFqn(methodName, extractParameterTypes(parameters));
+    final String methodFqn =
+        fileDataHandler.buildMethodFqn(methodName, extractParameterTypes(parameters));
     final String returnType = extractReturnType(ctx.callSignature());
     final boolean async = isAsync(ctx.propertyMemberBase());
 
@@ -289,9 +293,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
       final MethodDataHandler methodData = classData.addMethod(methodName, methodFqn, returnType);
       populateMethod(methodData, ctx, parameters, async);
 
-      LOGGER.atTrace()
-          .addArgument(methodName)
-          .log("Class method: {}");
+      LOGGER.atTrace().addArgument(methodName).log("Class method: {}");
     }
   }
 
@@ -306,12 +308,12 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     final var classData = fileDataHandler.getCurrentClassData();
     if (classData != null) {
       final List<ParameterInfo> parameters = extractParameters(ctx.formalParameterList());
-      final String constructorFqn = fileDataHandler.buildMethodFqn("constructor", extractParameterTypes(parameters));
+      final String constructorFqn =
+          fileDataHandler.buildMethodFqn("constructor", extractParameterTypes(parameters));
       final MethodDataHandler methodData = classData.addConstructor("constructor", constructorFqn);
       populateMethod(methodData, ctx, parameters, false);
 
-      LOGGER.atTrace()
-          .log("Constructor detected");
+      LOGGER.atTrace().log("Constructor detected");
     }
   }
 
@@ -328,21 +330,19 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     final boolean async = ctx.Async() != null;
 
     if (fileDataHandler.isInClassContext()) {
-      final String functionFqn = fileDataHandler.buildMethodFqn(functionName, extractParameterTypes(parameters));
-      final var methodData = fileDataHandler.getCurrentClassData()
-          .addMethod(functionName, functionFqn, returnType);
+      final String functionFqn =
+          fileDataHandler.buildMethodFqn(functionName, extractParameterTypes(parameters));
+      final var methodData =
+          fileDataHandler.getCurrentClassData().addMethod(functionName, functionFqn, returnType);
       populateMethod(methodData, ctx, parameters, async);
 
-      LOGGER.atTrace()
-          .addArgument(functionName)
-          .log("Function inside class: {}");
+      LOGGER.atTrace().addArgument(functionName).log("Function inside class: {}");
     } else {
-      final MethodDataHandler methodHandler = fileDataHandler.addGlobalFunction(functionName, returnType);
+      final MethodDataHandler methodHandler =
+          fileDataHandler.addGlobalFunction(functionName, returnType);
       populateMethod(methodHandler, ctx, parameters, async);
 
-      LOGGER.atTrace()
-          .addArgument(functionName)
-          .log("Global function: {}");
+      LOGGER.atTrace().addArgument(functionName).log("Global function: {}");
     }
   }
 
@@ -366,21 +366,19 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     final boolean async = ctx.Async() != null;
 
     if (fileDataHandler.isInClassContext()) {
-      final String functionFqn = fileDataHandler.buildMethodFqn(functionName, extractParameterTypes(parameters));
-      final var methodData = fileDataHandler.getCurrentClassData()
-          .addMethod(functionName, functionFqn, returnType);
+      final String functionFqn =
+          fileDataHandler.buildMethodFqn(functionName, extractParameterTypes(parameters));
+      final var methodData =
+          fileDataHandler.getCurrentClassData().addMethod(functionName, functionFqn, returnType);
       populateMethod(methodData, ctx, parameters, async);
 
-      LOGGER.atTrace()
-          .addArgument(functionName)
-          .log("Arrow function inside class: {}");
+      LOGGER.atTrace().addArgument(functionName).log("Arrow function inside class: {}");
     } else {
-      final MethodDataHandler methodHandler = fileDataHandler.addGlobalFunction(functionName, returnType);
+      final MethodDataHandler methodHandler =
+          fileDataHandler.addGlobalFunction(functionName, returnType);
       populateMethod(methodHandler, ctx, parameters, async);
 
-      LOGGER.atTrace()
-          .addArgument(functionName)
-          .log("Global arrow function: {}");
+      LOGGER.atTrace().addArgument(functionName).log("Global arrow function: {}");
     }
   }
 
@@ -389,8 +387,11 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     variableCount++;
   }
 
-  private void populateMethod(final MethodDataHandler methodData, final ParserRuleContext ctx,
-      final List<ParameterInfo> parameters, final boolean async) {
+  private void populateMethod(
+      final MethodDataHandler methodData,
+      final ParserRuleContext ctx,
+      final List<ParameterInfo> parameters,
+      final boolean async) {
     for (final ParameterInfo parameter : parameters) {
       methodData.addParameter(parameter.name(), parameter.type(), List.of());
     }
@@ -405,7 +406,8 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     methodData.addMetric(LINE_COUNT, String.valueOf(methodLoc));
   }
 
-  private List<ParameterInfo> extractParameters(final TypeScriptParser.CallSignatureContext callSignature) {
+  private List<ParameterInfo> extractParameters(
+      final TypeScriptParser.CallSignatureContext callSignature) {
     if (callSignature == null || callSignature.parameterList() == null) {
       return List.of();
     }
@@ -421,7 +423,8 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
       return extractParameters(arrowParameters.formalParameterList());
     }
     if (arrowParameters.propertyName() != null) {
-      return List.of(new ParameterInfo(arrowParameters.propertyName().getText(), UNTYPED_PARAMETER));
+      return List.of(
+          new ParameterInfo(arrowParameters.propertyName().getText(), UNTYPED_PARAMETER));
     }
     return List.of();
   }
@@ -433,21 +436,28 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
       return parameters;
     }
 
-    for (final TypeScriptParser.FormalParameterArgContext arg : formalParameterList.formalParameterArg()) {
-      parameters.add(new ParameterInfo(extractAssignableName(arg.assignable()),
-          extractTypeFromAnnotation(arg.typeAnnotation())));
+    for (final TypeScriptParser.FormalParameterArgContext arg :
+        formalParameterList.formalParameterArg()) {
+      parameters.add(
+          new ParameterInfo(
+              extractAssignableName(arg.assignable()),
+              extractTypeFromAnnotation(arg.typeAnnotation())));
     }
 
     if (formalParameterList.lastFormalParameterArg() != null) {
-      final TypeScriptParser.LastFormalParameterArgContext restArg = formalParameterList.lastFormalParameterArg();
-      final String restName = restArg.identifier() != null ? restArg.identifier().getText() : "rest";
-      parameters.add(new ParameterInfo(restName, extractTypeFromAnnotation(restArg.typeAnnotation(), "...")));
+      final TypeScriptParser.LastFormalParameterArgContext restArg =
+          formalParameterList.lastFormalParameterArg();
+      final String restName =
+          restArg.identifier() != null ? restArg.identifier().getText() : "rest";
+      parameters.add(
+          new ParameterInfo(restName, extractTypeFromAnnotation(restArg.typeAnnotation(), "...")));
     }
 
     return parameters;
   }
 
-  private List<ParameterInfo> extractParameters(final TypeScriptParser.ParameterListContext parameterList) {
+  private List<ParameterInfo> extractParameters(
+      final TypeScriptParser.ParameterListContext parameterList) {
     final List<ParameterInfo> parameters = new ArrayList<>();
     if (parameterList == null) {
       return parameters;
@@ -455,7 +465,8 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
 
     if (parameterList.restParameter() != null) {
       final TypeScriptParser.RestParameterContext rest = parameterList.restParameter();
-      parameters.add(new ParameterInfo("rest", extractTypeFromAnnotation(rest.typeAnnotation(), "...")));
+      parameters.add(
+          new ParameterInfo("rest", extractTypeFromAnnotation(rest.typeAnnotation(), "...")));
       return parameters;
     }
 
@@ -472,14 +483,17 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
 
   private ParameterInfo extractRequiredParameter(
       final TypeScriptParser.RequiredParameterContext requiredParameter) {
-    return new ParameterInfo(extractIdentifierOrPatternName(requiredParameter.identifierOrPattern()),
+    return new ParameterInfo(
+        extractIdentifierOrPatternName(requiredParameter.identifierOrPattern()),
         extractTypeFromAnnotation(requiredParameter.typeAnnotation()));
   }
 
   private ParameterInfo extractOptionalParameter(
       final TypeScriptParser.OptionalParameterContext optionalParameter) {
-    final TypeScriptParser.IdentifierOrPatternContext pattern = optionalParameter.identifierOrPattern();
-    return new ParameterInfo(extractIdentifierOrPatternName(pattern),
+    final TypeScriptParser.IdentifierOrPatternContext pattern =
+        optionalParameter.identifierOrPattern();
+    return new ParameterInfo(
+        extractIdentifierOrPatternName(pattern),
         extractTypeFromAnnotation(optionalParameter.typeAnnotation()));
   }
 
@@ -501,12 +515,13 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     return normalizeTypeName(typeAnnotation.type_().getText());
   }
 
-  private String extractTypeFromAnnotation(final TypeScriptParser.TypeAnnotationContext typeAnnotation) {
+  private String extractTypeFromAnnotation(
+      final TypeScriptParser.TypeAnnotationContext typeAnnotation) {
     return extractTypeFromAnnotation(typeAnnotation, UNTYPED_PARAMETER);
   }
 
-  private String extractTypeFromAnnotation(final TypeScriptParser.TypeAnnotationContext typeAnnotation,
-      final String defaultType) {
+  private String extractTypeFromAnnotation(
+      final TypeScriptParser.TypeAnnotationContext typeAnnotation, final String defaultType) {
     if (typeAnnotation == null || typeAnnotation.type_() == null) {
       return defaultType;
     }
@@ -555,9 +570,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
     return propertyMemberBase != null && propertyMemberBase.Async() != null;
   }
 
-  /**
-   * Extract the name of an arrow function from its parent context.
-   */
+  /** Extract the name of an arrow function from its parent context. */
   private String extractArrowFunctionName(
       final TypeScriptParser.ArrowFunctionDeclarationContext ctx) {
     ParserRuleContext parent = ctx.getParent();
@@ -569,7 +582,8 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
           return variableDeclaration.identifierOrKeyWord().getText();
         }
       }
-      if (parent instanceof TypeScriptParser.PropertyDeclarationExpressionContext propertyDeclaration) {
+      if (parent
+          instanceof TypeScriptParser.PropertyDeclarationExpressionContext propertyDeclaration) {
         if (propertyDeclaration.classElementName() != null) {
           return propertyDeclaration.classElementName().getText();
         }
@@ -592,8 +606,8 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener imp
   }
 
   /**
-   * Get comment lines of code by counting tokens on the hidden channel. ANTLR
-   * places comments on a hidden channel, so we need to extract them from there.
+   * Get comment lines of code by counting tokens on the hidden channel. ANTLR places comments on a
+   * hidden channel, so we need to extract them from there.
    */
   private int getCloc(final ParserRuleContext ctx) {
     if (ctx == null || tokens == null) {

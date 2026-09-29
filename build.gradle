@@ -5,6 +5,7 @@ plugins {
     id 'eclipse'
     id "org.kordamp.gradle.jandex" version "1.1.0"
     id 'antlr'
+    id 'com.diffplug.spotless' version '6.25.0'
 }
 
 apply from: 'buildscripts/code-analysis.gradle'
@@ -114,8 +115,8 @@ tasks.named('checkstyleMain') {
     dependsOn 'jandex'
 }
 
-tasks.named('pmdMain') {
-    dependsOn 'jandex', 'compileQuarkusGeneratedSourcesJava'
+tasks.named('spotlessCheck') {
+    dependsOn 'jandex'
 }
 
 tasks.named('compileTestJava') {

@@ -25,44 +25,33 @@ import org.junit.jupiter.params.provider.MethodSource;
 /**
  * Golden-file regression tests across all supported languages.
  *
- * <p>To regenerate expected files after intentional analyzer changes, run with
- * {@code -DupdateGoldenFiles=true}.
+ * <p>To regenerate expected files after intentional analyzer changes, run with {@code
+ * -DupdateGoldenFiles=true}.
  */
 @QuarkusTest
 public class ParserTestInputRegressionTest {
 
-  @Inject
-  AntlrParserService javaParserService;
+  @Inject AntlrParserService javaParserService;
 
-  @Inject
-  AntlrTypeScriptParserService typeScriptParserService;
+  @Inject AntlrTypeScriptParserService typeScriptParserService;
 
-  @Inject
-  AntlrPythonParserService pythonParserService;
+  @Inject AntlrPythonParserService pythonParserService;
 
-  @Inject
-  AntlrGoParserService goParserService;
+  @Inject AntlrGoParserService goParserService;
 
-  @Inject
-  AntlrCSharpParserService csharpParserService;
+  @Inject AntlrCSharpParserService csharpParserService;
 
-  @Inject
-  AntlrRustParserService rustParserService;
+  @Inject AntlrRustParserService rustParserService;
 
-  @Inject
-  AntlrKotlinParserService kotlinParserService;
+  @Inject AntlrKotlinParserService kotlinParserService;
 
-  @Inject
-  AntlrPhpParserService phpParserService;
+  @Inject AntlrPhpParserService phpParserService;
 
-  @Inject
-  AntlrSwiftParserService swiftParserService;
+  @Inject AntlrSwiftParserService swiftParserService;
 
-  @Inject
-  AntlrCParserService cParserService;
+  @Inject AntlrCParserService cParserService;
 
-  @Inject
-  AntlrCppParserService cppParserService;
+  @Inject AntlrCppParserService cppParserService;
 
   static Stream<Arguments> fixtures() {
     return Stream.of(
@@ -79,8 +68,7 @@ public class ParserTestInputRegressionTest {
         Arguments.of("php", "ParserTestInput.php"),
         Arguments.of("swift", "ParserTestInput.swift"),
         Arguments.of("c", "ParserTestInput.c"),
-        Arguments.of("cpp", "ParserTestInput.cpp")
-    );
+        Arguments.of("cpp", "ParserTestInput.cpp"));
   }
 
   @ParameterizedTest(name = "{0}/{1}")
@@ -90,15 +78,16 @@ public class ParserTestInputRegressionTest {
     final String source = GoldenFileRegressionSupport.readFixture(languageDir, fileName);
     final AbstractFileDataHandler handler = parse(languageDir, fileName, source);
 
-    Assertions.assertNotNull(handler, "Parser should return a handler for " + languageDir + "/" + fileName);
+    Assertions.assertNotNull(
+        handler, "Parser should return a handler for " + languageDir + "/" + fileName);
 
     final FileData actual = handler.getProtoBufObject();
     GoldenFileRegressionSupport.assertMatchesGolden(
         ParserTestInputRegressionTest.class, languageDir, fileName, actual);
   }
 
-  private AbstractFileDataHandler parse(final String languageDir, final String fileName,
-      final String source) {
+  private AbstractFileDataHandler parse(
+      final String languageDir, final String fileName, final String source) {
     final String hash = GoldenFileRegressionSupport.FILE_HASH;
     return switch (languageDir) {
       case "java" -> javaParserService.parseFileContent(source, fileName, hash);

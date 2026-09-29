@@ -12,10 +12,9 @@ public record Triple<L, M, R>(L left, M middle, R right) {
   /**
    * Creates a Triple of data entries.
    *
-   * @param left   the left data entry
+   * @param left the left data entry
    * @param middle the middle data entry
-   * @param right  the right data entry
+   * @param right the right data entry
    */
-  public Triple {
-  }
+  public Triple {}
 }

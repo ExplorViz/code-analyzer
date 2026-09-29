@@ -2,9 +2,7 @@ package net.explorviz.code.analysis.git;
 
 import java.util.Optional;
 
-/**
- * Normalizes repository clone URLs for persistence in the landscape service.
- */
+/** Normalizes repository clone URLs for persistence in the landscape service. */
 public final class RepositoryFileUrlBuilder {
 
   private RepositoryFileUrlBuilder() {

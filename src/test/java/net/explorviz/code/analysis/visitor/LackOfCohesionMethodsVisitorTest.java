@@ -15,16 +15,14 @@ import net.explorviz.code.proto.FileData;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-/**
- * Tests for the LackOfCohesionMethodsVisitor calculating the LCOM4 metric.
- */
+/** Tests for the LackOfCohesionMethodsVisitor calculating the LCOM4 metric. */
 @QuarkusTest
 public class LackOfCohesionMethodsVisitorTest {
 
   private static final String LCOM4 = "LCOM4";
 
   @Test()
-  void fileDataTest1() throws FileNotFoundException { // NOCS
+  void fileDataTest1() throws FileNotFoundException {
     JavaFileDataHandler fileDataHandler = new JavaFileDataHandler("LCOM4.java");
     FileDataVisitor visitor = new FileDataVisitor(Optional.empty(), false);
     String path = "src/test/resources/files/LCOM4.java";

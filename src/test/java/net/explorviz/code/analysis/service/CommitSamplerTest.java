@@ -93,10 +93,11 @@ class CommitSamplerTest {
 
   @Test
   void intervalSamplingTakesPrecedenceOverPeriod() {
-    final AnalysisConfig config = new AnalysisConfig.Builder()
-        .commitSamplingInterval(Optional.of(4))
-        .commitSamplingPeriod(Optional.of(CommitSamplingPeriod.DAY))
-        .build();
+    final AnalysisConfig config =
+        new AnalysisConfig.Builder()
+            .commitSamplingInterval(Optional.of(4))
+            .commitSamplingPeriod(Optional.of(CommitSamplingPeriod.DAY))
+            .build();
 
     final Set<Integer> indices =
         CommitSampler.selectFullyAnalyzedIndicesFromCommitTimes(
@@ -106,15 +107,11 @@ class CommitSamplerTest {
   }
 
   private static AnalysisConfig configWithInterval(final int interval) {
-    return new AnalysisConfig.Builder()
-        .commitSamplingInterval(Optional.of(interval))
-        .build();
+    return new AnalysisConfig.Builder().commitSamplingInterval(Optional.of(interval)).build();
   }
 
   private static AnalysisConfig configWithPeriod(final CommitSamplingPeriod period) {
-    return new AnalysisConfig.Builder()
-        .commitSamplingPeriod(Optional.of(period))
-        .build();
+    return new AnalysisConfig.Builder().commitSamplingPeriod(Optional.of(period)).build();
   }
 
   private static int epochSeconds(final String isoInstant) {

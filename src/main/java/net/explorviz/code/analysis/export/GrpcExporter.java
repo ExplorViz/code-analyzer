@@ -24,9 +24,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Basic GRPC handler.
- */
+/** Basic GRPC handler. */
 @ApplicationScoped
 public final class GrpcExporter implements DataExporter {
 
@@ -34,8 +32,8 @@ public final class GrpcExporter implements DataExporter {
 
   private static final String GRPC_CLIENT_NAME = "codeAnalysisGrpcClient";
 
-  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-      .withZone(ZoneId.of("UTC"));
+  private static final DateTimeFormatter FORMATTER =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"));
 
   @GrpcClient(GRPC_CLIENT_NAME)
   /* package */ FileDataServiceGrpc.FileDataServiceBlockingStub fileDataGrpcClient;
@@ -50,7 +48,8 @@ public final class GrpcExporter implements DataExporter {
   /* package */ StateDataServiceGrpc.StateDataServiceBlockingStub stateDataGrpcClient;
 
   @GrpcClient(GRPC_CLIENT_NAME)
-  /* package */ TrackableResourceServiceGrpc.TrackableResourceServiceBlockingStub trackableResourceGrpcClient;
+  /* package */ TrackableResourceServiceGrpc.TrackableResourceServiceBlockingStub
+      trackableResourceGrpcClient;
 
   @ConfigProperty(name = "explorviz.landscape.token")
   /* default */ String landscapeTokenProperty;
@@ -65,9 +64,12 @@ public final class GrpcExporter implements DataExporter {
    * @return the state of the remote database
    */
   @Override
-  public StateData getStateData(final String repositoryName, final String branchName,
+  public StateData getStateData(
+      final String repositoryName,
+      final String branchName,
       final String token,
-      final Map<String, String> applicationPaths, final String repositoryUrl,
+      final Map<String, String> applicationPaths,
+      final String repositoryUrl,
       final boolean skipLatestCommitLookup) {
     final StateDataRequest.Builder requestBuilder = StateDataRequest.newBuilder();
     requestBuilder.setBranchName(branchName);
@@ -135,22 +137,26 @@ public final class GrpcExporter implements DataExporter {
 
   @Override
   public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
-    Instant instant = Instant.ofEpochSecond(trackableResourceEvent.getEventTimestamp().getSeconds(),
-        trackableResourceEvent.getEventTimestamp().getNanos());
+    Instant instant =
+        Instant.ofEpochSecond(
+            trackableResourceEvent.getEventTimestamp().getSeconds(),
+            trackableResourceEvent.getEventTimestamp().getNanos());
     LOGGER.info(
         "Sending TrackableResourceEvent {} for {} #{} at timestamp {}",
         trackableResourceEvent.getAnnotationType(),
         trackableResourceEvent.getResourceType(),
         trackableResourceEvent.getResourceId(),
-        FORMATTER.format(instant)
-    );
+        FORMATTER.format(instant));
     try {
       trackableResourceGrpcClient.persistTrackableResourceEvent(trackableResourceEvent);
     } catch (final Exception e) {
-      LOGGER.error("Failed to send trackable resource event {}: {}", trackableResourceEvent.getAnnotationId(),
+      LOGGER.error(
+          "Failed to send trackable resource event {}: {}",
+          trackableResourceEvent.getAnnotationId(),
           e.getMessage());
-      throw new RuntimeException("Failed to send trackable resource event for "
-          + trackableResourceEvent.getAnnotationId(), e);
+      throw new RuntimeException(
+          "Failed to send trackable resource event for " + trackableResourceEvent.getAnnotationId(),
+          e);
     }
   }
 
@@ -162,10 +168,12 @@ public final class GrpcExporter implements DataExporter {
     LOGGER.info("Sending batch of {} trackable resource events via RPC", events.size());
     try {
       trackableResourceGrpcClient.persistTrackableResourceEvents(
-          TrackableResourceEventBatch.newBuilder().addAllEvents(events).build()
-      );
+          TrackableResourceEventBatch.newBuilder().addAllEvents(events).build());
     } catch (final Exception e) {
-      LOGGER.error("Failed to send batch of {} trackable resource events: {}", events.size(), e.getMessage());
+      LOGGER.error(
+          "Failed to send batch of {} trackable resource events: {}",
+          events.size(),
+          e.getMessage());
       throw new RuntimeException("Failed to send trackable resource event batch ", e);
     }
   }
@@ -174,14 +182,15 @@ public final class GrpcExporter implements DataExporter {
   public void relinkResourceEvents(final String token, final String repoName) {
     LOGGER.info("Sending relink request on {}", repoName);
     try {
-      RelinkResourcesRequest request = RelinkResourcesRequest.newBuilder()
-          .setLandscapeToken(token)
-          .setRepositoryName(repoName)
-          .build();
+      RelinkResourcesRequest request =
+          RelinkResourcesRequest.newBuilder()
+              .setLandscapeToken(token)
+              .setRepositoryName(repoName)
+              .build();
       trackableResourceGrpcClient.relinkResources(request);
     } catch (final Exception e) {
       if (LOGGER.isErrorEnabled()) {
-        LOGGER.error("Failed to send relink request on {}: {}", repoName,  e.getMessage());
+        LOGGER.error("Failed to send relink request on {}: {}", repoName, e.getMessage());
       }
     }
   }

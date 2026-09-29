@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 /**
- * Verifies that {@code parse-timeout-ms} aborts ANTLR prediction on the parsing thread itself
- * (via {@link AntlrParserUtils.DeadlineTokenStream}), rather than leaving a zombie worker.
+ * Verifies that {@code parse-timeout-ms} aborts ANTLR prediction on the parsing thread itself (via
+ * {@link AntlrParserUtils.DeadlineTokenStream}), rather than leaving a zombie worker.
  */
 class ParseTimeoutTest {
 
@@ -41,19 +41,24 @@ class ParseTimeoutTest {
     final long timeoutMs = 200L;
     final long budgetMs = timeoutMs + 2_000L;
     final long start = System.nanoTime();
-    final ParseCancellationException thrown = Assertions.assertThrows(
-        ParseCancellationException.class,
-        () -> AntlrParserUtils.parseTwoStage(
-            parser, tokens, LoggerFactory.getLogger(ParseTimeoutTest.class),
-            "pathological.js", timeoutMs, parser::program));
+    final ParseCancellationException thrown =
+        Assertions.assertThrows(
+            ParseCancellationException.class,
+            () ->
+                AntlrParserUtils.parseTwoStage(
+                    parser,
+                    tokens,
+                    LoggerFactory.getLogger(ParseTimeoutTest.class),
+                    "pathological.js",
+                    timeoutMs,
+                    parser::program));
     final long elapsedMs = (System.nanoTime() - start) / 1_000_000L;
 
     Assertions.assertTrue(
         thrown.getMessage() != null && thrown.getMessage().startsWith("Parse timeout after "),
         "Expected timeout cancellation, got: " + thrown.getMessage());
     Assertions.assertTrue(
-        elapsedMs < budgetMs,
-        "Expected abort under " + budgetMs + " ms, was " + elapsedMs + " ms");
+        elapsedMs < budgetMs, "Expected abort under " + budgetMs + " ms, was " + elapsedMs + " ms");
   }
 
   @Test
@@ -64,8 +69,14 @@ class ParseTimeoutTest {
     final TypeScriptParser parser = new TypeScriptParser(tokens);
     parser.setJavaScriptMode(true);
 
-    Assertions.assertDoesNotThrow(() -> AntlrParserUtils.parseTwoStage(
-        parser, tokens, LoggerFactory.getLogger(ParseTimeoutTest.class),
-        "ok.js", 0L, parser::program));
+    Assertions.assertDoesNotThrow(
+        () ->
+            AntlrParserUtils.parseTwoStage(
+                parser,
+                tokens,
+                LoggerFactory.getLogger(ParseTimeoutTest.class),
+                "ok.js",
+                0L,
+                parser::program));
   }
 }

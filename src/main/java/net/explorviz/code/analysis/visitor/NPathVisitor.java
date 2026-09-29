@@ -24,12 +24,10 @@ import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import net.explorviz.code.analysis.handler.JavaFileDataHandler;
 
 /**
- * Visitor filling a FileData object with NPath data. Only handles constructor and methods bodies. This implementation
- * is a reimplementation of the {@code NPathBaseVisitor} from PMD.
+ * Visitor filling a FileData object with NPath data. Only handles constructor and methods bodies.
+ * This implementation is a reimplementation of the {@code NPathBaseVisitor} from PMD.
  */
-public class NPathVisitor
-    extends GenericVisitorAdapter<Integer, JavaFileDataHandler> { // NOCS NOPMD
-
+public class NPathVisitor extends GenericVisitorAdapter<Integer, JavaFileDataHandler> {
 
   @Override
   public Integer visit(final ConstructorDeclaration n, final JavaFileDataHandler data) {
@@ -59,7 +57,6 @@ public class NPathVisitor
       if (childComplexity != null) {
         product *= childComplexity;
       }
-
     }
 
     return product;
@@ -104,7 +101,7 @@ public class NPathVisitor
     // (npath of while + bool_comp of while + 1) * npath of next
     final int boolCompWhile = booleanExpressionComplexity(n.getCondition());
 
-    final int nPathWhile = n.getBody().accept(this, data); // NOCS
+    final int nPathWhile = n.getBody().accept(this, data);
 
     return boolCompWhile + nPathWhile + 1;
   }
@@ -114,7 +111,7 @@ public class NPathVisitor
     // (npath of do + bool_comp of do + 1) * npath of next
     final int boolCompDo = booleanExpressionComplexity(n.getCondition());
 
-    final int nPathDo = n.getBody().accept(this, data); // NOCS
+    final int nPathDo = n.getBody().accept(this, data);
 
     return boolCompDo + nPathDo + 1;
   }
@@ -134,7 +131,7 @@ public class NPathVisitor
     for (final Expression e : n.getUpdate()) {
       boolCompForUpdate += booleanExpressionComplexity(e);
     }
-    final int nPathFor = n.getBody().accept(this, data);  // NOCS
+    final int nPathFor = n.getBody().accept(this, data);
 
     return boolCompForInit + boolCompForCompare + boolCompForUpdate + nPathFor + 1;
   }
@@ -147,9 +144,9 @@ public class NPathVisitor
     }
     int boolCompReturn = booleanExpressionComplexity(n.getExpression().get());
     // int conditionalExpressionComplexity = multiply(n.getExpression().get(), data);
-    final int conditionalExpressionComplexity = 0; // NOPMD
+    final int conditionalExpressionComplexity = 0;
 
-    if (conditionalExpressionComplexity > 1) { // NOPMD
+    if (conditionalExpressionComplexity > 1) {
       boolCompReturn += conditionalExpressionComplexity;
     }
     return boolCompReturn > 0 ? conditionalExpressionComplexity : 1;
@@ -177,12 +174,12 @@ public class NPathVisitor
     //
     int caseRange = 0;
     for (final SwitchEntry entry : n.getEntries()) {
-      if (entry.getType().equals(SwitchEntry.Type.STATEMENT_GROUP) || entry.getType()
-          .equals(SwitchEntry.Type.THROWS_STATEMENT)) {
+      if (entry.getType().equals(SwitchEntry.Type.STATEMENT_GROUP)
+          || entry.getType().equals(SwitchEntry.Type.THROWS_STATEMENT)) {
         npath += caseRange;
         caseRange = 1;
-      } else if (entry.getType().equals(SwitchEntry.Type.EXPRESSION) || entry.getType().equals(
-          SwitchEntry.Type.BLOCK)) {
+      } else if (entry.getType().equals(SwitchEntry.Type.EXPRESSION)
+          || entry.getType().equals(SwitchEntry.Type.BLOCK)) {
         npath += caseRange;
         final int complexity = entry.accept(this, data);
         caseRange = complexity;
@@ -246,10 +243,9 @@ public class NPathVisitor
     }
 
     if (expr.isBinaryExpr()) {
-      final boolean isAndOperator = expr.asBinaryExpr().getOperator()
-          .equals(BinaryExpr.Operator.AND);
-      final boolean isOrOperator = expr.asBinaryExpr().getOperator()
-          .equals(BinaryExpr.Operator.OR);
+      final boolean isAndOperator =
+          expr.asBinaryExpr().getOperator().equals(BinaryExpr.Operator.AND);
+      final boolean isOrOperator = expr.asBinaryExpr().getOperator().equals(BinaryExpr.Operator.OR);
       if (isAndOperator || isOrOperator) {
         int complexity = 1;
         complexity += booleanExpressionComplexity(expr.asBinaryExpr().getLeft());

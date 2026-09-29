@@ -13,8 +13,7 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 public class GithubFetcherServiceTest {
 
-  @Inject
-  GithubFetcherService githubSocialFetcherService;
+  @Inject GithubFetcherService githubSocialFetcherService;
 
   @Disabled
   @Test
@@ -37,6 +36,5 @@ public class GithubFetcherServiceTest {
         repositoryName, startDate, endDate, mockExporter, landscapeToken, "dummy-token");
     System.out.println("Finished testFetchSocialDataInRange");
     System.out.println("#######################################################");
-
   }
 }

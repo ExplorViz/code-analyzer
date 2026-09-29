@@ -67,103 +67,120 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Service for analyzing Git repositories and extracting code metrics.
- */
+/** Service for analyzing Git repositories and extracting code metrics. */
 @ApplicationScoped
 public class AnalysisService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AnalysisService.class);
   private static final Long SOCIAL_FETCH_TIMEOUT_SECONDS = 900L; // should probably be in config
-  private static final Set<String> TEXT_FILE_EXTENSIONS = Set.of(
-      // Plain text & docs
-      "txt", "md", "rst", "adoc", "log", "license", "notice", "readme",
+  private static final Set<String> TEXT_FILE_EXTENSIONS =
+      Set.of(
+          // Plain text & docs
+          "txt",
+          "md",
+          "rst",
+          "adoc",
+          "log",
+          "license",
+          "notice",
+          "readme",
 
-      // Configuration formats
-      "conf", "cfg", "ini", "properties", "prefs",
-      "env", "dotenv",
-      "toml",
-      "yaml", "yml",
-      "json",
-      "xml",
+          // Configuration formats
+          "conf",
+          "cfg",
+          "ini",
+          "properties",
+          "prefs",
+          "env",
+          "dotenv",
+          "toml",
+          "yaml",
+          "yml",
+          "json",
+          "xml",
 
-      // Infrastructure / tooling configs
-      "gradle",
-      "editorconfig",
-      "gitignore", "gitattributes", "gitmodules",
-      "dockerignore",
-      "npmrc", "yarnrc", "pnpmrc",
-      "eslintrc", "prettierrc", "stylelintrc",
-      "babelrc",
-      "htaccess",
+          // Infrastructure / tooling configs
+          "gradle",
+          "editorconfig",
+          "gitignore",
+          "gitattributes",
+          "gitmodules",
+          "dockerignore",
+          "npmrc",
+          "yarnrc",
+          "pnpmrc",
+          "eslintrc",
+          "prettierrc",
+          "stylelintrc",
+          "babelrc",
+          "htaccess",
 
-      // CI / automation
-      "workflow",
+          // CI / automation
+          "workflow",
 
-      // Data & text-based assets
-      "csv", "tsv", "sql",
+          // Data & text-based assets
+          "csv",
+          "tsv",
+          "sql",
 
-      // System / service configs
-      "service", "socket", "timer");
-  @Inject
-  /* package */ GitRepositoryHandler gitRepositoryHandler;
-  @Inject
-  /* package */ AntlrParserService antlrParserService;
-  @Inject
-  /* package */ AntlrTypeScriptParserService tsParserService;
-  @Inject
-  /* package */ AntlrPythonParserService pythonParserService;
-  @Inject
-  /* package */ AntlrCppParserService cppParserService;
-  @Inject
-  /* package */ AntlrCParserService antlrCParserService;
-  @Inject
-  /* package */ AntlrGoParserService goParserService;
-  @Inject
-  /* package */ AntlrCSharpParserService csharpParserService;
-  @Inject
-  /* package */ AntlrRustParserService rustParserService;
-  @Inject
-  /* package */ AntlrKotlinParserService kotlinParserService;
-  @Inject
-  /* package */ AntlrPhpParserService phpParserService;
-  @Inject
-  /* package */ AntlrSwiftParserService swiftParserService;
-  @Inject
-  /* package */ AnalysisStatusService analysisStatusService;
-  @Inject
-  /* package */ GithubFetcherService socialFetcherService;
-  @Inject
-  /* package */ ManagedExecutor managedExecutor;
+          // System / service configs
+          "service",
+          "socket",
+          "timer");
+  @Inject /* package */ GitRepositoryHandler gitRepositoryHandler;
+  @Inject /* package */ AntlrParserService antlrParserService;
+  @Inject /* package */ AntlrTypeScriptParserService tsParserService;
+  @Inject /* package */ AntlrPythonParserService pythonParserService;
+  @Inject /* package */ AntlrCppParserService cppParserService;
+  @Inject /* package */ AntlrCParserService antlrCParserService;
+  @Inject /* package */ AntlrGoParserService goParserService;
+  @Inject /* package */ AntlrCSharpParserService csharpParserService;
+  @Inject /* package */ AntlrRustParserService rustParserService;
+  @Inject /* package */ AntlrKotlinParserService kotlinParserService;
+  @Inject /* package */ AntlrPhpParserService phpParserService;
+  @Inject /* package */ AntlrSwiftParserService swiftParserService;
+  @Inject /* package */ AnalysisStatusService analysisStatusService;
+  @Inject /* package */ GithubFetcherService socialFetcherService;
+  @Inject /* package */ ManagedExecutor managedExecutor;
+
   @ConfigProperty(name = "explorviz.gitanalysis.save-crashed_files")
   /* default */ boolean saveCrashedFilesProperty;
+
   @ConfigProperty(name = "explorviz.gitanalysis.file-analysis-parallelism", defaultValue = "0")
   /* default */ int fileAnalysisParallelismProperty;
+
   @ConfigProperty(name = "explorviz.gitanalysis.file-persist-concurrency", defaultValue = "8")
   /* default */ int filePersistConcurrencyProperty;
+
   @ConfigProperty(name = "explorviz.gitanalysis.file-persist-batch-size", defaultValue = "50")
   /* default */ int filePersistBatchSizeProperty;
+
   @ConfigProperty(name = "explorviz.gitanalysis.run-mode", defaultValue = "api")
   /* default */ String runModeProperty;
 
-  private static String toErrorText(final String position, final String commitId,
-      final String branchName) {
-    return "The given " + position + " commit <" + commitId
-        + "> was not found in the current branch <" + branchName + ">";
+  private static String toErrorText(
+      final String position, final String commitId, final String branchName) {
+    return "The given "
+        + position
+        + " commit <"
+        + commitId
+        + "> was not found in the current branch <"
+        + branchName
+        + ">";
   }
 
   /**
    * Analyzes a Git repository and sends the results using the provided exporter.
    *
-   * @param config   The analysis configuration
+   * @param config The analysis configuration
    * @param exporter The data exporter to use for sending results
-   * @throws IOException                 If an I/O error occurs
-   * @throws GitAPIException             If a Git operation fails
-   * @throws NotFoundException           If a required resource is not found
+   * @throws IOException If an I/O error occurs
+   * @throws GitAPIException If a Git operation fails
+   * @throws NotFoundException If a required resource is not found
    * @throws PropertyNotDefinedException If a required property is not defined
    */
-  public void analyzeAndSendRepo(final AnalysisConfig config, final DataExporter exporter) // NOCS
-      throws IOException, GitAPIException, NotFoundException, PropertyNotDefinedException { // NOPMD
+  public void analyzeAndSendRepo(final AnalysisConfig config, final DataExporter exporter)
+      throws IOException, GitAPIException, NotFoundException, PropertyNotDefinedException {
 
     ensureNotCancelled(config.landscapeToken());
 
@@ -184,19 +201,27 @@ public class AnalysisService {
           initializeRemoteStateAndResolveStart(config, exporter, branch, repositoryUrl);
       final Optional<String> startCommit = analysisStartContext.startCommit();
 
-      final Optional<String> endCommit = exporter.isRemote() ? Optional.empty() : config.endCommit();
+      final Optional<String> endCommit =
+          exporter.isRemote() ? Optional.empty() : config.endCommit();
 
       checkIfCommitsAreReachable(startCommit, endCommit, fullBranch);
 
-      final List<CommitWalkEntry> commitsInRange = collectCommitWalkEntries(repository, fullBranch, startCommit,
-          endCommit, exporter.isRemote(), config.firstParentCommitsOnly());
+      final List<CommitWalkEntry> commitsInRange =
+          collectCommitWalkEntries(
+              repository,
+              fullBranch,
+              startCommit,
+              endCommit,
+              exporter.isRemote(),
+              config.firstParentCommitsOnly());
       final int totalCommitsInRange = commitsInRange.size();
       final boolean commitSamplingEnabled = CommitSampler.isEnabled(config);
 
       CommitRangeSelection commitRangeSelection =
           resolveCommitRangeSelection(totalCommitsInRange, config);
-      commitRangeSelection = adjustSkipForShallowCloneBoundary(
-          repository, commitsInRange, commitRangeSelection, config);
+      commitRangeSelection =
+          adjustSkipForShallowCloneBoundary(
+              repository, commitsInRange, commitRangeSelection, config);
 
       final int commitsToAnalyze = commitRangeSelection.commitsToAnalyze();
       final int commitsToSkipBeforeAnalyzing = commitRangeSelection.commitsToSkipBeforeAnalyzing();
@@ -220,9 +245,10 @@ public class AnalysisService {
       analysisStatusService.markRunning(config.landscapeToken(), commitsForProgressTracking, 0);
 
       // find start and end dates for social analysis
-      final List<CommitWalkEntry> analyzedCommits = commitSamplingEnabled
-          ? commitsToProcess
-          : commitsInRange.subList(commitsToSkipBeforeAnalyzing, totalCommitsInRange);
+      final List<CommitWalkEntry> analyzedCommits =
+          commitSamplingEnabled
+              ? commitsToProcess
+              : commitsInRange.subList(commitsToSkipBeforeAnalyzing, totalCommitsInRange);
       if (config.syncSocialWindow() && !analyzedCommits.isEmpty()) {
         long min = Long.MAX_VALUE;
         long max = Long.MIN_VALUE;
@@ -233,16 +259,18 @@ public class AnalysisService {
         }
         final Date socialStart = new Date(min * 1000L);
         final Date socialEnd = new Date(max * 1000L);
-        socialFuture = socialFetcherService.fetchSocialData(config, exporter, managedExecutor, socialStart, socialEnd);
+        socialFuture =
+            socialFetcherService.fetchSocialData(
+                config, exporter, managedExecutor, socialStart, socialEnd);
       }
 
       final Map<ObjectId, List<String>> tagsByCommitId = buildTagsByCommitId(repository);
 
       // Pre-compile patterns
-      final List<java.nio.file.PathMatcher> restrictMatchers = compileMatchers(
-          config.includeInAnalysisExpressions());
-      final List<java.nio.file.PathMatcher> excludeMatchers = compileMatchers(
-          config.excludeFromAnalysisExpressions());
+      final List<java.nio.file.PathMatcher> restrictMatchers =
+          compileMatchers(config.includeInAnalysisExpressions());
+      final List<java.nio.file.PathMatcher> excludeMatchers =
+          compileMatchers(config.excludeFromAnalysisExpressions());
 
       String lastCheckedCommitHash = startCommit.filter(hash -> !hash.isBlank()).orElse(null);
       String lastFullyAnalyzedCommitHash = lastCheckedCommitHash;
@@ -258,7 +286,9 @@ public class AnalysisService {
                 || !commitSamplingEnabled && processedCommitCount < commitsToAnalyze;
 
         if (!fullyAnalyzeCommit && commitSamplingEnabled) {
-          LOGGER.atDebug().addArgument(walkEntry.hash())
+          LOGGER
+              .atDebug()
+              .addArgument(walkEntry.hash())
               .log("Skipping commit not selected for sampling: {}");
           recordSkippedCommitInWalk(config);
           lastCheckedCommitHash = walkEntry.hash();
@@ -299,10 +329,14 @@ public class AnalysisService {
 
             final var reportTriple =
                 gitRepositoryHandler.listDiff(
-                    repository, Optional.ofNullable(baseCommit), commit, config.pathRestrictionForDiff());
+                    repository,
+                    Optional.ofNullable(baseCommit),
+                    commit,
+                    config.pathRestrictionForDiff());
 
-            final List<FileDescriptor> descriptorAddedList = new ArrayList<>(reportTriple.right()); // NOPMD
-            final List<FileDescriptor> descriptorModifiedList = new ArrayList<>(reportTriple.left());
+            final List<FileDescriptor> descriptorAddedList = new ArrayList<>(reportTriple.right());
+            final List<FileDescriptor> descriptorModifiedList =
+                new ArrayList<>(reportTriple.left());
             final List<FileDescriptor> descriptorDeletedList = reportTriple.middle();
 
             final GlobFilterStats globFilterStats = new GlobFilterStats();
@@ -317,27 +351,30 @@ public class AnalysisService {
             if (config.skipCommitsWithoutRelevantFileChanges()
                 && !hasRelevantFilteredFileChanges(
                     descriptorAddedList, descriptorModifiedList, descriptorDeletedList)) {
-              LOGGER.atDebug().addArgument(commit.getName())
+              LOGGER
+                  .atDebug()
+                  .addArgument(commit.getName())
                   .log("Skipping commit without file changes in analysis scope: {}");
               recordSkippedCommitInWalk(config);
               lastCheckedCommitHash = walkEntry.hash();
               continue;
             }
 
-            LOGGER.atDebug().addArgument(descriptorAddedList.size())
+            LOGGER
+                .atDebug()
+                .addArgument(descriptorAddedList.size())
                 .addArgument(descriptorModifiedList.size())
                 .log("Files added: {}, files modified: {}");
 
             final List<FileDescriptor> unchangedFiles = List.of();
 
-            final List<FileDescriptor> filesToAnalyze = new ArrayList<>(descriptorAddedList.size()
-                + descriptorModifiedList.size());
+            final List<FileDescriptor> filesToAnalyze =
+                new ArrayList<>(descriptorAddedList.size() + descriptorModifiedList.size());
             filesToAnalyze.addAll(descriptorAddedList);
             filesToAnalyze.addAll(descriptorModifiedList);
 
             analysisStatusService.setCurrentCommitFiles(
-                config.landscapeToken(),
-                filesToAnalyze.size());
+                config.landscapeToken(), filesToAnalyze.size());
 
             if (filesToAnalyze.isEmpty()) {
               createCommitReport(
@@ -395,24 +432,25 @@ public class AnalysisService {
 
       LOGGER.atTrace().addArgument(fullAnalysisCount).log("Analyzed {} commits");
 
-      socialFuture.ifPresent(f -> {
-        try {
-          f.get(SOCIAL_FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-          exporter.relinkResourceEvents(config.landscapeToken(), config.getRepositoryName());
-        } catch (TimeoutException | ExecutionException e) {
-          LOGGER.warn("Social fetch did not complete", e);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
-      });
+      socialFuture.ifPresent(
+          f -> {
+            try {
+              f.get(SOCIAL_FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+              exporter.relinkResourceEvents(config.landscapeToken(), config.getRepositoryName());
+            } catch (TimeoutException | ExecutionException e) {
+              LOGGER.warn("Social fetch did not complete", e);
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+            }
+          });
 
       // checkout the branch, so not a single commit is checked out after the run
       Git.wrap(repository).checkout().setName(fullBranch).call();
     }
   }
 
-  private String resolveRepositoryUrlForStateRequest(final AnalysisConfig config,
-      final String repositoryUrl) {
+  private String resolveRepositoryUrlForStateRequest(
+      final AnalysisConfig config, final String repositoryUrl) {
     return RepositoryFileUrlBuilder.resolveRepositoryUrl(
             repositoryUrl.isBlank() ? config.repoRemoteUrl() : Optional.of(repositoryUrl), "")
         .orElse("");
@@ -422,21 +460,25 @@ public class AnalysisService {
    * Sends a single state request that both registers landscape metadata and, in CI mode, resolves
    * the latest fully persisted commit to resume from.
    */
-  private AnalysisStartContext initializeRemoteStateAndResolveStart(final AnalysisConfig config,
-      final DataExporter exporter, final String branch, final String repositoryUrl) {
+  private AnalysisStartContext initializeRemoteStateAndResolveStart(
+      final AnalysisConfig config,
+      final DataExporter exporter,
+      final String branch,
+      final String repositoryUrl) {
     if (!exporter.isRemote()) {
       return new AnalysisStartContext(config.startCommit(), false);
     }
 
     try {
       final boolean ciMode = isCiMode();
-      final StateData remoteState = exporter.getStateData(
-          config.getRepositoryName(),
-          branch,
-          config.landscapeToken(),
-          config.applicationPathsMap(),
-          resolveRepositoryUrlForStateRequest(config, repositoryUrl),
-          !ciMode);
+      final StateData remoteState =
+          exporter.getStateData(
+              config.getRepositoryName(),
+              branch,
+              config.landscapeToken(),
+              config.applicationPathsMap(),
+              resolveRepositoryUrlForStateRequest(config, repositoryUrl),
+              !ciMode);
       return resolveAnalysisStartContext(config, exporter, remoteState, ciMode, branch);
     } catch (final Exception e) {
       LOGGER.warn("Could not initialize remote state: {}", e.getMessage());
@@ -444,8 +486,8 @@ public class AnalysisService {
     }
   }
 
-  private void checkIfCommitsAreReachable(final Optional<String> startCommit,
-      final Optional<String> endCommit, final String branch)
+  private void checkIfCommitsAreReachable(
+      final Optional<String> startCommit, final Optional<String> endCommit, final String branch)
       throws NotFoundException {
     if (this.gitRepositoryHandler.isUnreachableCommit(startCommit, branch)) {
       throw new NotFoundException(toErrorText("start", startCommit.orElse(""), branch));
@@ -455,32 +497,35 @@ public class AnalysisService {
   }
 
   private record AnalysisStartContext(
-      Optional<String> startCommit, boolean landscapeHasPersistedCommits) {
-  }
+      Optional<String> startCommit, boolean landscapeHasPersistedCommits) {}
 
   /**
    * Resolves the git commit to start from and whether landscape already contains a fully persisted
    * commit for this repository branch.
    */
-  private AnalysisStartContext resolveAnalysisStartContext(final AnalysisConfig config,
-      final DataExporter exporter, final StateData remoteState, final boolean ciMode,
+  private AnalysisStartContext resolveAnalysisStartContext(
+      final AnalysisConfig config,
+      final DataExporter exporter,
+      final StateData remoteState,
+      final boolean ciMode,
       final String branch) {
-    final boolean landscapeHasPersistedCommits = remoteState.getCommitId() != null
-        && !remoteState.getCommitId().isBlank();
+    final boolean landscapeHasPersistedCommits =
+        remoteState.getCommitId() != null && !remoteState.getCommitId().isBlank();
 
     if (ciMode) {
       if (!landscapeHasPersistedCommits) {
-        LOGGER.info("No remote state found for branch {}. Starting analysis from the beginning.",
-            branch);
+        LOGGER.info(
+            "No remote state found for branch {}. Starting analysis from the beginning.", branch);
         return new AnalysisStartContext(Optional.empty(), false);
       }
-      LOGGER.info("Remote state found. Starting analysis after already analyzed commit: {}",
+      LOGGER.info(
+          "Remote state found. Starting analysis after already analyzed commit: {}",
           remoteState.getCommitId());
       return new AnalysisStartContext(Optional.of(remoteState.getCommitId()), true);
     }
 
-    if (config.startCommit().isPresent() && exporter.isInvalidCommitHash(
-        config.startCommit().get())) {
+    if (config.startCommit().isPresent()
+        && exporter.isInvalidCommitHash(config.startCommit().get())) {
       return new AnalysisStartContext(Optional.empty(), landscapeHasPersistedCommits);
     }
     return new AnalysisStartContext(config.startCommit(), landscapeHasPersistedCommits);
@@ -501,8 +546,7 @@ public class AnalysisService {
       final String lastFullyAnalyzedCommitHash,
       final Set<String> analyzedCommitHashes)
       throws IOException {
-    if (hasGapSinceLastFullAnalysis(
-        lastFullyAnalyzedCommitHash, commit, analyzedCommitHashes)) {
+    if (hasGapSinceLastFullAnalysis(lastFullyAnalyzedCommitHash, commit, analyzedCommitHashes)) {
       return parseCommitByHash(repository, lastFullyAnalyzedCommitHash);
     }
     final boolean isFirstAnalyzedCommit = commitCount == 0;
@@ -539,8 +583,9 @@ public class AnalysisService {
   }
 
   /**
-   * Parent commit ids for {@link CommitData}. When {@code connectToLastAnalyzedWhenCommitsWereSkipped}
-   * is enabled, commits after ignored ones link to the last persisted commit instead of git parents.
+   * Parent commit ids for {@link CommitData}. When {@code
+   * connectToLastAnalyzedWhenCommitsWereSkipped} is enabled, commits after ignored ones link to the
+   * last persisted commit instead of git parents.
    */
   /* package */ List<String> resolveLandscapeParentCommitIds(
       final RevCommit commit,
@@ -548,8 +593,7 @@ public class AnalysisService {
       final boolean connectToLastAnalyzedWhenCommitsWereSkipped,
       final Set<String> analyzedCommitHashes) {
     if (connectToLastAnalyzedWhenCommitsWereSkipped
-        && hasGapSinceLastFullAnalysis(
-            lastFullyAnalyzedCommitHash, commit, analyzedCommitHashes)) {
+        && hasGapSinceLastFullAnalysis(lastFullyAnalyzedCommitHash, commit, analyzedCommitHashes)) {
       return List.of(lastFullyAnalyzedCommitHash);
     }
     return resolveStoredParentCommitIds(commit);
@@ -563,9 +607,9 @@ public class AnalysisService {
   }
 
   /**
-   * Determines how many oldest commits to skip and how many to analyze when a
-   * {@link AnalysisConfig#commitAnalysisLimit()} is set. Shallow clones fetch {@code limit + 1}
-   * commits; the extra oldest commit is excluded via {@code total - limit} when {@code total > limit}.
+   * Determines how many oldest commits to skip and how many to analyze when a {@link
+   * AnalysisConfig#commitAnalysisLimit()} is set. Shallow clones fetch {@code limit + 1} commits;
+   * the extra oldest commit is excluded via {@code total - limit} when {@code total > limit}.
    */
   /* package */ CommitRangeSelection resolveCommitRangeSelection(
       final int totalCommitsInRange, final AnalysisConfig config) {
@@ -588,7 +632,8 @@ public class AnalysisService {
       final Repository repository,
       final List<CommitWalkEntry> commitsInRange,
       final CommitRangeSelection selection,
-      final AnalysisConfig config) throws IOException {
+      final AnalysisConfig config)
+      throws IOException {
     if (config.commitAnalysisLimit().isEmpty() || commitsInRange.isEmpty()) {
       return selection;
     }
@@ -600,14 +645,14 @@ public class AnalysisService {
     }
 
     final CommitWalkEntry firstEntryToProcess = commitsInRange.get(commitsToSkipBeforeAnalyzing);
-    final RevCommit firstCommitToProcess = parseCommitByHash(repository, firstEntryToProcess.hash());
+    final RevCommit firstCommitToProcess =
+        parseCommitByHash(repository, firstEntryToProcess.hash());
     try {
       if (shouldExcludeAsShallowCloneBoundary(repository, firstCommitToProcess)) {
         commitsToSkipBeforeAnalyzing++;
         commitsToAnalyze = Math.max(0, commitsToAnalyze - 1);
         LOGGER.info(
-            "Excluding shallow-clone boundary commit {} from analysis",
-            firstEntryToProcess.hash());
+            "Excluding shallow-clone boundary commit {} from analysis", firstEntryToProcess.hash());
       }
     } finally {
       firstCommitToProcess.disposeBody();
@@ -645,16 +690,17 @@ public class AnalysisService {
     return !isCommitAvailableInRepository(repository, commit.getParent(0).getName());
   }
 
-  private boolean isCommitAvailableInRepository(final Repository repository, final String commitHash)
-      throws IOException {
+  private boolean isCommitAvailableInRepository(
+      final Repository repository, final String commitHash) throws IOException {
     return repository.resolve(commitHash) != null;
   }
 
-  /* package */ record CommitRangeSelection(int commitsToAnalyze, int commitsToSkipBeforeAnalyzing) {}
+  /* package */ record CommitRangeSelection(
+      int commitsToAnalyze, int commitsToSkipBeforeAnalyzing) {}
 
   /**
-   * Returns {@code true} when skipped commits sit between the last fully analyzed commit and
-   * {@code commit}, so landscape-service cannot inherit unchanged files from its git parent.
+   * Returns {@code true} when skipped commits sit between the last fully analyzed commit and {@code
+   * commit}, so landscape-service cannot inherit unchanged files from its git parent.
    *
    * <p>When the walk analyzes commits from merged branches, the last fully analyzed commit may
    * belong to a parallel branch while {@code commit}'s first git parent was already analyzed. That
@@ -706,9 +752,14 @@ public class AnalysisService {
     return parseCommitByHash(repository, entry.hash());
   }
 
-  private List<CommitWalkEntry> collectCommitWalkEntries(final Repository repository, final String fullBranch,
-      final Optional<String> startCommit, final Optional<String> endCommit,
-      final boolean remoteExport, final boolean firstParentCommitsOnly) throws IOException {
+  private List<CommitWalkEntry> collectCommitWalkEntries(
+      final Repository repository,
+      final String fullBranch,
+      final Optional<String> startCommit,
+      final Optional<String> endCommit,
+      final boolean remoteExport,
+      final boolean firstParentCommitsOnly)
+      throws IOException {
     try (RevWalk revWalk = new RevWalk(repository)) {
       prepareRevWalk(repository, revWalk, fullBranch, firstParentCommitsOnly);
 
@@ -746,24 +797,36 @@ public class AnalysisService {
     final Map<ObjectId, List<String>> tagsByCommitId = new HashMap<>();
     final List<Ref> tags = Git.wrap(repository).tagList().call();
     for (final Ref tag : tags) {
-      tagsByCommitId.computeIfAbsent(tag.getObjectId(), ignored -> new ArrayList<>())
+      tagsByCommitId
+          .computeIfAbsent(tag.getObjectId(), ignored -> new ArrayList<>())
           .add(tag.getName());
     }
     return tagsByCommitId;
   }
 
-  private void prepareRevWalk(final Repository repository, final RevWalk revWalk,
-      final String branch, final boolean firstParentCommitsOnly) throws IOException {
-    gitRepositoryHandler.configureBranchRevWalk(revWalk, repository, branch,
-        firstParentCommitsOnly);
+  private void prepareRevWalk(
+      final Repository repository,
+      final RevWalk revWalk,
+      final String branch,
+      final boolean firstParentCommitsOnly)
+      throws IOException {
+    gitRepositoryHandler.configureBranchRevWalk(
+        revWalk, repository, branch, firstParentCommitsOnly);
   }
 
-  private void commitAnalysis(final AnalysisConfig config, final Repository repository,
-      final RevCommit commit, final List<FileDescriptor> filesToAnalyze,
-      final DataExporter exporter, final String branchName,
-      final List<FileDescriptor> addedFiles, final List<FileDescriptor> modifiedFiles,
-      final List<FileDescriptor> deletedFiles, final List<FileDescriptor> unchangedFiles,
-      final Map<ObjectId, List<String>> tagsByCommitId, final String lastFullyAnalyzedCommitHash,
+  private void commitAnalysis(
+      final AnalysisConfig config,
+      final Repository repository,
+      final RevCommit commit,
+      final List<FileDescriptor> filesToAnalyze,
+      final DataExporter exporter,
+      final String branchName,
+      final List<FileDescriptor> addedFiles,
+      final List<FileDescriptor> modifiedFiles,
+      final List<FileDescriptor> deletedFiles,
+      final List<FileDescriptor> unchangedFiles,
+      final Map<ObjectId, List<String>> tagsByCommitId,
+      final String lastFullyAnalyzedCommitHash,
       final Set<String> analyzedCommitHashes)
       throws GitAPIException, NotFoundException, IOException {
 
@@ -788,20 +851,25 @@ public class AnalysisService {
     LOGGER.atTrace().addArgument(filesToAnalyze.toString()).log("Files: {}");
 
     final long analysisStartedAt = System.nanoTime();
-    final List<CompletableFuture<FileData>> analysisTasks = submitFileAnalysisTasks(config,
-        repository, commit, filesToAnalyze);
+    final List<CompletableFuture<FileData>> analysisTasks =
+        submitFileAnalysisTasks(config, repository, commit, filesToAnalyze);
     CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture<?>[0]))
-        .whenComplete((ignored, error) -> LOGGER.atDebug()
-            .addArgument(commit.getName())
-            .addArgument(analysisTasks.size())
-            .addArgument((System.nanoTime() - analysisStartedAt) / 1_000_000L)
-            .log("File analysis for commit {} ({} files) took {} ms"));
+        .whenComplete(
+            (ignored, error) ->
+                LOGGER
+                    .atDebug()
+                    .addArgument(commit.getName())
+                    .addArgument(analysisTasks.size())
+                    .addArgument((System.nanoTime() - analysisStartedAt) / 1_000_000L)
+                    .log("File analysis for commit {} ({} files) took {} ms"));
 
     pipelinePersistAnalyzedFiles(exporter, analysisTasks, commit.getName());
   }
 
-  private List<CompletableFuture<FileData>> submitFileAnalysisTasks(final AnalysisConfig config,
-      final Repository repository, final RevCommit commit,
+  private List<CompletableFuture<FileData>> submitFileAnalysisTasks(
+      final AnalysisConfig config,
+      final Repository repository,
+      final RevCommit commit,
       final List<FileDescriptor> descriptorList) {
     final String commitAuthor = commit.getAuthorIdent().getEmailAddress();
     final int parallelism = resolveFileAnalysisParallelism();
@@ -809,60 +877,69 @@ public class AnalysisService {
     final List<CompletableFuture<FileData>> analysisTasks = new ArrayList<>(descriptorList.size());
 
     for (final FileDescriptor fileDescriptor : descriptorList) {
-      analysisTasks.add(managedExecutor.supplyAsync(() -> {
-        try {
-          ensureNotCancelled(config.landscapeToken());
-          inFlightTasks.acquire();
-          analysisStatusService.setCurrentAnalyzingFile(config.landscapeToken(),
-              fileDescriptor.reportedPath);
+      analysisTasks.add(
+          managedExecutor.supplyAsync(
+              () -> {
+                try {
+                  ensureNotCancelled(config.landscapeToken());
+                  inFlightTasks.acquire();
+                  analysisStatusService.setCurrentAnalyzingFile(
+                      config.landscapeToken(), fileDescriptor.reportedPath);
 
-          LOGGER.atDebug()
-              .addArgument(fileDescriptor.reportedPath)
-              .log("Analyzing file: {}");
+                  LOGGER
+                      .atDebug()
+                      .addArgument(fileDescriptor.reportedPath)
+                      .log("Analyzing file: {}");
 
-          AbstractFileDataHandler fileDataHandler = analyzeFileForCommit(config, repository,
-              fileDescriptor, commit.getName(), commitAuthor);
-          if (fileDataHandler == null) {
-            LOGGER.atWarn()
-                .addArgument(fileDescriptor.reportedPath)
-                .log("Analysis of file {} failed - sending minimal file data with updated hash");
-            fileDataHandler = createMinimalFileDataHandler(fileDescriptor, commit);
-            GitMetricCollector.addCommitGitMetrics(fileDataHandler, commitAuthor);
-            fileDataHandler.setLandscapeToken(config.landscapeToken());
-            fileDataHandler.setRepositoryName(config.getRepositoryName());
-          }
+                  AbstractFileDataHandler fileDataHandler =
+                      analyzeFileForCommit(
+                          config, repository, fileDescriptor, commit.getName(), commitAuthor);
+                  if (fileDataHandler == null) {
+                    LOGGER
+                        .atWarn()
+                        .addArgument(fileDescriptor.reportedPath)
+                        .log(
+                            "Analysis of file {} failed - sending minimal file data with updated hash");
+                    fileDataHandler = createMinimalFileDataHandler(fileDescriptor, commit);
+                    GitMetricCollector.addCommitGitMetrics(fileDataHandler, commitAuthor);
+                    fileDataHandler.setLandscapeToken(config.landscapeToken());
+                    fileDataHandler.setRepositoryName(config.getRepositoryName());
+                  }
 
-          return toExportFileData(fileDataHandler, config);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          if (analysisStatusService.isCancellationRequested(config.landscapeToken())) {
-            throw new AnalysisCancelledException(config.landscapeToken());
-          }
-          LOGGER.warn("File analysis interrupted for {}", fileDescriptor.reportedPath);
-          final AbstractFileDataHandler minimalHandler = createMinimalFileDataHandler(fileDescriptor, commit);
-          GitMetricCollector.addCommitGitMetrics(minimalHandler, commitAuthor);
-          minimalHandler.setLandscapeToken(config.landscapeToken());
-          minimalHandler.setRepositoryName(config.getRepositoryName());
-          return toExportFileData(minimalHandler, config);
-        } finally {
-          inFlightTasks.release();
-          analysisStatusService.clearCurrentAnalyzingFile(config.landscapeToken(),
-              fileDescriptor.reportedPath);
-          analysisStatusService.incrementAnalyzedFile(config.landscapeToken());
-        }
-      }));
+                  return toExportFileData(fileDataHandler, config);
+                } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  if (analysisStatusService.isCancellationRequested(config.landscapeToken())) {
+                    throw new AnalysisCancelledException(config.landscapeToken());
+                  }
+                  LOGGER.warn("File analysis interrupted for {}", fileDescriptor.reportedPath);
+                  final AbstractFileDataHandler minimalHandler =
+                      createMinimalFileDataHandler(fileDescriptor, commit);
+                  GitMetricCollector.addCommitGitMetrics(minimalHandler, commitAuthor);
+                  minimalHandler.setLandscapeToken(config.landscapeToken());
+                  minimalHandler.setRepositoryName(config.getRepositoryName());
+                  return toExportFileData(minimalHandler, config);
+                } finally {
+                  inFlightTasks.release();
+                  analysisStatusService.clearCurrentAnalyzingFile(
+                      config.landscapeToken(), fileDescriptor.reportedPath);
+                  analysisStatusService.incrementAnalyzedFile(config.landscapeToken());
+                }
+              }));
     }
     return analysisTasks;
   }
 
-  private FileData toExportFileData(final AbstractFileDataHandler fileDataHandler,
-      final AnalysisConfig config) {
-    return FileDataExportFilter.filter(fileDataHandler.getProtoBufObject(),
-        config.includeDataStructures());
+  private FileData toExportFileData(
+      final AbstractFileDataHandler fileDataHandler, final AnalysisConfig config) {
+    return FileDataExportFilter.filter(
+        fileDataHandler.getProtoBufObject(), config.includeDataStructures());
   }
 
-  private void pipelinePersistAnalyzedFiles(final DataExporter exporter,
-      final List<CompletableFuture<FileData>> analysisTasks, final String commitId) {
+  private void pipelinePersistAnalyzedFiles(
+      final DataExporter exporter,
+      final List<CompletableFuture<FileData>> analysisTasks,
+      final String commitId) {
     if (analysisTasks.isEmpty()) {
       return;
     }
@@ -875,20 +952,30 @@ public class AnalysisService {
     final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
     final CountDownLatch analysisFinished = new CountDownLatch(1);
 
-    final Thread persistThread = Thread.ofVirtual().name("file-persist-" + commitId)
-        .start(() -> exporter.persistFilesFromQueueInBatches(completedFiles, analysisFinished,
-            filePersistBatchSizeProperty, filePersistConcurrencyProperty));
+    final Thread persistThread =
+        Thread.ofVirtual()
+            .name("file-persist-" + commitId)
+            .start(
+                () ->
+                    exporter.persistFilesFromQueueInBatches(
+                        completedFiles,
+                        analysisFinished,
+                        filePersistBatchSizeProperty,
+                        filePersistConcurrencyProperty));
 
     for (final CompletableFuture<FileData> analysisTask : analysisTasks) {
-      analysisTask.whenComplete((fileData, error) -> {
-        if (error != null) {
-          LOGGER.error("Unexpected analysis failure during pipelined persist for commit {}: {}",
-              commitId, error.getMessage());
-        }
-        if (fileData != null) {
-          completedFiles.offer(fileData);
-        }
-      });
+      analysisTask.whenComplete(
+          (fileData, error) -> {
+            if (error != null) {
+              LOGGER.error(
+                  "Unexpected analysis failure during pipelined persist for commit {}: {}",
+                  commitId,
+                  error.getMessage());
+            }
+            if (fileData != null) {
+              completedFiles.offer(fileData);
+            }
+          });
     }
 
     CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture<?>[0])).join();
@@ -907,16 +994,17 @@ public class AnalysisService {
     }
   }
 
-  private AbstractFileDataHandler analyzeFileForCommit(final AnalysisConfig config,
-      final Repository repository, final FileDescriptor fileDescriptor, final String commitSha,
+  private AbstractFileDataHandler analyzeFileForCommit(
+      final AnalysisConfig config,
+      final Repository repository,
+      final FileDescriptor fileDescriptor,
+      final String commitSha,
       final String commitAuthor) {
     try {
-      LOGGER.atDebug()
-          .addArgument(fileDescriptor.reportedPath)
-          .log("Analyzing file: {}");
+      LOGGER.atDebug().addArgument(fileDescriptor.reportedPath).log("Analyzing file: {}");
 
-      AbstractFileDataHandler fileDataHandler = fileAnalysis(config, repository, fileDescriptor,
-          commitSha);
+      AbstractFileDataHandler fileDataHandler =
+          fileAnalysis(config, repository, fileDescriptor, commitSha);
       if (fileDataHandler == null) {
         return null;
       }
@@ -925,7 +1013,9 @@ public class AnalysisService {
         final long fileSize = GitRepositoryHandler.getBlobSize(fileDescriptor.objectId, repository);
         fileDataHandler.addMetric(CommonFileDataListener.FILE_SIZE, String.valueOf(fileSize));
       } catch (IOException e) {
-        LOGGER.error("File size of file {} could not be analyzed: {}", fileDescriptor.relativePath,
+        LOGGER.error(
+            "File size of file {} could not be analyzed: {}",
+            fileDescriptor.relativePath,
             e.getMessage());
       }
 
@@ -959,36 +1049,43 @@ public class AnalysisService {
   }
 
   private boolean shouldReconnectParentAcrossSkippedCommits(final AnalysisConfig config) {
-    return config.skipCommitsWithoutRelevantFileChanges()
-        || CommitSampler.isEnabled(config);
+    return config.skipCommitsWithoutRelevantFileChanges() || CommitSampler.isEnabled(config);
   }
 
-  private void createCommitReport(final AnalysisConfig config, final RevCommit commit,
-      final DataExporter exporter, final String branchName,
-      final List<FileDescriptor> addedFiles, final List<FileDescriptor> modifiedFiles,
-      final List<FileDescriptor> deletedFiles, final List<FileDescriptor> unchangedFiles,
-      final Map<ObjectId, List<String>> tagsByCommitId, final String lastFullyAnalyzedCommitHash,
+  private void createCommitReport(
+      final AnalysisConfig config,
+      final RevCommit commit,
+      final DataExporter exporter,
+      final String branchName,
+      final List<FileDescriptor> addedFiles,
+      final List<FileDescriptor> modifiedFiles,
+      final List<FileDescriptor> deletedFiles,
+      final List<FileDescriptor> unchangedFiles,
+      final Map<ObjectId, List<String>> tagsByCommitId,
+      final String lastFullyAnalyzedCommitHash,
       final Set<String> analyzedCommitHashes)
       throws NotFoundException, IOException, GitAPIException {
     final CommitReportHandler commitReportHandler = new CommitReportHandler();
 
-    final List<String> parentCommitIds = shouldReconnectParentAcrossSkippedCommits(config)
-        ? resolveLandscapeParentCommitIds(
-            commit, lastFullyAnalyzedCommitHash, true, analyzedCommitHashes)
-        : resolveLandscapeParentCommitIds(commit);
+    final List<String> parentCommitIds =
+        shouldReconnectParentAcrossSkippedCommits(config)
+            ? resolveLandscapeParentCommitIds(
+                commit, lastFullyAnalyzedCommitHash, true, analyzedCommitHashes)
+            : resolveLandscapeParentCommitIds(commit);
 
-    commitReportHandler.init(
-        commit.getId().getName(),
-        parentCommitIds,
-        branchName);
+    commitReportHandler.init(commit.getId().getName(), parentCommitIds, branchName);
 
     commitReportHandler.setAnalysisFileCount(
         addedFiles.size() + modifiedFiles.size() + unchangedFiles.size());
 
-    commitReportHandler.setAuthorDate(Timestamp.newBuilder()
-        .setSeconds(commit.getAuthorIdent().getWhen().getTime() / 1000).build());
-    commitReportHandler.setCommitDate(Timestamp.newBuilder()
-        .setSeconds(commit.getCommitterIdent().getWhen().getTime() / 1000).build());
+    commitReportHandler.setAuthorDate(
+        Timestamp.newBuilder()
+            .setSeconds(commit.getAuthorIdent().getWhen().getTime() / 1000)
+            .build());
+    commitReportHandler.setCommitDate(
+        Timestamp.newBuilder()
+            .setSeconds(commit.getCommitterIdent().getWhen().getTime() / 1000)
+            .build());
 
     for (final FileDescriptor addedFile : addedFiles) {
       commitReportHandler.addAdded(addedFile);
@@ -1011,10 +1108,9 @@ public class AnalysisService {
     commitReportHandler.addToken(config.landscapeToken());
     commitReportHandler.setRepositoryName(config.getRepositoryName());
 
-    ContributorData contributorData = GitMetricCollector.createContributorData(
-        commit,
-        config.landscapeToken(),
-        config.getRepositoryName());
+    ContributorData contributorData =
+        GitMetricCollector.createContributorData(
+            commit, config.landscapeToken(), config.getRepositoryName());
 
     commitReportHandler.setAuthor(contributorData);
 
@@ -1022,9 +1118,8 @@ public class AnalysisService {
   }
 
   /**
-   * Checks if a file is a text file by checking its MIME type. Detects text/*,
-   * application/json, and application/yaml
-   * files.
+   * Checks if a file is a text file by checking its MIME type. Detects text/*, application/json,
+   * and application/yaml files.
    *
    * @param file the file descriptor
    * @return true if it's a readable text file
@@ -1062,19 +1157,21 @@ public class AnalysisService {
   }
 
   /**
-   * Analyzes a file and returns the appropriate handler based on file extension.
-   * Routes code files to parsers and text
-   * files to basic metric collection.
+   * Analyzes a file and returns the appropriate handler based on file extension. Routes code files
+   * to parsers and text files to basic metric collection.
    *
-   * @param config     the analysis configuration
+   * @param config the analysis configuration
    * @param repository the git repository
-   * @param file       the file descriptor
-   * @param commitSha  the commit SHA
+   * @param file the file descriptor
+   * @param commitSha the commit SHA
    * @return the file data handler
    * @throws IOException if file content cannot be read
    */
-  private AbstractFileDataHandler fileAnalysis(final AnalysisConfig config,
-      final Repository repository, final FileDescriptor file, final String commitSha)
+  private AbstractFileDataHandler fileAnalysis(
+      final AnalysisConfig config,
+      final Repository repository,
+      final FileDescriptor file,
+      final String commitSha)
       throws IOException {
     final String fileContent;
     try {
@@ -1090,13 +1187,15 @@ public class AnalysisService {
     try {
       AbstractFileDataHandler fileDataHandler = null;
 
-      LOGGER.atDebug()
+      LOGGER
+          .atDebug()
           .addArgument(file.reportedPath)
           .addArgument(fileContent.length())
           .log("Analyzing file {} with size {} bytes");
 
       if (shouldUseMinimalSourceAnalysis(config, fileName, loc)) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(loc)
             .addArgument(config.maxLocForFullAnalysis().get())
@@ -1105,130 +1204,191 @@ public class AnalysisService {
       }
 
       // Route to appropriate parser based on file extension
-      if (fileName.endsWith(".ts") || fileName.endsWith(".tsx")
-          || fileName.endsWith(".js") || fileName.endsWith(".jsx")) {
-        final Language tsJsLanguage = fileName.endsWith(".ts") || fileName.endsWith(".tsx")
-            ? Language.TYPESCRIPT
-            : Language.JAVASCRIPT;
-        LOGGER.atInfo()
+      if (fileName.endsWith(".ts")
+          || fileName.endsWith(".tsx")
+          || fileName.endsWith(".js")
+          || fileName.endsWith(".jsx")) {
+        final Language tsJsLanguage =
+            fileName.endsWith(".ts") || fileName.endsWith(".tsx")
+                ? Language.TYPESCRIPT
+                : Language.JAVASCRIPT;
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing TypeScript/JavaScript file: {} (size: {} bytes)");
 
-        fileDataHandler = parseOrFallback(
-            () -> tsParserService.parseFileContent(fileContent, file.reportedPath,
-                file.objectId.getName()),
-            file, fileContent, tsJsLanguage);
+        fileDataHandler =
+            parseOrFallback(
+                () ->
+                    tsParserService.parseFileContent(
+                        fileContent, file.reportedPath, file.objectId.getName()),
+                file,
+                fileContent,
+                tsJsLanguage);
       } else if (fileName.endsWith(".java")) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Java file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = parseOrFallback(
-            () -> antlrParserService.parseFileContent(fileContent, file.reportedPath,
-                file.objectId.getName()),
-            file, fileContent, Language.JAVA);
+        fileDataHandler =
+            parseOrFallback(
+                () ->
+                    antlrParserService.parseFileContent(
+                        fileContent, file.reportedPath, file.objectId.getName()),
+                file,
+                fileContent,
+                Language.JAVA);
       } else if (fileName.endsWith(".py")) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Python file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = parseOrFallback(
-            () -> pythonParserService.parseFileContent(fileContent, file.reportedPath,
-                file.objectId.getName()),
-            file, fileContent, Language.PYTHON);
+        fileDataHandler =
+            parseOrFallback(
+                () ->
+                    pythonParserService.parseFileContent(
+                        fileContent, file.reportedPath, file.objectId.getName()),
+                file,
+                fileContent,
+                Language.PYTHON);
       } else if (fileName.endsWith(".go")) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Go file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = parseOrFallback(
-            () -> goParserService.parseFileContent(fileContent, file.reportedPath,
-                file.objectId.getName()),
-            file, fileContent, Language.GO);
+        fileDataHandler =
+            parseOrFallback(
+                () ->
+                    goParserService.parseFileContent(
+                        fileContent, file.reportedPath, file.objectId.getName()),
+                file,
+                fileContent,
+                Language.GO);
       } else if (fileName.endsWith(".cs")) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing C# file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = parseOrFallback(
-            () -> csharpParserService.parseFileContent(fileContent, file.reportedPath,
-                file.objectId.getName()),
-            file, fileContent, Language.CSHARP);
+        fileDataHandler =
+            parseOrFallback(
+                () ->
+                    csharpParserService.parseFileContent(
+                        fileContent, file.reportedPath, file.objectId.getName()),
+                file,
+                fileContent,
+                Language.CSHARP);
       } else if (fileName.endsWith(".rs")) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Rust file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = parseOrFallback(
-            () -> rustParserService.parseFileContent(fileContent, file.reportedPath,
-                file.objectId.getName()),
-            file, fileContent, Language.RUST);
+        fileDataHandler =
+            parseOrFallback(
+                () ->
+                    rustParserService.parseFileContent(
+                        fileContent, file.reportedPath, file.objectId.getName()),
+                file,
+                fileContent,
+                Language.RUST);
       } else if (fileName.endsWith(".kt") || fileName.endsWith(".kts")) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Kotlin file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = parseOrFallback(
-            () -> kotlinParserService.parseFileContent(fileContent, file.reportedPath,
-                file.objectId.getName()),
-            file, fileContent, Language.KOTLIN);
+        fileDataHandler =
+            parseOrFallback(
+                () ->
+                    kotlinParserService.parseFileContent(
+                        fileContent, file.reportedPath, file.objectId.getName()),
+                file,
+                fileContent,
+                Language.KOTLIN);
       } else if (fileName.endsWith(".php")) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing PHP file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = parseOrFallback(
-            () -> phpParserService.parseFileContent(fileContent, file.reportedPath,
-                file.objectId.getName()),
-            file, fileContent, Language.PHP);
+        fileDataHandler =
+            parseOrFallback(
+                () ->
+                    phpParserService.parseFileContent(
+                        fileContent, file.reportedPath, file.objectId.getName()),
+                file,
+                fileContent,
+                Language.PHP);
       } else if (fileName.endsWith(".swift")) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Swift file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = parseOrFallback(
-            () -> swiftParserService.parseFileContent(fileContent, file.reportedPath,
-                file.objectId.getName()),
-            file, fileContent, Language.SWIFT);
+        fileDataHandler =
+            parseOrFallback(
+                () ->
+                    swiftParserService.parseFileContent(
+                        fileContent, file.reportedPath, file.objectId.getName()),
+                file,
+                fileContent,
+                Language.SWIFT);
       } else if (fileName.endsWith(".c") || fileName.endsWith(".h")) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing C file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = parseOrFallback(
-            () -> antlrCParserService.parseFileContent(fileContent, file.reportedPath,
-                file.objectId.getName()),
-            file, fileContent, Language.C);
-      } else if (fileName.endsWith(".cpp") || fileName.endsWith(".cxx")
-          || fileName.endsWith(".cc") || fileName.endsWith(".hpp")
+        fileDataHandler =
+            parseOrFallback(
+                () ->
+                    antlrCParserService.parseFileContent(
+                        fileContent, file.reportedPath, file.objectId.getName()),
+                file,
+                fileContent,
+                Language.C);
+      } else if (fileName.endsWith(".cpp")
+          || fileName.endsWith(".cxx")
+          || fileName.endsWith(".cc")
+          || fileName.endsWith(".hpp")
           || fileName.endsWith(".hxx")) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing C++ file with ANTLR: {} (size: {} bytes)");
 
-        fileDataHandler = parseOrFallback(
-            () -> cppParserService.parseFileContent(fileContent, file.reportedPath,
-                file.objectId.getName()),
-            file, fileContent, Language.CPP);
+        fileDataHandler =
+            parseOrFallback(
+                () ->
+                    cppParserService.parseFileContent(
+                        fileContent, file.reportedPath, file.objectId.getName()),
+                file,
+                fileContent,
+                Language.CPP);
       } else if (isTextFile(file, fileContent)) {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("📄 Processing detected text file: {} (size: {} bytes)");
 
-        final TextFileDataHandler textHandler = new TextFileDataHandler(file.reportedPath,
-            Language.PLAINTEXT);
+        final TextFileDataHandler textHandler =
+            new TextFileDataHandler(file.reportedPath, Language.PLAINTEXT);
         textHandler.setFileHash(file.objectId.getName());
         textHandler.calculateMetrics(fileContent);
 
@@ -1236,16 +1396,18 @@ public class AnalysisService {
         GitMetricCollector.addFileGitMetrics(textHandler, file);
 
         fileDataHandler = textHandler;
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .log("✅ Successfully processed text file: {}");
       } else {
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(file.reportedPath)
             .log("📄 Processing other file (size only): {}");
 
-        final TextFileDataHandler genericHandler = new TextFileDataHandler(file.reportedPath,
-            Language.LANGUAGE_UNSPECIFIED);
+        final TextFileDataHandler genericHandler =
+            new TextFileDataHandler(file.reportedPath, Language.LANGUAGE_UNSPECIFIED);
         genericHandler.setFileHash(file.objectId.getName());
 
         // Add git metrics
@@ -1289,8 +1451,8 @@ public class AnalysisService {
     return FallbackFileDataHandlerFactory.create(file, fileContent);
   }
 
-  /* package */ boolean shouldUseMinimalSourceAnalysis(final AnalysisConfig config,
-      final String fileName, final long loc) {
+  /* package */ boolean shouldUseMinimalSourceAnalysis(
+      final AnalysisConfig config, final String fileName, final long loc) {
     if (config.maxLocForFullAnalysis().isEmpty()) {
       return false;
     }
@@ -1314,7 +1476,8 @@ public class AnalysisService {
     if (saveCrashedFilesProperty) {
       DebugFileWriter.saveDebugFile("/logs/crashedfiles/", fileContent, file.fileName);
     }
-    LOGGER.atWarn()
+    LOGGER
+        .atWarn()
         .addArgument(file.reportedPath)
         .addArgument(language)
         .log("Parser failed for {}, using fallback metrics (language={}, loc, size)");
@@ -1339,7 +1502,8 @@ public class AnalysisService {
     if (!stats.hasExclusions()) {
       return;
     }
-    LOGGER.atDebug()
+    LOGGER
+        .atDebug()
         .addArgument(commitHash)
         .addArgument(stats.excludedByInclusion)
         .addArgument(stats.excludedByExclusion)
@@ -1348,7 +1512,8 @@ public class AnalysisService {
                 + " exclusion patterns");
   }
 
-  private GlobFilterStats applyGlobFiltering(final List<FileDescriptor> descriptors,
+  private GlobFilterStats applyGlobFiltering(
+      final List<FileDescriptor> descriptors,
       final List<java.nio.file.PathMatcher> restrictMatchers,
       final List<java.nio.file.PathMatcher> excludeMatchers) {
     final GlobFilterStats stats = new GlobFilterStats();
@@ -1356,36 +1521,37 @@ public class AnalysisService {
       return stats;
     }
 
-    descriptors.removeIf(desc -> {
-      final java.nio.file.Path path = java.nio.file.Paths.get(desc.relativePath);
+    descriptors.removeIf(
+        desc -> {
+          final java.nio.file.Path path = java.nio.file.Paths.get(desc.relativePath);
 
-      // Restriction (Inclusion) - if specified, it must match one of them
-      if (restrictMatchers != null && !restrictMatchers.isEmpty()) {
-        boolean matchesRestrict = false;
-        for (final java.nio.file.PathMatcher matcher : restrictMatchers) {
-          if (matcher.matches(path)) {
-            matchesRestrict = true;
-            break;
+          // Restriction (Inclusion) - if specified, it must match one of them
+          if (restrictMatchers != null && !restrictMatchers.isEmpty()) {
+            boolean matchesRestrict = false;
+            for (final java.nio.file.PathMatcher matcher : restrictMatchers) {
+              if (matcher.matches(path)) {
+                matchesRestrict = true;
+                break;
+              }
+            }
+            if (!matchesRestrict) {
+              stats.excludedByInclusion++;
+              return true; // remove because it doesn't match restriction
+            }
           }
-        }
-        if (!matchesRestrict) {
-          stats.excludedByInclusion++;
-          return true; // remove because it doesn't match restriction
-        }
-      }
 
-      // Exclusion - if it matches any, remove it
-      if (excludeMatchers != null && !excludeMatchers.isEmpty()) {
-        for (final java.nio.file.PathMatcher matcher : excludeMatchers) {
-          if (matcher.matches(path)) {
-            stats.excludedByExclusion++;
-            return true; // remove because it matches exclusion
+          // Exclusion - if it matches any, remove it
+          if (excludeMatchers != null && !excludeMatchers.isEmpty()) {
+            for (final java.nio.file.PathMatcher matcher : excludeMatchers) {
+              if (matcher.matches(path)) {
+                stats.excludedByExclusion++;
+                return true; // remove because it matches exclusion
+              }
+            }
           }
-        }
-      }
 
-      return false; // keep it
-    });
+          return false; // keep it
+        });
     return stats;
   }
 
@@ -1410,5 +1576,4 @@ public class AnalysisService {
     }
     return matchers;
   }
-
 }

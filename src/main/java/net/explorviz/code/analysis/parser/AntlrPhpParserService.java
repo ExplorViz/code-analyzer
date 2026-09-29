@@ -16,19 +16,16 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR-based parser service for analyzing PHP source code.
- */
+/** ANTLR-based parser service for analyzing PHP source code. */
 @ApplicationScoped
 public class AntlrPhpParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrPhpParserService.class);
 
-  @Inject
-  AntlrParseSettings parseSettings = new AntlrParseSettings();
+  @Inject AntlrParseSettings parseSettings = new AntlrParseSettings();
 
-  public PhpFileDataHandler parseFileContent(final String fileContent, final String fileName,
-      final String fileHash) {
+  public PhpFileDataHandler parseFileContent(
+      final String fileContent, final String fileName, final String fileHash) {
     try {
       LOGGER.trace("Parsing PHP file content for {}", fileName);
       final CharStream charStream = CharStreams.fromString(fileContent, fileName);
@@ -55,15 +52,16 @@ public class AntlrPhpParserService {
     }
   }
 
-  private PhpFileDataHandler parse(final CharStream charStream, final String fileName,
-      final String fileHash) {
+  private PhpFileDataHandler parse(
+      final CharStream charStream, final String fileName, final String fileHash) {
     final PhpLexer lexer = new PhpLexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final PhpParser parser = new PhpParser(tokens);
 
-    final ParseTree document = AntlrParserUtils.parseTwoStage(
-        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::htmlDocument);
+    final ParseTree document =
+        AntlrParserUtils.parseTwoStage(
+            parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::htmlDocument);
 
     final PhpFileDataHandler fileDataHandler = new PhpFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

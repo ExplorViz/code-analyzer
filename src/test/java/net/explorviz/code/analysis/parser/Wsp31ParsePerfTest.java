@@ -13,14 +13,11 @@ class Wsp31ParsePerfTest {
 
   private static final Path REPO = Path.of("cloned-repositories/wsp-3-1");
 
-  @Inject
-  AntlrTypeScriptParserService tsParser;
+  @Inject AntlrTypeScriptParserService tsParser;
 
-  @Inject
-  AntlrPythonParserService pythonParser;
+  @Inject AntlrPythonParserService pythonParser;
 
-  @Inject
-  AntlrParserService javaParser;
+  @Inject AntlrParserService javaParser;
 
   @Test
   @EnabledIf("repoPresent")
@@ -56,8 +53,8 @@ class Wsp31ParsePerfTest {
     final var handler = tsParser.parseFileContent(content, relativePath, "hash");
     final long ms = (System.nanoTime() - start) / 1_000_000L;
     System.out.println(relativePath + " TS parse took " + ms + " ms, handler=" + (handler != null));
-    Assertions.assertTrue(ms < budgetMs,
-        relativePath + " expected under " + budgetMs + " ms, was " + ms + " ms");
+    Assertions.assertTrue(
+        ms < budgetMs, relativePath + " expected under " + budgetMs + " ms, was " + ms + " ms");
   }
 
   private void assertPythonWithinBudget(final String relativePath, final long budgetMs)
@@ -67,9 +64,10 @@ class Wsp31ParsePerfTest {
     final long start = System.nanoTime();
     final var handler = pythonParser.parseFileContent(content, relativePath, "hash");
     final long ms = (System.nanoTime() - start) / 1_000_000L;
-    System.out.println(relativePath + " Python parse took " + ms + " ms, handler=" + (handler != null));
-    Assertions.assertTrue(ms < budgetMs,
-        relativePath + " expected under " + budgetMs + " ms, was " + ms + " ms");
+    System.out.println(
+        relativePath + " Python parse took " + ms + " ms, handler=" + (handler != null));
+    Assertions.assertTrue(
+        ms < budgetMs, relativePath + " expected under " + budgetMs + " ms, was " + ms + " ms");
   }
 
   private void assertJavaWithinBudget(final String relativePath, final long budgetMs)
@@ -79,9 +77,10 @@ class Wsp31ParsePerfTest {
     final long start = System.nanoTime();
     final var handler = javaParser.parseFileContent(content, relativePath, "hash");
     final long ms = (System.nanoTime() - start) / 1_000_000L;
-    System.out.println(relativePath + " Java parse took " + ms + " ms, handler=" + (handler != null));
-    Assertions.assertTrue(ms < budgetMs,
-        relativePath + " expected under " + budgetMs + " ms, was " + ms + " ms");
+    System.out.println(
+        relativePath + " Java parse took " + ms + " ms, handler=" + (handler != null));
+    Assertions.assertTrue(
+        ms < budgetMs, relativePath + " expected under " + budgetMs + " ms, was " + ms + " ms");
   }
 
   static boolean repoPresent() {

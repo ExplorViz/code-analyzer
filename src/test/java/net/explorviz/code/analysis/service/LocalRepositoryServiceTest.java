@@ -16,8 +16,7 @@ class LocalRepositoryServiceTest {
 
   private static final String CLONE_ROOT_NAME = "cloned-repositories";
 
-  @TempDir
-  Path tempDir;
+  @TempDir Path tempDir;
 
   private String originalUserDir;
 

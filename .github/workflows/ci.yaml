@@ -30,8 +30,8 @@ jobs:
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
-  pmd:
-    name: PMD Analysis
+  spotless:
+    name: Spotless Format Check
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -47,8 +47,10 @@ jobs:
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-      - name: Run PMD Analysis
-        run: ./gradlew pmdMain
+      - name: Run Spotless
+        run: ./gradlew spotlessCheck
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
   checkstyle:
     name: Checkstyle Analysis

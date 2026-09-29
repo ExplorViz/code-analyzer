@@ -4,9 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import org.eclipse.jgit.transport.CredentialsProvider;
 
-/**
- * Storage Object to abstract the remote repository's url and storage path.
- */
+/** Storage Object to abstract the remote repository's url and storage path. */
 public class RemoteRepositoryObject {
 
   private String url;
@@ -18,15 +16,18 @@ public class RemoteRepositoryObject {
   /**
    * Create new RemoteRepositoryObject holding data for cloning remote repository.
    *
-   * @param url                 the repository's url
-   * @param storagePath         where to clone the repository to
+   * @param url the repository's url
+   * @param storagePath where to clone the repository to
    * @param credentialsProvider the credential provider for private repositories
-   * @param branchName          the name of the branch to analyze
-   * @param cloneDepth          optional clone depth for shallow cloning (null for full clone)
+   * @param branchName the name of the branch to analyze
+   * @param cloneDepth optional clone depth for shallow cloning (null for full clone)
    */
-  public RemoteRepositoryObject(final String url, final String storagePath,
+  public RemoteRepositoryObject(
+      final String url,
+      final String storagePath,
       final CredentialsProvider credentialsProvider,
-      final String branchName, final Integer cloneDepth) {
+      final String branchName,
+      final Integer cloneDepth) {
     this.url = url;
     this.storagePath = storagePath;
     this.credentialsProvider = credentialsProvider;
@@ -34,14 +35,16 @@ public class RemoteRepositoryObject {
     this.cloneDepth = cloneDepth;
   }
 
-  public RemoteRepositoryObject(final String url, final String storagePath,
+  public RemoteRepositoryObject(
+      final String url,
+      final String storagePath,
       final CredentialsProvider credentialsProvider,
       final String branchName) {
     this(url, storagePath, credentialsProvider, branchName, null);
   }
 
-  public RemoteRepositoryObject(final String url, final String storagePath,
-      final String branchName) {
+  public RemoteRepositoryObject(
+      final String url, final String storagePath, final String branchName) {
     this(url, storagePath, CredentialsProvider.getDefault(), branchName);
   }
 

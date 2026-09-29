@@ -16,19 +16,16 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR-based parser service for analyzing Go source code.
- */
+/** ANTLR-based parser service for analyzing Go source code. */
 @ApplicationScoped
 public class AntlrGoParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrGoParserService.class);
 
-  @Inject
-  AntlrParseSettings parseSettings = new AntlrParseSettings();
+  @Inject AntlrParseSettings parseSettings = new AntlrParseSettings();
 
-  public GoFileDataHandler parseFileContent(final String fileContent, final String fileName,
-      final String fileHash) {
+  public GoFileDataHandler parseFileContent(
+      final String fileContent, final String fileName, final String fileHash) {
     try {
       LOGGER.trace("Parsing Go file content for {}", fileName);
       final CharStream charStream = CharStreams.fromString(fileContent, fileName);
@@ -55,15 +52,16 @@ public class AntlrGoParserService {
     }
   }
 
-  private GoFileDataHandler parse(final CharStream charStream, final String fileName,
-      final String fileHash) {
+  private GoFileDataHandler parse(
+      final CharStream charStream, final String fileName, final String fileHash) {
     final GoLexer lexer = new GoLexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final GoParser parser = new GoParser(tokens);
 
-    final ParseTree sourceFile = AntlrParserUtils.parseTwoStage(
-        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::sourceFile);
+    final ParseTree sourceFile =
+        AntlrParserUtils.parseTwoStage(
+            parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::sourceFile);
 
     final GoFileDataHandler fileDataHandler = new GoFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

@@ -16,19 +16,16 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR-based parser service for analyzing Python source code.
- */
+/** ANTLR-based parser service for analyzing Python source code. */
 @ApplicationScoped
 public class AntlrPythonParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrPythonParserService.class);
 
-  @Inject
-  AntlrParseSettings parseSettings = new AntlrParseSettings();
+  @Inject AntlrParseSettings parseSettings = new AntlrParseSettings();
 
-  public PythonFileDataHandler parseFileContent(final String fileContent, final String fileName,
-      final String fileHash) {
+  public PythonFileDataHandler parseFileContent(
+      final String fileContent, final String fileName, final String fileHash) {
     try {
       LOGGER.trace("Parsing Python file content for {}", fileName);
       final CharStream charStream = CharStreams.fromString(fileContent);
@@ -55,15 +52,16 @@ public class AntlrPythonParserService {
     }
   }
 
-  private PythonFileDataHandler parse(final CharStream charStream, final String fileName,
-      final String fileHash) {
+  private PythonFileDataHandler parse(
+      final CharStream charStream, final String fileName, final String fileHash) {
     final PythonLexer lexer = new PythonLexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final PythonParser parser = new PythonParser(tokens);
 
-    final ParseTree fileInput = AntlrParserUtils.parseTwoStage(
-        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::file_input);
+    final ParseTree fileInput =
+        AntlrParserUtils.parseTwoStage(
+            parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::file_input);
 
     final PythonFileDataHandler fileDataHandler = new PythonFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

@@ -16,19 +16,16 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR-based parser service for analyzing TypeScript/JavaScript source code.
- */
+/** ANTLR-based parser service for analyzing TypeScript/JavaScript source code. */
 @ApplicationScoped
 public class AntlrTypeScriptParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrTypeScriptParserService.class);
 
-  @Inject
-  AntlrParseSettings parseSettings = new AntlrParseSettings();
+  @Inject AntlrParseSettings parseSettings = new AntlrParseSettings();
 
-  public TypeScriptFileDataHandler parseFileContent(final String fileContent, final String fileName,
-      final String fileHash) {
+  public TypeScriptFileDataHandler parseFileContent(
+      final String fileContent, final String fileName, final String fileHash) {
     try {
       LOGGER.trace("Parsing TS/JS file content for {}", fileName);
       final String normalizedContent = normalizeTsx(fileContent, fileName);
@@ -57,8 +54,11 @@ public class AntlrTypeScriptParserService {
     }
   }
 
-  private TypeScriptFileDataHandler parse(final CharStream charStream, final String fileName,
-      final String fileHash, final String extension) {
+  private TypeScriptFileDataHandler parse(
+      final CharStream charStream,
+      final String fileName,
+      final String fileHash,
+      final String extension) {
     final TypeScriptLexer lexer = new TypeScriptLexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -68,16 +68,15 @@ public class AntlrTypeScriptParserService {
     final boolean javaScript = ".js".equals(extension) || ".jsx".equals(extension);
     parser.setJavaScriptMode(javaScript);
 
-    final ParseTree program = AntlrParserUtils.parseTwoStage(
-        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::program);
+    final ParseTree program =
+        AntlrParserUtils.parseTwoStage(
+            parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::program);
 
     final TypeScriptFileDataHandler fileDataHandler = new TypeScriptFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);
 
-    final TypeScriptFileDataListener listener = new TypeScriptFileDataListener(
-        fileDataHandler,
-        extension,
-        tokens);
+    final TypeScriptFileDataListener listener =
+        new TypeScriptFileDataListener(fileDataHandler, extension, tokens);
     final ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(listener, program);
 

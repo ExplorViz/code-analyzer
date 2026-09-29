@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 class AnalysisStatusServiceTest {
 
-  @Inject
-  AnalysisStatusService analysisStatusService;
+  @Inject AnalysisStatusService analysisStatusService;
 
   @Test
   void requestCancellationMarksJobAsCancelled() {

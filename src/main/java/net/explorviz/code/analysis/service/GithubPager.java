@@ -33,7 +33,10 @@ final class GithubPager {
   private int lastRateLimit;
   private long lastQueryNanos;
 
-  GithubPager(final DynamicGraphQLClient client, final Document query, final Map<String, Object> variables,
+  GithubPager(
+      final DynamicGraphQLClient client,
+      final Document query,
+      final Map<String, Object> variables,
       final String resourceType) {
     this.client = client;
     this.query = query;
@@ -57,7 +60,8 @@ final class GithubPager {
         final Response response = client.executeSync(query, vars);
         lastQueryNanos = System.nanoTime() - t0;
         if (!response.hasError()) {
-          final JsonObject data = response.getData().getJsonObject("repository").getJsonObject(resourceType);
+          final JsonObject data =
+              response.getData().getJsonObject("repository").getJsonObject(resourceType);
           if (totalCount < 0) {
             totalCount = data.getInt("totalCount", -1);
           }
@@ -65,18 +69,25 @@ final class GithubPager {
           checkRateLimit(response.getData());
           final JsonObject pageInfo = data.getJsonObject("pageInfo");
           hasNextPage = pageInfo.getBoolean("hasNextPage", false);
-          cursor = hasNextPage && !pageInfo.isNull("endCursor") ? pageInfo.getString("endCursor") : null;
+          cursor =
+              hasNextPage && !pageInfo.isNull("endCursor") ? pageInfo.getString("endCursor") : null;
           final JsonArray nodes = data.getJsonArray("nodes");
           seen += nodes.size();
           return Optional.of(nodes);
         }
-        LOGGER.warn("attempt {} of {} returned errors: {}", attempt, RETRY_ATTEMPTS, response.getErrors());
+        LOGGER.warn(
+            "attempt {} of {} returned errors: {}", attempt, RETRY_ATTEMPTS, response.getErrors());
 
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         break;
       } catch (Exception e) {
-        LOGGER.error("attempt {}/{} failed at cursor {}: {}", attempt, RETRY_ATTEMPTS, cursor, e.getMessage());
+        LOGGER.error(
+            "attempt {}/{} failed at cursor {}: {}",
+            attempt,
+            RETRY_ATTEMPTS,
+            cursor,
+            e.getMessage());
       }
       if (attempt < RETRY_ATTEMPTS) {
         try {
@@ -133,5 +144,4 @@ final class GithubPager {
   public long getLastQueryNanos() {
     return lastQueryNanos;
   }
-
 }

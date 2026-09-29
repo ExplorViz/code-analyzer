@@ -8,9 +8,7 @@ import java.util.Stack;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
 
-/**
- * FileData handler for Go source files.
- */
+/** FileData handler for Go source files. */
 public class GoFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 

@@ -23,11 +23,8 @@ import net.explorviz.code.analysis.handler.MetricAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * This Visitor calculates the nestedBlockDepth for methods.
- */
-public class NestedBlockDepthVisitor
-    extends VoidVisitorAdapter<Pair<MetricAppender, Object>> { // NOPMD
+/** This Visitor calculates the nestedBlockDepth for methods. */
+public class NestedBlockDepthVisitor extends VoidVisitorAdapter<Pair<MetricAppender, Object>> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NestedBlockDepthVisitor.class);
 
@@ -56,7 +53,6 @@ public class NestedBlockDepthVisitor
     super.visit(n, data);
     data.a.leaveMethod();
   }
-
 
   @Override
   public void visit(final MethodDeclaration n, final Pair<MetricAppender, Object> data) {

@@ -8,9 +8,7 @@ import java.util.Stack;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
 
-/**
- * FileData handler for Java files.
- */
+/** FileData handler for Java files. */
 public class JavaFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 
@@ -164,8 +162,15 @@ public class JavaFileDataHandler extends AbstractFileDataHandler
       mapData.append(entry.getKey()).append(": ");
       mapData.append(entry.getValue()).append('\n');
     }
-    return "stats: methodCount=" + this.getMethodCount() + "\n" + "package: "
-        + this.builder.getPackageName() + "\n" + "imports: " + this.builder.getImportNamesList()
-        + "\n" + mapData;
+    return "stats: methodCount="
+        + this.getMethodCount()
+        + "\n"
+        + "package: "
+        + this.builder.getPackageName()
+        + "\n"
+        + "imports: "
+        + this.builder.getImportNamesList()
+        + "\n"
+        + mapData;
   }
 }

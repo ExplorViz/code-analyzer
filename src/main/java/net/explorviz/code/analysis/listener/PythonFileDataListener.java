@@ -9,10 +9,9 @@ import org.antlr.v4.runtime.Token;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR Listener for extracting file data from Python source code.
- */
-public class PythonFileDataListener extends PythonParserBaseListener implements CommonFileDataListener {
+/** ANTLR Listener for extracting file data from Python source code. */
+public class PythonFileDataListener extends PythonParserBaseListener
+    implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PythonFileDataListener.class);
 
@@ -21,8 +20,8 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
   private int functionCount = 0;
   private int variableCount = 0;
 
-  public PythonFileDataListener(final PythonFileDataHandler fileDataHandler,
-      final CommonTokenStream tokens) {
+  public PythonFileDataListener(
+      final PythonFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;
     this.tokens = tokens;
   }
@@ -36,7 +35,8 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
     fileDataHandler.addMetric(SLOC, String.valueOf(sloc));
     fileDataHandler.addMetric(CLOC, String.valueOf(cloc));
 
-    LOGGER.atTrace()
+    LOGGER
+        .atTrace()
         .addArgument(fileDataHandler.getFileName())
         .addArgument(sloc)
         .log("{} - SLOC: {}");
@@ -55,9 +55,7 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
     if (ctx.getText() != null) {
       final String importText = ctx.getText();
       fileDataHandler.addImport(importText);
-      LOGGER.atTrace()
-          .addArgument(importText)
-          .log("Import: {}");
+      LOGGER.atTrace().addArgument(importText).log("Import: {}");
     }
   }
 
@@ -70,9 +68,7 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
 
       fileDataHandler.enterClass(className, classFqn);
 
-      LOGGER.atTrace()
-          .addArgument(className)
-          .log("Class: {}");
+      LOGGER.atTrace().addArgument(className).log("Class: {}");
 
       // Calculate class SLOC and LOC
       final int classLoc = calculateLoc(ctx);
@@ -84,11 +80,19 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
         // Extract superclasses
         if (ctx.arglist() != null) {
           for (final PythonParser.ArgumentContext argCtx : ctx.arglist().argument()) {
-            if (argCtx.ASSIGN() == null && argCtx.comp_for() == null && argCtx.POWER() == null
+            if (argCtx.ASSIGN() == null
+                && argCtx.comp_for() == null
+                && argCtx.POWER() == null
                 && argCtx.STAR() == null) {
               final String superClassFqn = argCtx.getText();
-              classData.setSuperClass(getClassPathFromFqn(superClassFqn, ".py", fileDataHandler.getFileName(),
-                  fileDataHandler.getPackageName()) + "::" + getClassNameFromFqn(superClassFqn));
+              classData.setSuperClass(
+                  getClassPathFromFqn(
+                          superClassFqn,
+                          ".py",
+                          fileDataHandler.getFileName(),
+                          fileDataHandler.getPackageName())
+                      + "::"
+                      + getClassNameFromFqn(superClassFqn));
             }
           }
         }
@@ -117,12 +121,12 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
       // Function inside a class - treat as a method
       final String functionFqn = functionName + "#1"; // TODO: Add proper parameter hashing
 
-      final var methodData = fileDataHandler.getCurrentClassData()
-          .addMethod(functionName, functionFqn, "None"); // Python default return is None
+      final var methodData =
+          fileDataHandler
+              .getCurrentClassData()
+              .addMethod(functionName, functionFqn, "None"); // Python default return is None
 
-      LOGGER.atTrace()
-          .addArgument(functionName)
-          .log("Method: {}");
+      LOGGER.atTrace().addArgument(functionName).log("Method: {}");
 
       // Calculate function SLOC and LOC
       final int functionLoc = calculateLoc(ctx);
@@ -138,10 +142,10 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
       }
     } else {
       // Global function
-      final var funcBuilder = fileDataHandler.addGlobalFunction(
-          functionName,
-          "None" // TODO: Extract actual return type from type hints
-      );
+      final var funcBuilder =
+          fileDataHandler.addGlobalFunction(
+              functionName, "None" // TODO: Extract actual return type from type hints
+              );
 
       if (ctx.ASYNC() != null) {
         funcBuilder.addModifier("async");
@@ -191,9 +195,7 @@ public class PythonFileDataListener extends PythonParserBaseListener implements 
       funcBuilder.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       funcBuilder.addMetric(LINE_COUNT, String.valueOf(functionLoc));
 
-      LOGGER.atTrace()
-          .addArgument(functionName)
-          .log("Global function: {}");
+      LOGGER.atTrace().addArgument(functionName).log("Global function: {}");
     }
   }
 

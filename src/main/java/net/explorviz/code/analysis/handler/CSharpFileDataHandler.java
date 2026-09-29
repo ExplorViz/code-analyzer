@@ -8,9 +8,7 @@ import java.util.Stack;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
 
-/**
- * FileData handler for C# source files.
- */
+/** FileData handler for C# source files. */
 public class CSharpFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 

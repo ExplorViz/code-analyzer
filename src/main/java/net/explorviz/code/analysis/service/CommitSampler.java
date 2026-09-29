@@ -11,16 +11,14 @@ import java.util.Set;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 /**
- * Selects which commits in a branch walk receive full file analysis. Commits that are not
- * selected are skipped entirely during the analysis walk.
+ * Selects which commits in a branch walk receive full file analysis. Commits that are not selected
+ * are skipped entirely during the analysis walk.
  */
 public final class CommitSampler {
 
   private CommitSampler() {}
 
-  /**
-   * Returns {@code true} when commit sampling is configured.
-   */
+  /** Returns {@code true} when commit sampling is configured. */
   public static boolean isEnabled(final AnalysisConfig config) {
     return config.commitSamplingInterval().filter(interval -> interval > 1).isPresent()
         || config.commitSamplingPeriod().isPresent();
@@ -39,8 +37,7 @@ public final class CommitSampler {
       return Set.of();
     }
 
-    final List<Integer> commitTimes =
-        commits.stream().map(RevCommit::getCommitTime).toList();
+    final List<Integer> commitTimes = commits.stream().map(RevCommit::getCommitTime).toList();
     return selectFullyAnalyzedIndicesFromCommitTimes(commitTimes, config);
   }
 

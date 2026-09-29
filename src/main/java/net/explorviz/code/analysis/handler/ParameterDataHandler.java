@@ -3,9 +3,7 @@ package net.explorviz.code.analysis.handler;
 import java.util.List;
 import net.explorviz.code.proto.ParameterData;
 
-/**
- * A handler to easily access and maintain the ParameterData object.
- */
+/** A handler to easily access and maintain the ParameterData object. */
 public class ParameterDataHandler implements ProtoBufConvertable<ParameterData> {
 
   private final ParameterData.Builder builder;

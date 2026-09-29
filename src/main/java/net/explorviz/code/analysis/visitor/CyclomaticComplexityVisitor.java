@@ -26,11 +26,8 @@ import net.explorviz.code.analysis.handler.MetricAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Visitor to calculate the cyclomatic complexity for methods and classes.
- */
-public class CyclomaticComplexityVisitor // NOPMD
-    extends VoidVisitorAdapter<Pair<MetricAppender, Object>> { // NOPMD
+/** Visitor to calculate the cyclomatic complexity for methods and classes. */
+public class CyclomaticComplexityVisitor extends VoidVisitorAdapter<Pair<MetricAppender, Object>> {
 
   public static final String CYCLOMATIC_COMPLEXITY = "cyclomatic_complexity";
   private static final Logger LOGGER = LoggerFactory.getLogger(CyclomaticComplexityVisitor.class);
@@ -86,8 +83,8 @@ public class CyclomaticComplexityVisitor // NOPMD
     }
 
     // Update the file metric
-    final Integer oldValue = Integer.getInteger(
-        data.a.getFileData().getMetricValue(CYCLOMATIC_COMPLEXITY));
+    final Integer oldValue =
+        Integer.getInteger(data.a.getFileData().getMetricValue(CYCLOMATIC_COMPLEXITY));
     if (oldValue == null) {
       data.a.putFileMetric(CYCLOMATIC_COMPLEXITY, String.valueOf(metricValue));
     } else {
@@ -132,8 +129,8 @@ public class CyclomaticComplexityVisitor // NOPMD
     }
 
     // Update the file metric
-    final Integer oldValue = Integer.getInteger(
-        data.a.getFileData().getMetricValue(CYCLOMATIC_COMPLEXITY));
+    final Integer oldValue =
+        Integer.getInteger(data.a.getFileData().getMetricValue(CYCLOMATIC_COMPLEXITY));
     if (oldValue == null) {
       data.a.putFileMetric(CYCLOMATIC_COMPLEXITY, String.valueOf(metricValue));
     } else {
@@ -185,14 +182,12 @@ public class CyclomaticComplexityVisitor // NOPMD
     }
   }
 
-
   @Override
   public void visit(final ForEachStmt statement, final Pair<MetricAppender, Object> data) {
     addOccurrence(data.a.getCurrentMethodName());
 
     super.visit(statement, data);
   }
-
 
   @Override
   public void visit(final ForStmt statement, final Pair<MetricAppender, Object> data) {
@@ -204,7 +199,6 @@ public class CyclomaticComplexityVisitor // NOPMD
 
     super.visit(statement, data);
   }
-
 
   @Override
   public void visit(final IfStmt statement, final Pair<MetricAppender, Object> data) {
@@ -224,7 +218,6 @@ public class CyclomaticComplexityVisitor // NOPMD
 
     for (final Statement ignored : statement.getStatements()) {
       addOccurrence(data.a.getCurrentMethodName());
-
     }
 
     super.visit(statement, data);
@@ -246,7 +239,6 @@ public class CyclomaticComplexityVisitor // NOPMD
     super.visit(statement, data);
   }
 
-
   @Override
   public void visit(final TryStmt statement, final Pair<MetricAppender, Object> data) {
 
@@ -254,7 +246,6 @@ public class CyclomaticComplexityVisitor // NOPMD
 
     super.visit(statement, data);
   }
-
 
   @Override
   public void visit(final WhileStmt statement, final Pair<MetricAppender, Object> data) {
@@ -273,9 +264,8 @@ public class CyclomaticComplexityVisitor // NOPMD
     regexCheck(condition, Pattern.compile("/(\\s|\\w|\\d)\\|\\|(\\s|\\w|\\d)/xg"), data);
   }
 
-
-  private void regexCheck(final String haystack, final Pattern pattern,
-      final Pair<MetricAppender, Object> data) {
+  private void regexCheck(
+      final String haystack, final Pattern pattern, final Pair<MetricAppender, Object> data) {
     final Matcher matcher = pattern.matcher(haystack);
 
     while (matcher.find()) {
@@ -295,5 +285,4 @@ public class CyclomaticComplexityVisitor // NOPMD
       methodCounter.put(methodName, 1);
     }
   }
-
 }

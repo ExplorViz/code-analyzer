@@ -2,13 +2,11 @@ package net.explorviz.code.analysis.types;
 
 import java.util.Objects;
 
-/**
- * Vertex to be used in the Graph. Holds a flag if it is a field vertex and holds a group label.
- */
+/** Vertex to be used in the Graph. Holds a flag if it is a field vertex and holds a group label. */
 public class Vertex {
 
   private final String label;
-  private boolean isField; // NOPMD
+  private boolean isField;
   private int group;
 
   public Vertex(final String label, final int group) {

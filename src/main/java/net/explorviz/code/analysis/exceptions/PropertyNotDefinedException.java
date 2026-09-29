@@ -2,13 +2,10 @@ package net.explorviz.code.analysis.exceptions;
 
 import java.io.Serial;
 
-/**
- * Exception regarding not existing property.
- */
+/** Exception regarding not existing property. */
 public class PropertyNotDefinedException extends Exception {
 
-  @Serial
-  private static final long serialVersionUID = 765345121;
+  @Serial private static final long serialVersionUID = 765345121;
 
   public PropertyNotDefinedException(final String propertyName) {
     this(propertyName, "");
@@ -18,7 +15,7 @@ public class PropertyNotDefinedException extends Exception {
     super(toMessage(new String[] {propertyName}, errorMessage));
   }
 
-  public PropertyNotDefinedException(final String[] propertyNames) { //NOPMD
+  public PropertyNotDefinedException(final String[] propertyNames) {
     this(propertyNames, "");
   }
 

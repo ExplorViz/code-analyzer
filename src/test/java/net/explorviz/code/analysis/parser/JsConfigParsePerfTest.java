@@ -11,7 +11,8 @@ import org.junit.jupiter.api.condition.EnabledIf;
 @QuarkusTest
 class JsConfigParsePerfTest {
 
-  private static final String WEBPACK_DEVALL_JS = """
+  private static final String WEBPACK_DEVALL_JS =
+      """
       // Specific configuration for developers
       // Runs a HTTPS server in port 8080, accesible
       // from all hosts that can connect to it.
@@ -44,13 +45,12 @@ class JsConfigParsePerfTest {
       });
       """;
 
-  private static final Path BABIA_EASYRTC = Path.of(
-      "cloned-repositories/aframe-babia-components/examples/multiuser/easyrtc.js");
-  private static final Path BABIA_BOATS = Path.of(
-      "cloned-repositories/aframe-babia-components/components/visualizers/babia-boats.js");
+  private static final Path BABIA_EASYRTC =
+      Path.of("cloned-repositories/aframe-babia-components/examples/multiuser/easyrtc.js");
+  private static final Path BABIA_BOATS =
+      Path.of("cloned-repositories/aframe-babia-components/components/visualizers/babia-boats.js");
 
-  @Inject
-  AntlrTypeScriptParserService parser;
+  @Inject AntlrTypeScriptParserService parser;
 
   @Test
   void webpackDevallParsesQuickly() {
@@ -73,7 +73,8 @@ class JsConfigParsePerfTest {
     System.out.println("easyrtc.js parse took " + ms + " ms, handler=" + (handler != null));
     // Pathological vendored JS: full parse should time out and fall back (null).
     Assertions.assertNull(handler);
-    Assertions.assertTrue(ms < budget, "Expected timeout under " + budget + "ms, was " + ms + " ms");
+    Assertions.assertTrue(
+        ms < budget, "Expected timeout under " + budget + "ms, was " + ms + " ms");
   }
 
   @Test
@@ -86,7 +87,8 @@ class JsConfigParsePerfTest {
     parser.parseFileContent(content, "components/visualizers/babia-boats.js", "hash");
     final long ms = (System.nanoTime() - start) / 1_000_000L;
     System.out.println("babia-boats.js parse took " + ms + " ms");
-    Assertions.assertTrue(ms < budget, "Expected parse/timeout under " + budget + "ms, was " + ms + " ms");
+    Assertions.assertTrue(
+        ms < budget, "Expected parse/timeout under " + budget + "ms, was " + ms + " ms");
   }
 
   static boolean babiaRepoPresent() {

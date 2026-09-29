@@ -4,10 +4,7 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.TokenStream;
 
-/**
- * Base class for the Java parser that provides semantic predicates used by the
- * grammar.
- */
+/** Base class for the Java parser that provides semantic predicates used by the grammar. */
 public abstract class JavaParserBase extends Parser {
   protected JavaParserBase(final TokenStream input) {
     super(input);

@@ -59,8 +59,8 @@ public abstract class AbstractFileDataHandler {
         : null;
   }
 
-  public void setModifications(final int modifiedLines, final int addedLines,
-      final int deletedLines) {
+  public void setModifications(
+      final int modifiedLines, final int addedLines, final int deletedLines) {
     builder.setModifiedLines(modifiedLines);
     builder.setAddedLines(addedLines);
     builder.setDeletedLines(deletedLines);

@@ -10,15 +10,12 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Class to bundle some file deletion methods.
- */
-public final class FileIO { // NOCS
+/** Class to bundle some file deletion methods. */
+public final class FileIO {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(FileIO.class);
 
-  private FileIO() {
-  }
+  private FileIO() {}
 
   /**
    * Deletes a directory with all its children files and directories.
@@ -34,14 +31,11 @@ public final class FileIO { // NOCS
     }
 
     try (Stream<Path> walk = Files.walk(path)) {
-      walk
-          .filter(p -> !p.equals(path)) // keep the root directory
+      walk.filter(p -> !p.equals(path)) // keep the root directory
           .sorted(Comparator.reverseOrder())
           .forEach(FileIO::deleteDirectoryExtract);
     }
   }
-
-
 
   // extract method to handle exception in lambda
   private static void deleteDirectoryExtract(final Path path) {

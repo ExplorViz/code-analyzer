@@ -1,15 +1,12 @@
 package net.explorviz.code.analysis.parser;
 
 /**
- * Replaces JSX elements in TSX source with {@code null} so the TypeScript
- * grammar can parse
- * files without expensive JSX disambiguation. Suffices for structural code
- * analysis.
+ * Replaces JSX elements in TSX source with {@code null} so the TypeScript grammar can parse files
+ * without expensive JSX disambiguation. Suffices for structural code analysis.
  */
 public final class TsxJsxNormalizer {
 
-  private TsxJsxNormalizer() {
-  }
+  private TsxJsxNormalizer() {}
 
   public static String replaceJsxWithNull(final String source) {
     final StringBuilder out = new StringBuilder(source.length());
@@ -71,7 +68,9 @@ public final class TsxJsxNormalizer {
     }
     if (index > 0) {
       final String twoChars = source.substring(index - 1, index + 1);
-      if ("=>".equals(twoChars) || "&&".equals(twoChars) || "||".equals(twoChars)
+      if ("=>".equals(twoChars)
+          || "&&".equals(twoChars)
+          || "||".equals(twoChars)
           || "??".equals(twoChars)) {
         return true;
       }
@@ -90,7 +89,9 @@ public final class TsxJsxNormalizer {
     index = skipTagName(source, index);
     index = skipTypeArguments(source, index);
     index = skipAttributes(source, index);
-    if (index + 1 < source.length() && source.charAt(index) == '/' && source.charAt(index + 1) == '>') {
+    if (index + 1 < source.length()
+        && source.charAt(index) == '/'
+        && source.charAt(index + 1) == '>') {
       return index + 2;
     }
     if (index < source.length() && source.charAt(index) == '>') {
@@ -259,7 +260,8 @@ public final class TsxJsxNormalizer {
     return index;
   }
 
-  private static int skipBalanced(final String source, final int start, final char open, final char close) {
+  private static int skipBalanced(
+      final String source, final int start, final char open, final char close) {
     int depth = 0;
     int index = start;
     while (index < source.length()) {

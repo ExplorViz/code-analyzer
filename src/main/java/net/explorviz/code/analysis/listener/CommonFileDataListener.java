@@ -4,9 +4,7 @@ import net.explorviz.code.analysis.handler.AbstractFileDataHandler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
-/**
- * Common methods for file data listeners.
- */
+/** Common methods for file data listeners. */
 public interface CommonFileDataListener {
   String FILE_SIZE = "size";
   String SLOC = "sloc";
@@ -69,11 +67,12 @@ public interface CommonFileDataListener {
    * Calculates the Source Lines of Code (SLOC) for a specific context by counting unique lines that
    * contain tokens on the default channel (channel 0) within the range of the context.
    *
-   * @param ctx    The parser rule context
+   * @param ctx The parser rule context
    * @param tokens The token stream
    * @return The number of lines containing code tokens within the context's range
    */
-  default int getSloc(final ParserRuleContext ctx, final org.antlr.v4.runtime.CommonTokenStream tokens) {
+  default int getSloc(
+      final ParserRuleContext ctx, final org.antlr.v4.runtime.CommonTokenStream tokens) {
     if (ctx == null || ctx.start == null || ctx.stop == null || tokens == null) {
       return 0;
     }
@@ -102,8 +101,11 @@ public interface CommonFileDataListener {
     return codeLines.size();
   }
 
-  default String getClassPathFromFqn(final String fqn, final String fileExtension,
-      final String currentFilePath, final String currentPackage) {
+  default String getClassPathFromFqn(
+      final String fqn,
+      final String fileExtension,
+      final String currentFilePath,
+      final String currentPackage) {
     if (fqn == null || fqn.isEmpty()) {
       return "unknown/file";
     }

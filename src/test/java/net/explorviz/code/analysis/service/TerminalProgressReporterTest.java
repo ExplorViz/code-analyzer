@@ -8,21 +8,24 @@ class TerminalProgressReporterTest {
 
   @Test
   void formatCommitLineShowsCurrentCommitWhileRunning() {
-    final AnalysisProgressState state = new AnalysisProgressState("running", 220, 1, 100, 5, "src/Foo.java");
+    final AnalysisProgressState state =
+        new AnalysisProgressState("running", 220, 1, 100, 5, "src/Foo.java");
 
     assertEquals("Commit 2/220", TerminalProgressReporter.formatCommitLine(state));
   }
 
   @Test
   void formatCommitLineShowsTotalWhenFinished() {
-    final AnalysisProgressState state = new AnalysisProgressState("finished", 220, 220, 100, 100, null);
+    final AnalysisProgressState state =
+        new AnalysisProgressState("finished", 220, 220, 100, 100, null);
 
     assertEquals("Commit 220/220", TerminalProgressReporter.formatCommitLine(state));
   }
 
   @Test
   void formatFileLineShowsProgressBarAndPercentage() {
-    final AnalysisProgressState state = new AnalysisProgressState("running", 220, 1, 100, 5, "src/Foo.java");
+    final AnalysisProgressState state =
+        new AnalysisProgressState("running", 220, 1, 100, 5, "src/Foo.java");
 
     assertEquals(
         "Files [##----------------------------] 5/100 (5%)",
@@ -77,6 +80,8 @@ class TerminalProgressReporterTest {
   void formatAnalysisFinishedMessage() {
     final AnalysisProgressState state = new AnalysisProgressState("finished", 220, 220, 0, 0, null);
 
-    assertEquals("Analysis finished: 220/220 commits", TerminalProgressReporter.formatAnalysisFinishedMessage(state));
+    assertEquals(
+        "Analysis finished: 220/220 commits",
+        TerminalProgressReporter.formatAnalysisFinishedMessage(state));
   }
 }

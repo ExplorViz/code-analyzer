@@ -12,9 +12,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR listener for extracting file data from PHP source code.
- */
+/** ANTLR listener for extracting file data from PHP source code. */
 public class PhpFileDataListener extends PhpParserBaseListener implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PhpFileDataListener.class);
@@ -24,8 +22,8 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
   private int functionCount = 0;
   private int variableCount = 0;
 
-  public PhpFileDataListener(final PhpFileDataHandler fileDataHandler,
-      final CommonTokenStream tokens) {
+  public PhpFileDataListener(
+      final PhpFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;
     this.tokens = tokens;
   }
@@ -38,7 +36,8 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     fileDataHandler.addMetric(SLOC, String.valueOf(sloc));
     fileDataHandler.addMetric(CLOC, String.valueOf(cloc));
 
-    LOGGER.atTrace()
+    LOGGER
+        .atTrace()
         .addArgument(fileDataHandler.getFileName())
         .addArgument(sloc)
         .log("{} - SLOC: {}");
@@ -78,8 +77,8 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
       return;
     }
 
-    for (final PhpParser.UseDeclarationContentContext useContent : ctx.useDeclarationContentList()
-        .useDeclarationContent()) {
+    for (final PhpParser.UseDeclarationContentContext useContent :
+        ctx.useDeclarationContentList().useDeclarationContent()) {
       if (useContent.namespaceNameList() != null) {
         fileDataHandler.addImport(normalizeNamespace(useContent.namespaceNameList().getText()));
       }
@@ -118,27 +117,34 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     }
   }
 
-  private void addInterfaceExtends(final ClassDataHandler classData,
-      final PhpParser.InterfaceListContext interfaceList) {
+  private void addInterfaceExtends(
+      final ClassDataHandler classData, final PhpParser.InterfaceListContext interfaceList) {
     if (interfaceList == null) {
       return;
     }
 
-    for (final PhpParser.QualifiedStaticTypeRefContext typeRef : interfaceList
-        .qualifiedStaticTypeRef()) {
+    for (final PhpParser.QualifiedStaticTypeRefContext typeRef :
+        interfaceList.qualifiedStaticTypeRef()) {
       classData.addImplementedInterface(normalizeNamespace(typeRef.getText()));
     }
   }
 
-  private void addInterfaceImplements(final ClassDataHandler classData,
-      final PhpParser.InterfaceListContext interfaceList) {
+  private void addInterfaceImplements(
+      final ClassDataHandler classData, final PhpParser.InterfaceListContext interfaceList) {
     addInterfaceExtends(classData, interfaceList);
   }
 
-  private void addFormattedSuperClass(final ClassDataHandler classData, final String superClassFqn) {
+  private void addFormattedSuperClass(
+      final ClassDataHandler classData, final String superClassFqn) {
     final String normalizedFqn = normalizeNamespace(superClassFqn);
-    classData.setSuperClass(getClassPathFromFqn(normalizedFqn, ".php", fileDataHandler.getFileName(),
-        fileDataHandler.getPackageName()) + "::" + getClassNameFromFqn(normalizedFqn));
+    classData.setSuperClass(
+        getClassPathFromFqn(
+                normalizedFqn,
+                ".php",
+                fileDataHandler.getFileName(),
+                fileDataHandler.getPackageName())
+            + "::"
+            + getClassNameFromFqn(normalizedFqn));
   }
 
   @Override
@@ -263,8 +269,8 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     final String fieldType = ctx.typeHint() != null ? ctx.typeHint().getText() : "mixed";
     for (final PhpParser.VariableInitializerContext variable : ctx.variableInitializer()) {
       if (variable.VarName() != null) {
-        classData.addField(stripVariableName(variable.VarName().getText()), fieldType,
-            new ArrayList<>());
+        classData.addField(
+            stripVariableName(variable.VarName().getText()), fieldType, new ArrayList<>());
       }
     }
   }
@@ -283,7 +289,9 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     }
   }
 
-  private MethodDataHandler createMethodHandler(final String methodName, final String returnType,
+  private MethodDataHandler createMethodHandler(
+      final String methodName,
+      final String returnType,
       final PhpParser.FunctionDeclarationContext ctx) {
     if (fileDataHandler.isInClassContext()) {
       return createClassMethodFromParameters(methodName, returnType, ctx.formalParameterList());
@@ -294,20 +302,25 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     return methodData;
   }
 
-  private MethodDataHandler createClassMethodHandler(final String methodName,
-      final String returnType, final PhpParser.ClassStatementContext ctx) {
+  private MethodDataHandler createClassMethodHandler(
+      final String methodName, final String returnType, final PhpParser.ClassStatementContext ctx) {
     return createClassMethodFromParameters(methodName, returnType, ctx.formalParameterList());
   }
 
-  private MethodDataHandler createClassMethodFromParameters(final String methodName,
-      final String returnType, final PhpParser.FormalParameterListContext parameterList) {
+  private MethodDataHandler createClassMethodFromParameters(
+      final String methodName,
+      final String returnType,
+      final PhpParser.FormalParameterListContext parameterList) {
     final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
     if (classData == null) {
       return null;
     }
 
-    final MethodDataHandler methodData = classData.addMethod(methodName,
-        methodName + "#" + extractParameterTypes(parameterList).hashCode(), returnType);
+    final MethodDataHandler methodData =
+        classData.addMethod(
+            methodName,
+            methodName + "#" + extractParameterTypes(parameterList).hashCode(),
+            returnType);
     addParameters(methodData, parameterList);
     return methodData;
   }
@@ -326,7 +339,8 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     return returnTypeDecl.typeHint().getText();
   }
 
-  private List<String> extractParameterTypes(final PhpParser.FormalParameterListContext parameterList) {
+  private List<String> extractParameterTypes(
+      final PhpParser.FormalParameterListContext parameterList) {
     final List<String> paramTypes = new ArrayList<>();
     if (parameterList == null) {
       return paramTypes;
@@ -340,7 +354,8 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     return paramTypes;
   }
 
-  private void addParameters(final MethodDataHandler methodData,
+  private void addParameters(
+      final MethodDataHandler methodData,
       final PhpParser.FormalParameterListContext parameterList) {
     if (parameterList == null) {
       return;

@@ -1,8 +1,6 @@
 package net.explorviz.code.analysis.service;
 
-/**
- * Result of requesting cancellation for an analysis job.
- */
+/** Result of requesting cancellation for an analysis job. */
 public enum AnalysisCancellationResult {
   /** Cancellation was accepted. */
   CANCELLED,

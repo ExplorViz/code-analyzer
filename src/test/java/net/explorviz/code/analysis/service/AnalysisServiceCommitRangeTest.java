@@ -16,8 +16,7 @@ import org.junit.jupiter.api.io.TempDir;
 @QuarkusTest
 class AnalysisServiceCommitRangeTest {
 
-  @Inject
-  AnalysisService analysisService;
+  @Inject AnalysisService analysisService;
 
   @Test
   void excludesOldestCommitWhenShallowCloneHasOneExtraCommit() {
@@ -47,7 +46,8 @@ class AnalysisServiceCommitRangeTest {
   }
 
   @Test
-  void excludesShallowBoundaryWhenParentIsMissingLocally(@TempDir final File tempDir) throws Exception {
+  void excludesShallowBoundaryWhenParentIsMissingLocally(@TempDir final File tempDir)
+      throws Exception {
     final File sourceDir = new File(tempDir, "source");
     final File shallowDir = new File(tempDir, "shallow");
 
@@ -56,11 +56,12 @@ class AnalysisServiceCommitRangeTest {
       writeAndCommit(sourceGit, "v2");
     }
 
-    try (Git ignored = Git.cloneRepository()
-        .setURI(sourceDir.toURI().toString())
-        .setDirectory(shallowDir)
-        .setDepth(1)
-        .call()) {
+    try (Git ignored =
+        Git.cloneRepository()
+            .setURI(sourceDir.toURI().toString())
+            .setDirectory(shallowDir)
+            .setDepth(1)
+            .call()) {
       try (Git shallowGit = Git.open(shallowDir);
           Repository shallowRepository = shallowGit.getRepository()) {
         final RevCommit shallowTip = shallowGit.log().setMaxCount(1).call().iterator().next();
@@ -70,8 +71,8 @@ class AnalysisServiceCommitRangeTest {
         Assertions.assertTrue(
             analysisService.shouldExcludeAsShallowCloneBoundary(shallowRepository, shallowTip));
 
-        final List<CommitWalkEntry> commitsInRange = List.of(
-            new CommitWalkEntry(shallowTip.getName(), shallowTip.getCommitTime()));
+        final List<CommitWalkEntry> commitsInRange =
+            List.of(new CommitWalkEntry(shallowTip.getName(), shallowTip.getCommitTime()));
 
         final AnalysisService.CommitRangeSelection adjustedSelection =
             analysisService.adjustSkipForShallowCloneBoundary(
@@ -87,9 +88,7 @@ class AnalysisServiceCommitRangeTest {
   }
 
   private static AnalysisConfig configWithLimit(final int limit) {
-    return new AnalysisConfig.Builder()
-        .commitAnalysisLimit(Optional.of(limit))
-        .build();
+    return new AnalysisConfig.Builder().commitAnalysisLimit(Optional.of(limit)).build();
   }
 
   private static void writeAndCommit(final Git git, final String content) throws Exception {

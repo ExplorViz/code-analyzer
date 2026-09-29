@@ -32,9 +32,9 @@ build:
     paths:
       - build
 
-pmd:
+spotless:
   stage: code-analysis
-  script: ./gradlew pmdMain
+  script: ./gradlew spotlessCheck
   artifacts:
     paths:
       - build

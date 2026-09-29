@@ -7,14 +7,10 @@ import net.explorviz.code.analysis.service.AnalysisConfig;
 import net.explorviz.code.analysis.service.ApplicationPath;
 import net.explorviz.code.analysis.service.CommitSamplingPeriod;
 
-/**
- * Request object for triggering a Git analysis.
- */
+/** Request object for triggering a Git analysis. */
 public class AnalysisRequest {
 
-  /**
-   * Optional multi-application configuration (name and repo-relative root per app).
-   */
+  /** Optional multi-application configuration (name and repo-relative root per app). */
   public static final class ApplicationSpec {
     private String name;
     private String root;
@@ -65,8 +61,7 @@ public class AnalysisRequest {
   private String fetchEndDate;
   private Integer socialDataTimeFrameDays;
 
-  public AnalysisRequest() {
-  }
+  public AnalysisRequest() {}
 
   public String getRepoPath() {
     return repoPath;
@@ -286,41 +281,44 @@ public class AnalysisRequest {
       }
     }
 
-    final AnalysisConfig.Builder builder = new AnalysisConfig.Builder()
-        .repoPath(Optional.ofNullable(repoPath))
-        .repoRemoteUrl(Optional.ofNullable(repoRemoteUrl))
-        .gitUsername(Optional.ofNullable(username))
-        .gitPassword(Optional.ofNullable(password))
-        .branch(Optional.ofNullable(branch))
-        .includeInAnalysisExpressions(Optional.ofNullable(includeInAnalysisExpressions))
-        .excludeFromAnalysisExpressions(Optional.ofNullable(excludeFromAnalysisExpressions))
-        .includeDataStructures(includeDataStructures)
-        .startCommit(Optional.ofNullable(startCommit))
-        .endCommit(Optional.ofNullable(endCommit))
-        .commitAnalysisLimit(Optional.ofNullable(commitAnalysisLimit))
-        .commitSamplingInterval(Optional.ofNullable(commitSamplingInterval))
-        .commitSamplingPeriod(CommitSamplingPeriod.fromConfigValue(commitSamplingPeriod))
-        .maxLocForFullAnalysis(Optional.ofNullable(maxLocForFullAnalysis))
-        .firstParentCommitsOnly(firstParentCommitsOnly)
-        .skipCommitsWithoutRelevantFileChanges(skipCommitsWithoutRelevantFileChanges)
-        .landscapeToken((landscapeToken != null && !landscapeToken.isBlank()) ? landscapeToken : "mytokenvalue")
-        .applicationRoot(Optional.ofNullable(applicationRoot))
-        .fetchSocialData(fetchSocialData)
-        .syncSocialWindow(syncSocialWindow)
-        .socialDataTimeFrameDays(Optional.ofNullable(socialDataTimeFrameDays))
-        .fetchEndDate(Optional.ofNullable(fetchEndDate).filter(s -> !s.isEmpty()));
+    final AnalysisConfig.Builder builder =
+        new AnalysisConfig.Builder()
+            .repoPath(Optional.ofNullable(repoPath))
+            .repoRemoteUrl(Optional.ofNullable(repoRemoteUrl))
+            .gitUsername(Optional.ofNullable(username))
+            .gitPassword(Optional.ofNullable(password))
+            .branch(Optional.ofNullable(branch))
+            .includeInAnalysisExpressions(Optional.ofNullable(includeInAnalysisExpressions))
+            .excludeFromAnalysisExpressions(Optional.ofNullable(excludeFromAnalysisExpressions))
+            .includeDataStructures(includeDataStructures)
+            .startCommit(Optional.ofNullable(startCommit))
+            .endCommit(Optional.ofNullable(endCommit))
+            .commitAnalysisLimit(Optional.ofNullable(commitAnalysisLimit))
+            .commitSamplingInterval(Optional.ofNullable(commitSamplingInterval))
+            .commitSamplingPeriod(CommitSamplingPeriod.fromConfigValue(commitSamplingPeriod))
+            .maxLocForFullAnalysis(Optional.ofNullable(maxLocForFullAnalysis))
+            .firstParentCommitsOnly(firstParentCommitsOnly)
+            .skipCommitsWithoutRelevantFileChanges(skipCommitsWithoutRelevantFileChanges)
+            .landscapeToken(
+                (landscapeToken != null && !landscapeToken.isBlank())
+                    ? landscapeToken
+                    : "mytokenvalue")
+            .applicationRoot(Optional.ofNullable(applicationRoot))
+            .fetchSocialData(fetchSocialData)
+            .syncSocialWindow(syncSocialWindow)
+            .socialDataTimeFrameDays(Optional.ofNullable(socialDataTimeFrameDays))
+            .fetchEndDate(Optional.ofNullable(fetchEndDate).filter(s -> !s.isEmpty()));
 
     if (!paths.isEmpty()) {
       builder.applicationPaths(paths);
     } else {
       String resolvedName = applicationName != null ? applicationName.trim() : "";
       if (resolvedName.isEmpty()) {
-        resolvedName = AnalysisConfig.deriveRepositoryName(
-            Optional.ofNullable(repoPath),
-            Optional.ofNullable(repoRemoteUrl));
+        resolvedName =
+            AnalysisConfig.deriveRepositoryName(
+                Optional.ofNullable(repoPath), Optional.ofNullable(repoRemoteUrl));
       }
-      builder.applicationName(resolvedName)
-          .applicationRoot(Optional.ofNullable(applicationRoot));
+      builder.applicationName(resolvedName).applicationRoot(Optional.ofNullable(applicationRoot));
     }
     return builder.build();
   }

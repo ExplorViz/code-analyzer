@@ -12,13 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is a starting point for the implementation of further metrics. Use this stub as basis for your metrics
- * collector. The type of the VoidVisitorAdapter is set to a Pair where Pair.a is reserved for the MetricAppender.
- * Part.b is free to use and can be changed to whatever type is desired. The MetricAppender is a convenient way to add
- * metrics to the internal File representation without the need to construct the fqn and keep track of the current
- * Class-Method hierarchy. If more direct access is required, use the
- * {@link net.explorviz.code.analysis.handler.JavaFileDataHandler} directly but you have to handle all the fqn tracking
- * yourself.
+ * This is a starting point for the implementation of further metrics. Use this stub as basis for
+ * your metrics collector. The type of the VoidVisitorAdapter is set to a Pair where Pair.a is
+ * reserved for the MetricAppender. Part.b is free to use and can be changed to whatever type is
+ * desired. The MetricAppender is a convenient way to add metrics to the internal File
+ * representation without the need to construct the fqn and keep track of the current Class-Method
+ * hierarchy. If more direct access is required, use the {@link
+ * net.explorviz.code.analysis.handler.JavaFileDataHandler} directly but you have to handle all the
+ * fqn tracking yourself.
  */
 public class VisitorStub extends VoidVisitorAdapter<Pair<MetricAppender, Object>> {
 
@@ -53,7 +54,6 @@ public class VisitorStub extends VoidVisitorAdapter<Pair<MetricAppender, Object>
     super.visit(n, data);
     data.a.leaveClass();
   }
-
 
   @Override
   public void visit(final MethodDeclaration n, final Pair<MetricAppender, Object> data) {

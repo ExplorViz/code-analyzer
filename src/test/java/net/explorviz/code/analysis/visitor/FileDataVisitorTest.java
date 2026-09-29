@@ -18,34 +18,34 @@ import net.explorviz.code.proto.FunctionData;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-/**
- * Tests for the FileDataVisitor.
- */
+/** Tests for the FileDataVisitor. */
 @QuarkusTest
 public class FileDataVisitorTest {
 
   @Test()
-  void fileDataTest1() throws FileNotFoundException { // NOCS
+  void fileDataTest1() throws FileNotFoundException {
     JavaFileDataHandler fileDataHandler = new JavaFileDataHandler("Nested.java");
     FileDataVisitor visitor = new FileDataVisitor(Optional.empty(), false);
     String path = "src/test/resources/files/Nested.java";
     final CompilationUnit compilationUnit = StaticJavaParser.parse(new File(path));
     visitor.visit(compilationUnit, fileDataHandler);
     FileData data = fileDataHandler.getProtoBufObject();
-    Assertions.assertEquals("com.easy.life", data.getPackageName()); // NOCS
+    Assertions.assertEquals("com.easy.life", data.getPackageName());
     Assertions.assertEquals(0, data.getImportNamesCount());
     Assertions.assertEquals(1, data.getClassesCount());
     ClassData clazz = findClass(data.getClassesList(), "Nested");
     Assertions.assertTrue(containsFunction(clazz.getFunctionsList(), "heavyNested"));
-    Assertions.assertTrue(
-        containsFunction(clazz.getFunctionsList(), "heavyNested2")); // NOCS
-    Assertions.assertEquals("int",
-        findFunction(clazz.getFunctionsList(), "heavyNested2").getParametersList()
-            .get(0).getType());
+    Assertions.assertTrue(containsFunction(clazz.getFunctionsList(), "heavyNested2"));
+    Assertions.assertEquals(
+        "int",
+        findFunction(clazz.getFunctionsList(), "heavyNested2")
+            .getParametersList()
+            .get(0)
+            .getType());
   }
 
   @Test()
-  void fileDataTest2() throws FileNotFoundException { // NOCS
+  void fileDataTest2() throws FileNotFoundException {
     JavaFileDataHandler fileDataHandler = new JavaFileDataHandler("Happy.java");
     FileDataVisitor visitor = new FileDataVisitor(Optional.empty(), false);
     String path = "src/test/resources/files/Happy.java";
@@ -53,17 +53,17 @@ public class FileDataVisitorTest {
     visitor.visit(compilationUnit, fileDataHandler);
     FileData data = fileDataHandler.getProtoBufObject();
     Assertions.assertEquals("com.easy.life", data.getPackageName());
-    Assertions.assertEquals(4, data.getImportNamesCount()); // NOCS
+    Assertions.assertEquals(4, data.getImportNamesCount());
     Assertions.assertEquals(1, data.getClassesCount());
     ClassData clazz = findClass(data.getClassesList(), "Happy");
-    Assertions.assertTrue(
-        containsFunction(clazz.getFunctionsList(), "fromArrayToList")); // NOCS
-    Assertions.assertEquals("java.util.ArrayList<T>",
+    Assertions.assertTrue(containsFunction(clazz.getFunctionsList(), "fromArrayToList"));
+    Assertions.assertEquals(
+        "java.util.ArrayList<T>",
         findFunction(clazz.getFunctionsList(), "fromArrayToList").getReturnType());
   }
 
   @Test()
-  void fileDataEnumTest() throws FileNotFoundException { // NOCS
+  void fileDataEnumTest() throws FileNotFoundException {
     JavaFileDataHandler fileDataHandler = new JavaFileDataHandler("ColorParam.java");
     FileDataVisitor visitor = new FileDataVisitor(Optional.empty(), false);
     String path = "src/test/resources/files/ColorParam.java";
@@ -79,7 +79,7 @@ public class FileDataVisitorTest {
   }
 
   @Test()
-  void fileDataAnnotationTest() throws FileNotFoundException { // NOCS
+  void fileDataAnnotationTest() throws FileNotFoundException {
     JavaFileDataHandler fileDataHandler = new JavaFileDataHandler("SimpleJdbcClinic.java");
     FileDataVisitor visitor = new FileDataVisitor(Optional.empty(), false);
     String path = "src/test/resources/files/SimpleJdbcClinic.java";
@@ -88,11 +88,9 @@ public class FileDataVisitorTest {
     final CompilationUnit compilationUnit = StaticJavaParser.parse(new File(path));
     visitor.visit(compilationUnit, fileDataHandler);
     FileData data = fileDataHandler.getProtoBufObject();
-    ClassData clazz = findClass(data.getClassesList(),
-        "SimpleJdbcClinic");
+    ClassData clazz = findClass(data.getClassesList(), "SimpleJdbcClinic");
     Assertions.assertTrue(containsConstant(clazz.getAnnotationsList(), "Service"));
-    FunctionData method = findFunction(clazz.getFunctionsList(),
-        "init");
+    FunctionData method = findFunction(clazz.getFunctionsList(), "init");
 
     Assertions.assertTrue(containsConstant(method.getAnnotationsList(), "Autowired"));
   }
