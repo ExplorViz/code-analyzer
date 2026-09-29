@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -23,7 +23,9 @@ jobs:
       - name: Cache Gradle Packages
         uses: actions/cache@v4
         with:
-          path: ~/.gradle/caches
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
       - name: Build Project
         run: ./gradlew assemble
@@ -36,7 +38,7 @@ jobs:
     needs: build
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -45,7 +47,9 @@ jobs:
       - name: Cache Gradle Packages
         uses: actions/cache@v4
         with:
-          path: ~/.gradle/caches
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
       - name: Run Spotless
         run: ./gradlew spotlessCheck
@@ -58,7 +62,7 @@ jobs:
     needs: build
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -67,10 +71,34 @@ jobs:
       - name: Cache Gradle Packages
         uses: actions/cache@v4
         with:
-          path: ~/.gradle/caches
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
       - name: Run Checkstyle
-        run: ./gradlew checkstyleMain
+        id: checkstyle
+        run: |
+          set +e
+          ./gradlew checkstyleMain --continue
+          python3 code-analysis/ci/gitlab-code-quality.py build/reports/checkstyle/main.xml build/reports/ci/checkstyle-code-quality.json
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+      - name: Write Checkstyle Summary
+        if: always()
+        run: |
+          python3 code-analysis/ci/report-summary.py build/reports/checkstyle/main.xml >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish Checkstyle Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkstyle-report
+          path: |
+            build/reports/checkstyle/
+            build/reports/ci/checkstyle-code-quality.json
+      - name: Fail on Checkstyle Violations
+        if: steps.checkstyle.outputs.exit_code != '0'
+        run: exit 1
 
   test:
     name: Unit Tests
@@ -78,7 +106,7 @@ jobs:
     needs: build
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -87,10 +115,37 @@ jobs:
       - name: Cache Gradle Packages
         uses: actions/cache@v4
         with:
-          path: ~/.gradle/caches
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
       - name: Run Unit Tests
-        run: ./gradlew test
+        id: unit_tests
+        run: |
+          set +e
+          ./gradlew test jacocoTestReport --continue
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+      - name: Publish Unit Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: build/test-results/test/**/*.xml
+          check_name: Unit Tests
+          comment_mode: off
+      - name: Publish Test and Coverage Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: |
+            build/reports/tests/test/
+            build/reports/jacoco/test/html/
+            build/reports/jacoco/test/jacocoTestReport.xml
+      - name: Fail on Test Failures
+        if: steps.unit_tests.outputs.exit_code != '0'
+        run: exit 1
 
   docker-image-jvm:
     name: Docker image JVM
@@ -99,7 +154,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build and Push Image
         uses: explorviz/deployment/.github/actions/build-and-deploy-quarkus-jvm@main
         with:
