@@ -19,19 +19,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Wrapper service that handles concurrent analysis requests safely. Uses an executor service to queue and process
- * analysis requests sequentially
+ * Wrapper service that handles concurrent analysis requests safely. Uses an executor service to
+ * queue and process analysis requests sequentially
  */
 @ApplicationScoped
 public class ConcurrentAnalysisService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConcurrentAnalysisService.class);
 
-  @Inject
-  /* package */ AnalysisService analysisService; // NOCS
+  @Inject /* package */ AnalysisService analysisService;
 
-  @Inject
-  /* package */ AnalysisStatusService analysisStatusService; // NOCS
+  @Inject /* package */ AnalysisStatusService analysisStatusService;
 
   // Single-threaded executor to process analysis requests sequentially
   private ExecutorService executorService;
@@ -40,11 +38,13 @@ public class ConcurrentAnalysisService {
 
   @PostConstruct
   public void init() {
-    executorService = Executors.newSingleThreadExecutor(r -> {
-      final Thread thread = new Thread(r, "code-analysis-worker");
-      thread.setDaemon(false); // Keep thread alive for pending requests
-      return thread;
-    });
+    executorService =
+        Executors.newSingleThreadExecutor(
+            r -> {
+              final Thread thread = new Thread(r, "code-analysis-worker");
+              thread.setDaemon(false); // Keep thread alive for pending requests
+              return thread;
+            });
     LOGGER.info("ConcurrentAnalysisService initialized with sequential request processing");
   }
 
@@ -66,36 +66,43 @@ public class ConcurrentAnalysisService {
     }
   }
 
-  public CompletableFuture<Void> analyzeAndSendRepoAsync(final AnalysisConfig config,
-      final DataExporter exporter) {
+  public CompletableFuture<Void> analyzeAndSendRepoAsync(
+      final AnalysisConfig config, final DataExporter exporter) {
     final String landscapeToken = config.landscapeToken();
     final String repoUrl = config.repoRemoteUrl().orElse("unknown");
 
     LOGGER.info("📥 Queuing analysis request for repository: {}", repoUrl);
 
-    final CompletableFuture<Void> jobFuture = CompletableFuture.runAsync(() -> {
-      try {
-        LOGGER.info("⚙️  Processing analysis request for repository: {}", repoUrl);
-        analysisService.analyzeAndSendRepo(config, exporter);
-        LOGGER.info("✅ Completed analysis for repository: {}", repoUrl);
-      } catch (AnalysisCancelledException e) {
-        LOGGER.info("🛑 Analysis cancelled for repository: {}", repoUrl);
-        throw e;
-      } catch (IOException | GitAPIException | NotFoundException
-          | PropertyNotDefinedException e) {
-        LOGGER.error("❌ Analysis failed for repository: {}", repoUrl, e);
-        throw new RuntimeException("Analysis failed: " + e.getMessage(), e);
-      }
-    }, executorService);
+    final CompletableFuture<Void> jobFuture =
+        CompletableFuture.runAsync(
+            () -> {
+              try {
+                LOGGER.info("⚙️  Processing analysis request for repository: {}", repoUrl);
+                analysisService.analyzeAndSendRepo(config, exporter);
+                LOGGER.info("✅ Completed analysis for repository: {}", repoUrl);
+              } catch (AnalysisCancelledException e) {
+                LOGGER.info("🛑 Analysis cancelled for repository: {}", repoUrl);
+                throw e;
+              } catch (IOException
+                  | GitAPIException
+                  | NotFoundException
+                  | PropertyNotDefinedException e) {
+                LOGGER.error("❌ Analysis failed for repository: {}", repoUrl, e);
+                throw new RuntimeException("Analysis failed: " + e.getMessage(), e);
+              }
+            },
+            executorService);
 
     jobsByLandscapeToken.put(landscapeToken, jobFuture);
-    jobFuture.whenComplete((ignored, error) -> jobsByLandscapeToken.remove(landscapeToken, jobFuture));
+    jobFuture.whenComplete(
+        (ignored, error) -> jobsByLandscapeToken.remove(landscapeToken, jobFuture));
 
     return jobFuture;
   }
 
   public AnalysisCancellationResult cancelAnalysis(final String landscapeToken) {
-    final AnalysisCancellationResult result = analysisStatusService.requestCancellation(landscapeToken);
+    final AnalysisCancellationResult result =
+        analysisStatusService.requestCancellation(landscapeToken);
     if (result != AnalysisCancellationResult.CANCELLED) {
       return result;
     }
@@ -105,7 +112,8 @@ public class ConcurrentAnalysisService {
       jobFuture.cancel(true);
       LOGGER.info("🛑 Cancelled analysis job for landscapeToken={}", landscapeToken);
     } else {
-      LOGGER.info("🛑 Marked analysis as cancelled for landscapeToken={} (no active worker future)",
+      LOGGER.info(
+          "🛑 Marked analysis as cancelled for landscapeToken={} (no active worker future)",
           landscapeToken);
     }
 

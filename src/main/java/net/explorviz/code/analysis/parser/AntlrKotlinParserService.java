@@ -16,19 +16,16 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR-based parser service for analyzing Kotlin source code.
- */
+/** ANTLR-based parser service for analyzing Kotlin source code. */
 @ApplicationScoped
 public class AntlrKotlinParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrKotlinParserService.class);
 
-  @Inject
-  AntlrParseSettings parseSettings = new AntlrParseSettings();
+  @Inject AntlrParseSettings parseSettings = new AntlrParseSettings();
 
-  public KotlinFileDataHandler parseFileContent(final String fileContent, final String fileName,
-      final String fileHash) {
+  public KotlinFileDataHandler parseFileContent(
+      final String fileContent, final String fileName, final String fileHash) {
     try {
       LOGGER.trace("Parsing Kotlin file content for {}", fileName);
       final CharStream charStream = CharStreams.fromString(fileContent, fileName);
@@ -55,17 +52,22 @@ public class AntlrKotlinParserService {
     }
   }
 
-  private KotlinFileDataHandler parse(final CharStream charStream, final String fileName,
-      final String fileHash) {
+  private KotlinFileDataHandler parse(
+      final CharStream charStream, final String fileName, final String fileHash) {
     final KotlinLexer lexer = new KotlinLexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final KotlinParser parser = new KotlinParser(tokens);
 
     final boolean isScript = fileName.toLowerCase().endsWith(".kts");
-    final ParseTree tree = AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName,
-        parseSettings.parseTimeoutMs(),
-        () -> isScript ? parser.script() : parser.kotlinFile());
+    final ParseTree tree =
+        AntlrParserUtils.parseTwoStage(
+            parser,
+            tokens,
+            LOGGER,
+            fileName,
+            parseSettings.parseTimeoutMs(),
+            () -> isScript ? parser.script() : parser.kotlinFile());
 
     final KotlinFileDataHandler fileDataHandler = new KotlinFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

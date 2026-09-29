@@ -12,10 +12,9 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR listener for extracting file data from C# source code.
- */
-public class CSharpFileDataListener extends CSharpParserBaseListener implements CommonFileDataListener {
+/** ANTLR listener for extracting file data from C# source code. */
+public class CSharpFileDataListener extends CSharpParserBaseListener
+    implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CSharpFileDataListener.class);
 
@@ -24,8 +23,8 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
   private int functionCount = 0;
   private int variableCount = 0;
 
-  public CSharpFileDataListener(final CSharpFileDataHandler fileDataHandler,
-      final CommonTokenStream tokens) {
+  public CSharpFileDataListener(
+      final CSharpFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;
     this.tokens = tokens;
   }
@@ -38,7 +37,8 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     fileDataHandler.addMetric(SLOC, String.valueOf(sloc));
     fileDataHandler.addMetric(CLOC, String.valueOf(cloc));
 
-    LOGGER.atTrace()
+    LOGGER
+        .atTrace()
         .addArgument(fileDataHandler.getFileName())
         .addArgument(sloc)
         .log("{} - SLOC: {}");
@@ -105,8 +105,8 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     }
   }
 
-  private void addClassBaseRelations(final ClassDataHandler classData,
-      final CSharpParser.Class_baseContext classBase) {
+  private void addClassBaseRelations(
+      final ClassDataHandler classData, final CSharpParser.Class_baseContext classBase) {
     if (classBase == null) {
       return;
     }
@@ -116,16 +116,23 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     }
 
     if (classBase.interface_type_list() != null) {
-      for (final CSharpParser.Interface_typeContext interfaceType : classBase.interface_type_list()
-          .interface_type()) {
+      for (final CSharpParser.Interface_typeContext interfaceType :
+          classBase.interface_type_list().interface_type()) {
         classData.addImplementedInterface(interfaceType.getText());
       }
     }
   }
 
-  private void addFormattedSuperClass(final ClassDataHandler classData, final String superClassFqn) {
-    classData.setSuperClass(getClassPathFromFqn(superClassFqn, ".cs", fileDataHandler.getFileName(),
-        fileDataHandler.getPackageName()) + "::" + getClassNameFromFqn(superClassFqn));
+  private void addFormattedSuperClass(
+      final ClassDataHandler classData, final String superClassFqn) {
+    classData.setSuperClass(
+        getClassPathFromFqn(
+                superClassFqn,
+                ".cs",
+                fileDataHandler.getFileName(),
+                fileDataHandler.getPackageName())
+            + "::"
+            + getClassNameFromFqn(superClassFqn));
   }
 
   @Override
@@ -151,9 +158,10 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
 
-      if (ctx.struct_interfaces() != null && ctx.struct_interfaces().interface_type_list() != null) {
-        for (final CSharpParser.Interface_typeContext interfaceType : ctx.struct_interfaces()
-            .interface_type_list().interface_type()) {
+      if (ctx.struct_interfaces() != null
+          && ctx.struct_interfaces().interface_type_list() != null) {
+        for (final CSharpParser.Interface_typeContext interfaceType :
+            ctx.struct_interfaces().interface_type_list().interface_type()) {
           classData.addImplementedInterface(interfaceType.getText());
         }
       }
@@ -235,8 +243,8 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     }
 
     final String fieldType = ctx.type_().getText();
-    for (final CSharpParser.Variable_declaratorContext variableDecl : ctx.variable_declarators()
-        .variable_declarator()) {
+    for (final CSharpParser.Variable_declaratorContext variableDecl :
+        ctx.variable_declarators().variable_declarator()) {
       if (variableDecl.identifier() != null) {
         classData.addField(variableDecl.identifier().getText(), fieldType, new ArrayList<>());
       }
@@ -256,7 +264,8 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     }
 
     final String returnType = extractReturnType(ctx);
-    final MethodDataHandler methodData = createMethodHandler(methodName, returnType, ctx.method_header());
+    final MethodDataHandler methodData =
+        createMethodHandler(methodName, returnType, ctx.method_header());
     if (methodData == null) {
       return;
     }
@@ -281,8 +290,10 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
       return;
     }
 
-    final MethodDataHandler methodData = classData.addConstructor(constructorName,
-        constructorName + "#" + extractParameterTypes(ctx.constructor_declarator()).hashCode());
+    final MethodDataHandler methodData =
+        classData.addConstructor(
+            constructorName,
+            constructorName + "#" + extractParameterTypes(ctx.constructor_declarator()).hashCode());
     addParameters(methodData, ctx.constructor_declarator().parameter_list());
 
     if (ctx.start != null && ctx.stop != null) {
@@ -340,15 +351,18 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     }
   }
 
-  private MethodDataHandler createMethodHandler(final String methodName, final String returnType,
+  private MethodDataHandler createMethodHandler(
+      final String methodName,
+      final String returnType,
       final CSharpParser.Method_headerContext header) {
     if (fileDataHandler.isInClassContext()) {
       final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
       if (classData == null) {
         return null;
       }
-      final MethodDataHandler methodData = classData.addMethod(methodName,
-          methodName + "#" + extractParameterTypes(header).hashCode(), returnType);
+      final MethodDataHandler methodData =
+          classData.addMethod(
+              methodName, methodName + "#" + extractParameterTypes(header).hashCode(), returnType);
       addParameters(methodData, header.parameter_list());
       return methodData;
     }
@@ -382,18 +396,20 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     return extractParameterTypes(header.parameter_list());
   }
 
-  private List<String> extractParameterTypes(final CSharpParser.Constructor_declaratorContext declarator) {
+  private List<String> extractParameterTypes(
+      final CSharpParser.Constructor_declaratorContext declarator) {
     return extractParameterTypes(declarator.parameter_list());
   }
 
-  private List<String> extractParameterTypes(final CSharpParser.Parameter_listContext parameterList) {
+  private List<String> extractParameterTypes(
+      final CSharpParser.Parameter_listContext parameterList) {
     final List<String> paramTypes = new ArrayList<>();
     if (parameterList == null || parameterList.fixed_parameters() == null) {
       return paramTypes;
     }
 
-    for (final CSharpParser.Fixed_parameterContext param : parameterList.fixed_parameters()
-        .fixed_parameter()) {
+    for (final CSharpParser.Fixed_parameterContext param :
+        parameterList.fixed_parameters().fixed_parameter()) {
       if (param.type_() != null) {
         paramTypes.add(param.type_().getText());
       }
@@ -401,14 +417,14 @@ public class CSharpFileDataListener extends CSharpParserBaseListener implements 
     return paramTypes;
   }
 
-  private void addParameters(final MethodDataHandler methodData,
-      final CSharpParser.Parameter_listContext parameterList) {
+  private void addParameters(
+      final MethodDataHandler methodData, final CSharpParser.Parameter_listContext parameterList) {
     if (parameterList == null || parameterList.fixed_parameters() == null) {
       return;
     }
 
-    for (final CSharpParser.Fixed_parameterContext param : parameterList.fixed_parameters()
-        .fixed_parameter()) {
+    for (final CSharpParser.Fixed_parameterContext param :
+        parameterList.fixed_parameters().fixed_parameter()) {
       final String paramType = param.type_() != null ? param.type_().getText() : "unknown";
       String paramName = "";
       if (param.identifier() != null) {

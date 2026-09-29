@@ -8,9 +8,7 @@ import java.util.Stack;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
 
-/**
- * FileData handler for PHP source files.
- */
+/** FileData handler for PHP source files. */
 public class PhpFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 

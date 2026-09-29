@@ -19,16 +19,16 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-/**
- * Resolves and lists repositories stored in the local clone folder.
- */
+/** Resolves and lists repositories stored in the local clone folder. */
 @ApplicationScoped
 public class LocalRepositoryService {
 
   private static final String DEFAULT_CLONE_ROOT = "cloned-repositories";
 
-  @ConfigProperty(name = "explorviz.gitanalysis.remote.storage-path", defaultValue = DEFAULT_CLONE_ROOT)
-  /* default */ String cloneRootProperty; // NOCS
+  @ConfigProperty(
+      name = "explorviz.gitanalysis.remote.storage-path",
+      defaultValue = DEFAULT_CLONE_ROOT)
+  /* default */ String cloneRootProperty;
 
   /**
    * Lists all Git repositories below the configured clone root.
@@ -61,7 +61,8 @@ public class LocalRepositoryService {
    * @return absolute repository path
    * @throws IOException if the path escapes the clone root
    */
-  public Path resolveRelativeRepositoryPath(final String relativeRepositoryPath) throws IOException {
+  public Path resolveRelativeRepositoryPath(final String relativeRepositoryPath)
+      throws IOException {
     final Path cloneRoot = getCloneRoot();
     final Path repositoryPath = cloneRoot.resolve(relativeRepositoryPath.trim()).normalize();
 
@@ -73,9 +74,10 @@ public class LocalRepositoryService {
   }
 
   private Path getCloneRoot() {
-    final String cloneRoot = cloneRootProperty == null || cloneRootProperty.isBlank()
-        ? DEFAULT_CLONE_ROOT
-        : cloneRootProperty;
+    final String cloneRoot =
+        cloneRootProperty == null || cloneRootProperty.isBlank()
+            ? DEFAULT_CLONE_ROOT
+            : cloneRootProperty;
     final Path configuredPath = Paths.get(cloneRoot);
 
     if (configuredPath.isAbsolute()) {
@@ -93,8 +95,8 @@ public class LocalRepositoryService {
   }
 
   private LocalRepositoryInfo getRepositoryInfo(final Path walkRoot, final Path repositoryPath) {
-    final String relativePath = walkRoot.relativize(repositoryPath).toString()
-        .replace(File.separatorChar, '/');
+    final String relativePath =
+        walkRoot.relativize(repositoryPath).toString().replace(File.separatorChar, '/');
     return new LocalRepositoryInfo(relativePath, listBranches(repositoryPath));
   }
 
@@ -117,9 +119,11 @@ public class LocalRepositoryService {
     final Set<String> branchNames = new LinkedHashSet<>();
     try (Git repository = Git.open(repositoryPath.toFile())) {
       for (final Ref branch : repository.branchList().setListMode(ListMode.ALL).call()) {
-        final String branchName = branch.getName()
-            .replaceFirst("^refs/heads/", "")
-            .replaceFirst("^refs/remotes/origin/", "");
+        final String branchName =
+            branch
+                .getName()
+                .replaceFirst("^refs/heads/", "")
+                .replaceFirst("^refs/remotes/origin/", "");
         if (!branchName.equals("HEAD")) {
           branchNames.add(branchName);
         }

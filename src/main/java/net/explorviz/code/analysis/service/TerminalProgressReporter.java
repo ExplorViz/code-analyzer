@@ -62,8 +62,15 @@ public class TerminalProgressReporter {
     final int totalFiles = Math.max(0, state.totalFiles());
     final int analyzedFiles = Math.min(Math.max(0, state.analyzedFiles()), totalFiles);
     final int percent = totalFiles == 0 ? 100 : (analyzedFiles * 100) / totalFiles;
-    return "Files " + renderBar(analyzedFiles, totalFiles) + " "
-        + analyzedFiles + "/" + totalFiles + " (" + percent + "%)";
+    return "Files "
+        + renderBar(analyzedFiles, totalFiles)
+        + " "
+        + analyzedFiles
+        + "/"
+        + totalFiles
+        + " ("
+        + percent
+        + "%)";
   }
 
   static String formatAnalysisStartedMessage(final AnalysisProgressState state) {
@@ -76,15 +83,31 @@ public class TerminalProgressReporter {
     if (state.totalFiles() == 0) {
       return "Commit " + currentCommit + "/" + totalCommits + ": no files to analyze";
     }
-    return "Commit " + currentCommit + "/" + totalCommits + ": analyzing " + state.totalFiles() + " files";
+    return "Commit "
+        + currentCommit
+        + "/"
+        + totalCommits
+        + ": analyzing "
+        + state.totalFiles()
+        + " files";
   }
 
-  static String formatFileMilestoneMessage(final AnalysisProgressState state, final int milestonePercent) {
+  static String formatFileMilestoneMessage(
+      final AnalysisProgressState state, final int milestonePercent) {
     final int totalCommits = Math.max(0, state.totalCommits());
     final int totalFiles = Math.max(0, state.totalFiles());
     final int analyzedFiles = Math.min(Math.max(0, state.analyzedFiles()), totalFiles);
-    return "Commit " + resolveDisplayedCommit(state) + "/" + totalCommits + ": files "
-        + analyzedFiles + "/" + totalFiles + " (" + milestonePercent + "%)";
+    return "Commit "
+        + resolveDisplayedCommit(state)
+        + "/"
+        + totalCommits
+        + ": files "
+        + analyzedFiles
+        + "/"
+        + totalFiles
+        + " ("
+        + milestonePercent
+        + "%)";
   }
 
   static String formatCommitCompletedMessage(final AnalysisProgressState state) {
@@ -148,9 +171,11 @@ public class TerminalProgressReporter {
   }
 
   private static String renderBar(final int analyzedFiles, final int totalFiles) {
-    final int filled = totalFiles == 0
-        ? BAR_WIDTH
-        : Math.min(BAR_WIDTH, (int) Math.round((double) analyzedFiles * BAR_WIDTH / totalFiles));
+    final int filled =
+        totalFiles == 0
+            ? BAR_WIDTH
+            : Math.min(
+                BAR_WIDTH, (int) Math.round((double) analyzedFiles * BAR_WIDTH / totalFiles));
     return "[" + "#".repeat(filled) + "-".repeat(BAR_WIDTH - filled) + "]";
   }
 
@@ -181,11 +206,15 @@ public class TerminalProgressReporter {
 
   private static boolean isTruthyEnv(final String name) {
     final String value = System.getenv(name);
-    return value != null && !value.isBlank() && !"false".equalsIgnoreCase(value) && !"0".equals(value);
+    return value != null
+        && !value.isBlank()
+        && !"false".equalsIgnoreCase(value)
+        && !"0".equals(value);
   }
 
   private void updateInteractive(final AnalysisProgressState state) {
-    if (STATUS_FINISHED.equals(state.status()) || STATUS_FAILED.equals(state.status())
+    if (STATUS_FINISHED.equals(state.status())
+        || STATUS_FAILED.equals(state.status())
         || STATUS_CANCELLED.equals(state.status())) {
       renderFinalState(state);
       finish();
@@ -237,7 +266,8 @@ public class TerminalProgressReporter {
     }
 
     if (state.totalFiles() > 0) {
-      final int milestone = nextFileMilestonePercent(resolveFilePercent(state), lastLoggedFilePercent);
+      final int milestone =
+          nextFileMilestonePercent(resolveFilePercent(state), lastLoggedFilePercent);
       if (milestone > 0) {
         LOGGER.info(formatFileMilestoneMessage(state, milestone));
         lastLoggedFilePercent = milestone;
@@ -262,8 +292,9 @@ public class TerminalProgressReporter {
 
   private boolean shouldRender(final AnalysisProgressState state) {
     final long now = System.nanoTime();
-    final boolean commitBoundaryChanged = state.analyzedCommits() != lastRenderedCommit
-        || state.totalFiles() != lastRenderedTotalFiles;
+    final boolean commitBoundaryChanged =
+        state.analyzedCommits() != lastRenderedCommit
+            || state.totalFiles() != lastRenderedTotalFiles;
     if (!active || commitBoundaryChanged) {
       return true;
     }
@@ -277,13 +308,14 @@ public class TerminalProgressReporter {
 
   private void renderFinalState(final AnalysisProgressState state) {
     if (STATUS_FINISHED.equals(state.status())) {
-      final AnalysisProgressState completed = new AnalysisProgressState(
-          STATUS_FINISHED,
-          state.totalCommits(),
-          state.totalCommits(),
-          state.totalFiles(),
-          state.totalFiles(),
-          null);
+      final AnalysisProgressState completed =
+          new AnalysisProgressState(
+              STATUS_FINISHED,
+              state.totalCommits(),
+              state.totalCommits(),
+              state.totalFiles(),
+              state.totalFiles(),
+              null);
       writeProgressLines(formatCommitLine(completed), formatFileLine(completed));
       rememberRender(completed);
       return;

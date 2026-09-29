@@ -16,19 +16,16 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR-based parser service for analyzing Swift source code.
- */
+/** ANTLR-based parser service for analyzing Swift source code. */
 @ApplicationScoped
 public class AntlrSwiftParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrSwiftParserService.class);
 
-  @Inject
-  AntlrParseSettings parseSettings = new AntlrParseSettings();
+  @Inject AntlrParseSettings parseSettings = new AntlrParseSettings();
 
-  public SwiftFileDataHandler parseFileContent(final String fileContent, final String fileName,
-      final String fileHash) {
+  public SwiftFileDataHandler parseFileContent(
+      final String fileContent, final String fileName, final String fileHash) {
     try {
       LOGGER.trace("Parsing Swift file content for {}", fileName);
       final CharStream charStream = CharStreams.fromString(fileContent, fileName);
@@ -55,15 +52,16 @@ public class AntlrSwiftParserService {
     }
   }
 
-  private SwiftFileDataHandler parse(final CharStream charStream, final String fileName,
-      final String fileHash) {
+  private SwiftFileDataHandler parse(
+      final CharStream charStream, final String fileName, final String fileHash) {
     final Swift5Lexer lexer = new Swift5Lexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final Swift5Parser parser = new Swift5Parser(tokens);
 
-    final ParseTree topLevel = AntlrParserUtils.parseTwoStage(
-        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::top_level);
+    final ParseTree topLevel =
+        AntlrParserUtils.parseTwoStage(
+            parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::top_level);
 
     final SwiftFileDataHandler fileDataHandler = new SwiftFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

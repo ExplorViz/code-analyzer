@@ -10,5 +10,4 @@ import com.google.protobuf.GeneratedMessageV3;
 public interface ProtoBufConvertable<T extends GeneratedMessageV3> {
 
   T getProtoBufObject();
-
 }

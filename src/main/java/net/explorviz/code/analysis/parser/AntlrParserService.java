@@ -17,22 +17,19 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR-based parser service for analyzing Java source code.
- */
+/** ANTLR-based parser service for analyzing Java source code. */
 @ApplicationScoped
 public class AntlrParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrParserService.class);
 
-  @Inject
-  AntlrParseSettings parseSettings = new AntlrParseSettings();
+  @Inject AntlrParseSettings parseSettings = new AntlrParseSettings();
 
   @ConfigProperty(name = "explorviz.gitanalysis.assume-unresolved-types-from-wildcard-imports")
-  /* default */ boolean wildcardImportProperty; // NOCS
+  /* default */ boolean wildcardImportProperty;
 
-  public JavaFileDataHandler parseFileContent(final String fileContent, final String fileName,
-      final String fileHash) {
+  public JavaFileDataHandler parseFileContent(
+      final String fileContent, final String fileName, final String fileHash) {
     try {
       LOGGER.trace("Parsing file content for {}", fileName);
       final CharStream charStream = CharStreams.fromString(fileContent);
@@ -59,22 +56,27 @@ public class AntlrParserService {
     }
   }
 
-  private JavaFileDataHandler parse(final CharStream charStream, final String fileName,
-      final String fileHash) {
+  private JavaFileDataHandler parse(
+      final CharStream charStream, final String fileName, final String fileHash) {
     final JavaLexer lexer = new JavaLexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final JavaParser parser = new JavaParser(tokens);
 
-    final ParseTree compilationUnit = AntlrParserUtils.parseTwoStage(
-        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(),
-        parser::compilationUnit);
+    final ParseTree compilationUnit =
+        AntlrParserUtils.parseTwoStage(
+            parser,
+            tokens,
+            LOGGER,
+            fileName,
+            parseSettings.parseTimeoutMs(),
+            parser::compilationUnit);
 
     final JavaFileDataHandler fileDataHandler = new JavaFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);
 
-    final JavaFileDataListener listener = new JavaFileDataListener(fileDataHandler,
-        wildcardImportProperty, tokens);
+    final JavaFileDataListener listener =
+        new JavaFileDataListener(fileDataHandler, wildcardImportProperty, tokens);
     final ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(listener, compilationUnit);
 

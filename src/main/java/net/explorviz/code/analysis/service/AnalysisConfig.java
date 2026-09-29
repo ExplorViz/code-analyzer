@@ -6,16 +6,19 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Configuration object for Git analysis operations.
- */
-public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRemoteUrl, Optional<String> gitUsername,
-    Optional<String> gitPassword, Optional<String> branch,
+/** Configuration object for Git analysis operations. */
+public record AnalysisConfig(
+    Optional<String> repoPath,
+    Optional<String> repoRemoteUrl,
+    Optional<String> gitUsername,
+    Optional<String> gitPassword,
+    Optional<String> branch,
     Optional<String> includeInAnalysisExpressions,
     Optional<String> excludeFromAnalysisExpressions,
     List<ApplicationPath> applicationPaths,
     boolean includeDataStructures,
-    Optional<String> startCommit, Optional<String> endCommit,
+    Optional<String> startCommit,
+    Optional<String> endCommit,
     Optional<Integer> commitAnalysisLimit,
     Optional<Integer> commitSamplingInterval,
     Optional<CommitSamplingPeriod> commitSamplingPeriod,
@@ -24,18 +27,22 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
     boolean skipCommitsWithoutRelevantFileChanges,
     String landscapeToken,
     boolean fetchSocialData,
-     boolean syncSocialWindow, Optional<String> fetchEndDate, Optional<Integer> socialDataTimeFrameDays) {
+    boolean syncSocialWindow,
+    Optional<String> fetchEndDate,
+    Optional<Integer> socialDataTimeFrameDays) {
 
   /**
-   * Path filter passed to Git diffs: union of all application roots, or global filters when appropriate.
+   * Path filter passed to Git diffs: union of all application roots, or global filters when
+   * appropriate.
    */
   public String pathRestrictionForDiff() {
     if (applicationPaths == null || applicationPaths.isEmpty()) {
       return includeInAnalysisExpressions().orElse("");
     }
-    final boolean anyBlankRoot = applicationPaths.stream()
-        .map(ApplicationPath::root)
-        .anyMatch(r -> r == null || r.isBlank());
+    final boolean anyBlankRoot =
+        applicationPaths.stream()
+            .map(ApplicationPath::root)
+            .anyMatch(r -> r == null || r.isBlank());
     if (anyBlankRoot) {
       return includeInAnalysisExpressions().orElse("");
     }
@@ -46,9 +53,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
         .collect(Collectors.joining(","));
   }
 
-  /**
-   * Map for {@link net.explorviz.code.proto.StateDataRequest} {@code application_paths}.
-   */
+  /** Map for {@link net.explorviz.code.proto.StateDataRequest} {@code application_paths}. */
   public Map<String, String> applicationPathsMap() {
     final Map<String, String> map = new LinkedHashMap<>();
     if (applicationPaths == null) {
@@ -77,9 +82,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
         .trim();
   }
 
-  /**
-   * Builder for AnalysisConfig.
-   */
+  /** Builder for AnalysisConfig. */
   public static class Builder {
     private Optional<String> repoPath = Optional.empty();
     private Optional<String> repoRemoteUrl = Optional.empty();
@@ -134,12 +137,14 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       return this;
     }
 
-    public Builder includeInAnalysisExpressions(final Optional<String> includeInAnalysisExpressions) {
+    public Builder includeInAnalysisExpressions(
+        final Optional<String> includeInAnalysisExpressions) {
       this.includeInAnalysisExpressions = includeInAnalysisExpressions;
       return this;
     }
 
-    public Builder excludeFromAnalysisExpressions(final Optional<String> excludeFromAnalysisExpressions) {
+    public Builder excludeFromAnalysisExpressions(
+        final Optional<String> excludeFromAnalysisExpressions) {
       this.excludeFromAnalysisExpressions = excludeFromAnalysisExpressions;
       return this;
     }
@@ -224,7 +229,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       this.socialDataTimeFrameDays = socialDataTimeFrameDays;
       return this;
     }
-    
+
     public Builder applicationPaths(final List<ApplicationPath> paths) {
       this.explicitApplicationPaths = paths;
       return this;
@@ -235,9 +240,10 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
       if (explicitApplicationPaths != null && !explicitApplicationPaths.isEmpty()) {
         paths = List.copyOf(explicitApplicationPaths);
       } else {
-        paths = List.of(new ApplicationPath(
-            applicationName != null ? applicationName : "",
-            applicationRoot.orElse("")));
+        paths =
+            List.of(
+                new ApplicationPath(
+                    applicationName != null ? applicationName : "", applicationRoot.orElse("")));
       }
       return new AnalysisConfig(
           repoPath,
@@ -272,8 +278,8 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
    * @param repoRemoteUrl optional clone URL (takes precedence over {@code repoPath})
    * @return The repository name, or an empty string if neither source yields one
    */
-  public static String deriveRepositoryName(final Optional<String> repoPath,
-      final Optional<String> repoRemoteUrl) {
+  public static String deriveRepositoryName(
+      final Optional<String> repoPath, final Optional<String> repoRemoteUrl) {
     if (repoRemoteUrl != null && repoRemoteUrl.isPresent()) {
       String upstream = repoRemoteUrl.get();
       // remove trailing slash if present
@@ -309,8 +315,7 @@ public record AnalysisConfig(Optional<String> repoPath, Optional<String> repoRem
   }
 
   /**
-   * Returns the name of the repository extracted from the remote URL or the local
-   * path.
+   * Returns the name of the repository extracted from the remote URL or the local path.
    *
    * @return The repository name, or an empty string if not found.
    */

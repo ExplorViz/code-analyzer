@@ -22,11 +22,8 @@ import net.explorviz.code.analysis.exceptions.NotFoundException;
 import net.explorviz.code.analysis.handler.MetricAppender;
 import net.explorviz.code.analysis.types.Graph;
 
-/**
- * Basic LCOM4 implementation.
- */
-public class LackOfCohesionMethodsVisitor // NOPMD
-    extends VoidVisitorAdapter<Pair<MetricAppender, Object>> {
+/** Basic LCOM4 implementation. */
+public class LackOfCohesionMethodsVisitor extends VoidVisitorAdapter<Pair<MetricAppender, Object>> {
 
   private static final String METRIC_NAME = "LCOM4";
   private final Stack<Graph> graphStack = new Stack<>();
@@ -45,14 +42,17 @@ public class LackOfCohesionMethodsVisitor // NOPMD
     data.a.enterClass(n);
 
     currentFields = n.getFields();
-    currentFieldNames = n.getFields().stream()
-        .map(field -> field.getVariables().getFirst().get().getName().asString())
-        .collect(Collectors.toList());
+    currentFieldNames =
+        n.getFields().stream()
+            .map(field -> field.getVariables().getFirst().get().getName().asString())
+            .collect(Collectors.toList());
     for (final String fieldName : currentFieldNames) {
       currentGraph.addVertex(fieldName, true);
     }
-    currentMethodNames = n.getMethods().stream().map(NodeWithSimpleName::getNameAsString)
-        .collect(Collectors.toList());
+    currentMethodNames =
+        n.getMethods().stream()
+            .map(NodeWithSimpleName::getNameAsString)
+            .collect(Collectors.toList());
     for (final String methodName : currentMethodNames) {
       currentGraph.addVertex(methodName);
     }
@@ -62,7 +62,7 @@ public class LackOfCohesionMethodsVisitor // NOPMD
     try {
       data.a.putClassMetric(METRIC_NAME, String.valueOf(currentGraph.getGroups().size()));
     } catch (NotFoundException e) {
-      throw new RuntimeException(e); // NOPMD
+      throw new RuntimeException(e);
     }
     data.a.leaveClass();
     leaveClass();
@@ -75,14 +75,17 @@ public class LackOfCohesionMethodsVisitor // NOPMD
     data.a.enterClass(n);
 
     currentFields = n.getFields();
-    currentFieldNames = n.getFields().stream()
-        .map(field -> field.getVariables().getFirst().get().getName().asString())
-        .collect(Collectors.toList());
+    currentFieldNames =
+        n.getFields().stream()
+            .map(field -> field.getVariables().getFirst().get().getName().asString())
+            .collect(Collectors.toList());
     for (final String fieldName : currentFieldNames) {
       currentGraph.addVertex(fieldName, true);
     }
-    currentMethodNames = n.getMethods().stream().map(NodeWithSimpleName::getNameAsString)
-        .collect(Collectors.toList());
+    currentMethodNames =
+        n.getMethods().stream()
+            .map(NodeWithSimpleName::getNameAsString)
+            .collect(Collectors.toList());
     for (final String methodName : currentMethodNames) {
       currentGraph.addVertex(methodName);
     }
@@ -92,7 +95,7 @@ public class LackOfCohesionMethodsVisitor // NOPMD
     try {
       data.a.putClassMetric(METRIC_NAME, String.valueOf(currentGraph.getGroups().size()));
     } catch (NotFoundException e) {
-      throw new RuntimeException(e); // NOPMD
+      throw new RuntimeException(e);
     }
     data.a.leaveClass();
     leaveClass();
@@ -105,9 +108,8 @@ public class LackOfCohesionMethodsVisitor // NOPMD
     data.a.leaveMethod();
   }
 
-  @Override // NOCS
-  public void visit(final MethodDeclaration n, // NOCS NOPMD
-      final Pair<MetricAppender, Object> data) { // NOCS NOPMD
+  @Override
+  public void visit(final MethodDeclaration n, final Pair<MetricAppender, Object> data) {
     data.a.enterMethod(n);
     // Skip this method if it is inherited, remove the graph entry
     if (n.isAnnotationPresent("Override")) {
@@ -115,8 +117,9 @@ public class LackOfCohesionMethodsVisitor // NOPMD
       return;
     }
     // it the method is empty, remove the graph entry
-    if (n.getBody().isEmpty() || n.getBody().get().getStatements().isEmpty() && n.getBody().get()
-        .getChildNodes().isEmpty()) {
+    if (n.getBody().isEmpty()
+        || n.getBody().get().getStatements().isEmpty()
+            && n.getBody().get().getChildNodes().isEmpty()) {
       currentGraph.removeVertex(n.getNameAsString());
       return;
     }
@@ -136,8 +139,8 @@ public class LackOfCohesionMethodsVisitor // NOPMD
     }
 
     for (final NameExpr nameExpr : n.findAll(NameExpr.class)) {
-      if (currentFieldNames.contains(nameExpr.getNameAsString()) && isNotShadowedByLocalVariable(
-          localVariables, nameExpr)) {
+      if (currentFieldNames.contains(nameExpr.getNameAsString())
+          && isNotShadowedByLocalVariable(localVariables, nameExpr)) {
         currentGraph.addEdge(n.getNameAsString(), nameExpr.getNameAsString());
       }
     }
@@ -147,7 +150,6 @@ public class LackOfCohesionMethodsVisitor // NOPMD
         // add something to method name so fields and methods can have the same name
         currentGraph.addEdge(n.getNameAsString(), method.getNameAsString());
       }
-
     }
     super.visit(n, data);
     data.a.leaveMethod();
@@ -163,10 +165,10 @@ public class LackOfCohesionMethodsVisitor // NOPMD
   private boolean isNotShadowedByLocalVariable(
       final List<Pair<String, Optional<Range>>> localVariables, final NameExpr nameExpr) {
     for (final Pair<String, Optional<Range>> entry : localVariables) {
-      if (nameExpr.getNameAsString().equals(entry.a) && entry.b.isPresent() && nameExpr.getRange()
-          .isPresent()) {
+      if (nameExpr.getNameAsString().equals(entry.a)
+          && entry.b.isPresent()
+          && nameExpr.getRange().isPresent()) {
         return entry.b.get().isAfter(nameExpr.getRange().get().end);
-
       }
     }
     return true;
@@ -174,8 +176,8 @@ public class LackOfCohesionMethodsVisitor // NOPMD
 
   private boolean findInClassFields(final String field) {
     for (final FieldDeclaration f : currentFields) {
-      if (f.getVariables().getFirst().isPresent() && field.contains(
-          f.getVariables().getFirst().get().getName().toString())) {
+      if (f.getVariables().getFirst().isPresent()
+          && field.contains(f.getVariables().getFirst().get().getName().toString())) {
         return true;
       }
     }
@@ -203,12 +205,12 @@ public class LackOfCohesionMethodsVisitor // NOPMD
 
   private void leaveClass() {
     graphStack.pop();
-    currentGraph = graphStack.isEmpty() ? null : graphStack.peek(); // NOPMD
+    currentGraph = graphStack.isEmpty() ? null : graphStack.peek();
     fieldsStack.pop();
-    currentFields = fieldsStack.isEmpty() ? null : fieldsStack.peek(); // NOPMD
+    currentFields = fieldsStack.isEmpty() ? null : fieldsStack.peek();
     fieldNamesStack.pop();
-    currentFieldNames = fieldNamesStack.isEmpty() ? null : fieldNamesStack.peek(); // NOPMD
+    currentFieldNames = fieldNamesStack.isEmpty() ? null : fieldNamesStack.peek();
     methodNamesStack.pop();
-    currentMethodNames = methodNamesStack.isEmpty() ? null : methodNamesStack.peek(); // NOPMD
+    currentMethodNames = methodNamesStack.isEmpty() ? null : methodNamesStack.peek();
   }
 }

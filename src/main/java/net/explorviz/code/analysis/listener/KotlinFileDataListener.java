@@ -11,10 +11,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR listener for extracting file data from Kotlin source code.
- */
-public class KotlinFileDataListener extends KotlinParserBaseListener implements CommonFileDataListener {
+/** ANTLR listener for extracting file data from Kotlin source code. */
+public class KotlinFileDataListener extends KotlinParserBaseListener
+    implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(KotlinFileDataListener.class);
 
@@ -24,8 +23,8 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
   private int variableCount = 0;
   private int functionDepth = 0;
 
-  public KotlinFileDataListener(final KotlinFileDataHandler fileDataHandler,
-      final CommonTokenStream tokens) {
+  public KotlinFileDataListener(
+      final KotlinFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;
     this.tokens = tokens;
   }
@@ -57,7 +56,8 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     fileDataHandler.addMetric(SLOC, String.valueOf(sloc));
     fileDataHandler.addMetric(CLOC, String.valueOf(cloc));
 
-    LOGGER.atTrace()
+    LOGGER
+        .atTrace()
         .addArgument(fileDataHandler.getFileName())
         .addArgument(sloc)
         .log("{} - SLOC: {}");
@@ -118,8 +118,8 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     addDelegationRelations(classData, ctx);
   }
 
-  private void addDelegationRelations(final ClassDataHandler classData,
-      final KotlinParser.ClassDeclarationContext ctx) {
+  private void addDelegationRelations(
+      final ClassDataHandler classData, final KotlinParser.ClassDeclarationContext ctx) {
     if (ctx.delegationSpecifiers() == null) {
       return;
     }
@@ -153,9 +153,16 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     return null;
   }
 
-  private void addFormattedSuperClass(final ClassDataHandler classData, final String superClassFqn) {
-    classData.setSuperClass(getClassPathFromFqn(superClassFqn, ".kt", fileDataHandler.getFileName(),
-        fileDataHandler.getPackageName()) + "::" + getClassNameFromFqn(superClassFqn));
+  private void addFormattedSuperClass(
+      final ClassDataHandler classData, final String superClassFqn) {
+    classData.setSuperClass(
+        getClassPathFromFqn(
+                superClassFqn,
+                ".kt",
+                fileDataHandler.getFileName(),
+                fileDataHandler.getPackageName())
+            + "::"
+            + getClassNameFromFqn(superClassFqn));
   }
 
   @Override
@@ -184,8 +191,8 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     }
   }
 
-  private void addObjectDelegationRelations(final ClassDataHandler classData,
-      final KotlinParser.ObjectDeclarationContext ctx) {
+  private void addObjectDelegationRelations(
+      final ClassDataHandler classData, final KotlinParser.ObjectDeclarationContext ctx) {
     if (ctx.delegationSpecifiers() == null) {
       return;
     }
@@ -216,9 +223,8 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
 
   @Override
   public void enterCompanionObject(final KotlinParser.CompanionObjectContext ctx) {
-    final String companionName = ctx.simpleIdentifier() != null
-        ? ctx.simpleIdentifier().getText()
-        : "Companion";
+    final String companionName =
+        ctx.simpleIdentifier() != null ? ctx.simpleIdentifier().getText() : "Companion";
     final String fqn = fileDataHandler.buildFqn(companionName);
     fileDataHandler.enterClass(companionName, fqn);
 
@@ -255,14 +261,15 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     }
 
     if (ctx.multiVariableDeclaration() != null) {
-      for (final KotlinParser.VariableDeclarationContext variableDecl : ctx.multiVariableDeclaration()
-          .variableDeclaration()) {
+      for (final KotlinParser.VariableDeclarationContext variableDecl :
+          ctx.multiVariableDeclaration().variableDeclaration()) {
         countVariableDeclaration(variableDecl);
       }
     }
   }
 
-  private void countVariableDeclaration(final KotlinParser.VariableDeclarationContext variableDecl) {
+  private void countVariableDeclaration(
+      final KotlinParser.VariableDeclarationContext variableDecl) {
     if (variableDecl.simpleIdentifier() != null) {
       variableCount++;
     }
@@ -279,13 +286,14 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
       return;
     }
 
-    final String fieldType = ctx.type() != null
-        ? ctx.type().getText()
-        : ctx.variableDeclaration().type() != null
-            ? ctx.variableDeclaration().type().getText()
-            : "unknown";
-    classData.addField(ctx.variableDeclaration().simpleIdentifier().getText(), fieldType,
-        new ArrayList<>());
+    final String fieldType =
+        ctx.type() != null
+            ? ctx.type().getText()
+            : ctx.variableDeclaration().type() != null
+                ? ctx.variableDeclaration().type().getText()
+                : "unknown";
+    classData.addField(
+        ctx.variableDeclaration().simpleIdentifier().getText(), fieldType, new ArrayList<>());
   }
 
   @Override
@@ -345,8 +353,9 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     }
 
     final String className = classData.getProtoBufObject().getName();
-    final MethodDataHandler methodData = classData.addConstructor(className,
-        className + "#" + extractParameterTypes(ctx).hashCode());
+    final MethodDataHandler methodData =
+        classData.addConstructor(
+            className, className + "#" + extractParameterTypes(ctx).hashCode());
     addParameters(methodData, ctx.functionValueParameters());
 
     if (ctx.start != null && ctx.stop != null) {
@@ -370,15 +379,18 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     return null;
   }
 
-  private MethodDataHandler createMethodHandler(final String methodName, final String returnType,
+  private MethodDataHandler createMethodHandler(
+      final String methodName,
+      final String returnType,
       final KotlinParser.FunctionDeclarationContext ctx) {
     if (fileDataHandler.isInClassContext()) {
       final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
       if (classData == null) {
         return null;
       }
-      final MethodDataHandler methodData = classData.addMethod(methodName,
-          methodName + "#" + extractParameterTypes(ctx).hashCode(), returnType);
+      final MethodDataHandler methodData =
+          classData.addMethod(
+              methodName, methodName + "#" + extractParameterTypes(ctx).hashCode(), returnType);
       addParameters(methodData, ctx.functionValueParameters());
       return methodData;
     }
@@ -403,7 +415,8 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
       return paramTypes;
     }
 
-    for (final KotlinParser.FunctionValueParameterContext param : parameters.functionValueParameter()) {
+    for (final KotlinParser.FunctionValueParameterContext param :
+        parameters.functionValueParameter()) {
       if (param.parameter() != null && param.parameter().type() != null) {
         paramTypes.add(param.parameter().type().getText());
       }
@@ -411,23 +424,25 @@ public class KotlinFileDataListener extends KotlinParserBaseListener implements 
     return paramTypes;
   }
 
-  private void addParameters(final MethodDataHandler methodData,
+  private void addParameters(
+      final MethodDataHandler methodData,
       final KotlinParser.FunctionValueParametersContext parameters) {
     if (parameters == null) {
       return;
     }
 
-    for (final KotlinParser.FunctionValueParameterContext param : parameters.functionValueParameter()) {
+    for (final KotlinParser.FunctionValueParameterContext param :
+        parameters.functionValueParameter()) {
       if (param.parameter() == null) {
         continue;
       }
 
-      final String paramType = param.parameter().type() != null
-          ? param.parameter().type().getText()
-          : "unknown";
-      final String paramName = param.parameter().simpleIdentifier() != null
-          ? param.parameter().simpleIdentifier().getText()
-          : "";
+      final String paramType =
+          param.parameter().type() != null ? param.parameter().type().getText() : "unknown";
+      final String paramName =
+          param.parameter().simpleIdentifier() != null
+              ? param.parameter().simpleIdentifier().getText()
+              : "";
       methodData.addParameter(paramName, paramType, new ArrayList<>());
     }
   }

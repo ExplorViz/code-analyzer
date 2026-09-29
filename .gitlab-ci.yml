@@ -2,7 +2,7 @@ default:
   tags:
     - exec-docker
   image: ghcr.io/graalvm/graalvm-community:21
-  cache: # Cache modules in between jobs
+  cache:
     key: $CI_COMMIT_REF_SLUG
     paths:
       - .gradle
@@ -29,30 +29,53 @@ build:
   stage: build
   script: ./gradlew assemble
   artifacts:
+    expire_in: 1 week
     paths:
-      - build
+      - build/libs/
 
-pmd:
+spotless:
   stage: code-analysis
-  script: ./gradlew pmdMain
-  artifacts:
-    paths:
-      - build
+  script: ./gradlew spotlessCheck
 
 checkstyle:
   stage: code-analysis
-  script: ./gradlew checkstyleMain
+  script:
+    - |
+      set +e
+      ./gradlew checkstyleMain --continue
+      CHECKSTYLE_EXIT=$?
+      python3 code-analysis/ci/gitlab-code-quality.py build/reports/checkstyle/main.xml build/reports/ci/checkstyle-code-quality.json
+      python3 code-analysis/ci/report-summary.py build/reports/checkstyle/main.xml
+      exit $CHECKSTYLE_EXIT
   artifacts:
+    when: always
+    expire_in: 1 week
+    reports:
+      codequality: build/reports/ci/checkstyle-code-quality.json
     paths:
-      - build
+      - build/reports/checkstyle/
+      - build/reports/ci/checkstyle-code-quality.json
 
 unit-test:
   stage: test
   script:
-    - ./gradlew test
+    - |
+      set +e
+      ./gradlew test jacocoTestReport --continue
+      TEST_EXIT=$?
+      REPORT_TEST_EXIT_CODE=$TEST_EXIT \
+      python3 code-analysis/ci/report-summary.py junit build/test-results/test \
+        --jacoco build/reports/jacoco/test/jacocoTestReport.xml
+      exit $TEST_EXIT
   artifacts:
+    when: always
+    expire_in: 1 week
+    reports:
+      junit: build/test-results/test/TEST-*.xml
     paths:
-      - build
+      - build/reports/tests/test/
+      - build/reports/jacoco/test/html/
+      - build/reports/jacoco/test/jacocoTestReport.xml
 
 .push-dockerhub-base-job:
   stage: publish

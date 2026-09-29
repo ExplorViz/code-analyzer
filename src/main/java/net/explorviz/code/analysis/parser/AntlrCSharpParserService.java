@@ -16,19 +16,16 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR-based parser service for analyzing C# source code.
- */
+/** ANTLR-based parser service for analyzing C# source code. */
 @ApplicationScoped
 public class AntlrCSharpParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrCSharpParserService.class);
 
-  @Inject
-  AntlrParseSettings parseSettings = new AntlrParseSettings();
+  @Inject AntlrParseSettings parseSettings = new AntlrParseSettings();
 
-  public CSharpFileDataHandler parseFileContent(final String fileContent, final String fileName,
-      final String fileHash) {
+  public CSharpFileDataHandler parseFileContent(
+      final String fileContent, final String fileName, final String fileHash) {
     try {
       LOGGER.trace("Parsing C# file content for {}", fileName);
       final CharStream charStream = CharStreams.fromString(fileContent, fileName);
@@ -55,15 +52,16 @@ public class AntlrCSharpParserService {
     }
   }
 
-  private CSharpFileDataHandler parse(final CharStream charStream, final String fileName,
-      final String fileHash) {
+  private CSharpFileDataHandler parse(
+      final CharStream charStream, final String fileName, final String fileHash) {
     final CSharpLexer lexer = new CSharpLexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final CSharpParser parser = new CSharpParser(tokens);
 
-    final ParseTree prog = AntlrParserUtils.parseTwoStage(
-        parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::prog);
+    final ParseTree prog =
+        AntlrParserUtils.parseTwoStage(
+            parser, tokens, LOGGER, fileName, parseSettings.parseTimeoutMs(), parser::prog);
 
     final CSharpFileDataHandler fileDataHandler = new CSharpFileDataHandler(fileName);
     fileDataHandler.setFileHash(fileHash);

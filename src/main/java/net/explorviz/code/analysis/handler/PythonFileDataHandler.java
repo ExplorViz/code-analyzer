@@ -8,9 +8,7 @@ import java.util.Stack;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
 
-/**
- * File data handler specifically for Python files.
- */
+/** File data handler specifically for Python files. */
 public class PythonFileDataHandler extends AbstractFileDataHandler {
 
   private final Stack<String> classStack = new Stack<>();

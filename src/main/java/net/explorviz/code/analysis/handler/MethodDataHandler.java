@@ -7,9 +7,7 @@ import java.util.Map;
 import net.explorviz.code.proto.FunctionData;
 import net.explorviz.code.proto.ParameterData;
 
-/**
- * FunctionData object holds data from analyzed function/method.
- */
+/** FunctionData object holds data from analyzed function/method. */
 public class MethodDataHandler implements ProtoBufConvertable<FunctionData> {
 
   private final FunctionData.Builder builder;
@@ -17,7 +15,7 @@ public class MethodDataHandler implements ProtoBufConvertable<FunctionData> {
   /**
    * Creates a new FunctionData object holding data describing the method.
    *
-   * @param name       the name of the function
+   * @param name the name of the function
    * @param returnType the return type of the method
    */
   public MethodDataHandler(final String name, final String returnType) {
@@ -54,12 +52,12 @@ public class MethodDataHandler implements ProtoBufConvertable<FunctionData> {
   /**
    * Add a parameter to the method.
    *
-   * @param name      name of the parameter
-   * @param type      type of the parameter
+   * @param name name of the parameter
+   * @param type type of the parameter
    * @param modifiers modifiers of the parameter
    */
-  public void addParameter(final String name, final String type,
-      final NodeList<Modifier> modifiers) {
+  public void addParameter(
+      final String name, final String type, final NodeList<Modifier> modifiers) {
     final ParameterData.Builder parameterBuilder = ParameterData.newBuilder();
     parameterBuilder.setName(name);
     parameterBuilder.setType(type);
@@ -72,8 +70,8 @@ public class MethodDataHandler implements ProtoBufConvertable<FunctionData> {
   /**
    * Add a parameter to the method.
    *
-   * @param name      name of the parameter
-   * @param type      type of the parameter
+   * @param name name of the parameter
+   * @param type type of the parameter
    * @param modifiers modifiers of the parameter
    */
   public void addParameter(final String name, final String type, final List<String> modifiers) {
@@ -91,7 +89,7 @@ public class MethodDataHandler implements ProtoBufConvertable<FunctionData> {
   /**
    * Adds a metric to the Method.
    *
-   * @param metricName  the name of the metric
+   * @param metricName the name of the metric
    * @param metricValue the value of the metric
    * @return the old metric value if it existed, null otherwise
    */
@@ -139,10 +137,18 @@ public class MethodDataHandler implements ProtoBufConvertable<FunctionData> {
       metricDataString.append(entry.getKey()).append(": ");
       metricDataString.append(entry.getValue()).append('\n');
     }
-    return "  type: " + this.builder.getReturnType() + "\n" + "  modifiers: "
-        + this.builder.getModifiersList() + "\n" + "  parameters: "
+    return "  type: "
+        + this.builder.getReturnType()
+        + "\n"
+        + "  modifiers: "
+        + this.builder.getModifiersList()
+        + "\n"
+        + "  parameters: "
         + this.builder.getParametersList()
-        + "\n" + "  outgoing calls: " + this.builder.getOutgoingMethodCallsList() + "\n"
+        + "\n"
+        + "  outgoing calls: "
+        + this.builder.getOutgoingMethodCallsList()
+        + "\n"
         + metricDataString;
   }
 }

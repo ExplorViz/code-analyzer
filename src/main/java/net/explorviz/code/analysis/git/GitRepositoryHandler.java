@@ -1,4 +1,4 @@
-package net.explorviz.code.analysis.git; // NOPMD
+package net.explorviz.code.analysis.git;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -59,21 +59,18 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Injectable helper class for jGit concerns.
- */
+/** Injectable helper class for jGit concerns. */
 @ApplicationScoped
-public class GitRepositoryHandler { // NOPMD
+public class GitRepositoryHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GitRepositoryHandler.class);
 
   private static String repositoryPath;
 
   @ConfigProperty(name = "explorviz.gitanalysis.remote.storage-path")
-  /* default */ Optional<String> repoLocalStoragePathProperty; // NOCS
+  /* default */ Optional<String> repoLocalStoragePathProperty;
 
-  @Inject
-  /* default */ LocalRepositoryService localRepositoryService; // NOCS
+  @Inject /* default */ LocalRepositoryService localRepositoryService;
 
   private Git git;
 
@@ -91,8 +88,8 @@ public class GitRepositoryHandler { // NOPMD
     }
   }
 
-  private static AbstractTreeIterator prepareTreeParser(final Repository repository,
-      final RevCommit commit) throws IOException {
+  private static AbstractTreeIterator prepareTreeParser(
+      final Repository repository, final RevCommit commit) throws IOException {
     ensureCommitTreeParsed(repository, commit);
     final RevTree tree = commit.getTree();
     final CanonicalTreeParser treeParser = new CanonicalTreeParser();
@@ -103,24 +100,24 @@ public class GitRepositoryHandler { // NOPMD
   }
 
   /**
-   * Converts a git ssh url to a https url and returns it as well as if the
-   * conversion is usable. If the given url is
-   * already in https format, it will be returned as-is and the flag is set to
-   * true. If the given url is in ssh format,
-   * it will be converted to https and returned and the flag is set to true. If it
-   * is neither, a warning will be printed
-   * the url will get returned but the flag is set to false.
+   * Converts a git ssh url to a https url and returns it as well as if the conversion is usable. If
+   * the given url is already in https format, it will be returned as-is and the flag is set to
+   * true. If the given url is in ssh format, it will be converted to https and returned and the
+   * flag is set to true. If it is neither, a warning will be printed the url will get returned but
+   * the flag is set to false.
    *
    * @param url the original git url
-   * @return a Tuple containing a flag if the returned url should be used and the
-   *         url itself
+   * @return a Tuple containing a flag if the returned url should be used and the url itself
    */
   public static Map.Entry<Boolean, String> convertSshToHttps(final String url) {
     if (url.startsWith("git@")) {
       final int colonIndex = url.indexOf(':');
       if (colonIndex > "git@".length() && colonIndex < url.length() - 1) {
-        final String convertedUrl = "https://" + url.substring("git@".length(), colonIndex) + "/"
-            + url.substring(colonIndex + 1);
+        final String convertedUrl =
+            "https://"
+                + url.substring("git@".length(), colonIndex)
+                + "/"
+                + url.substring(colonIndex + 1);
         if (LOGGER.isInfoEnabled()) {
           LOGGER.info("SSH URL detected, converting to HTTPS: " + convertedUrl);
         }
@@ -154,11 +151,10 @@ public class GitRepositoryHandler { // NOPMD
   }
 
   /**
-   * Returns the string content for a file path that was modified in a commit for
-   * a given repo.
+   * Returns the string content for a file path that was modified in a commit for a given repo.
    *
    * @param blobId The {@link ObjectId}.
-   * @param repo   The {@link Repository}.
+   * @param repo The {@link Repository}.
    * @return The stringified file content.
    * @throws IOException Thrown if JGit cannot open the Git repo.
    */
@@ -168,14 +164,13 @@ public class GitRepositoryHandler { // NOPMD
       final byte[] bytes = objectLoader.getBytes();
       return new String(bytes, StandardCharsets.UTF_8);
     }
-
   }
 
   /**
    * Returns the size in bytes of a git blob without checking out the commit.
    *
    * @param blobId The {@link ObjectId}.
-   * @param repo   The {@link Repository}.
+   * @param repo The {@link Repository}.
    * @return The blob size in bytes.
    * @throws IOException Thrown if JGit cannot read the blob.
    */
@@ -196,25 +191,27 @@ public class GitRepositoryHandler { // NOPMD
     systemPath = systemPath.replace("\\build\\classes\\java\\main", "");
     systemPath = systemPath.replace("/build/classes/java/main", "");
     String absolutePath = Paths.get(systemPath, relativePath).toString();
-    LOGGER.atInfo().addArgument(relativePath).addArgument(absolutePath)
+    LOGGER
+        .atInfo()
+        .addArgument(relativePath)
+        .addArgument(absolutePath)
         .log("Converted relative path {} to absolute path {}");
     return absolutePath;
   }
 
   /**
-   * Tries to download the Git {@link Repository} based on a given Url to the
-   * given.
+   * Tries to download the Git {@link Repository} based on a given Url to the given.
    *
-   * @param remoteRepositoryObject the {@link RemoteRepositoryObject} object
-   *                               containing the path and url
+   * @param remoteRepositoryObject the {@link RemoteRepositoryObject} object containing the path and
+   *     url
    * @return returns an opened git repository
    * @throws GitAPIException gets thrown if the git api encounters an error
    */
-  private Repository downloadGitRepository(// NOCS NOPMD
-      final RemoteRepositoryObject remoteRepositoryObject) throws GitAPIException, IOException {
+  private Repository downloadGitRepository(final RemoteRepositoryObject remoteRepositoryObject)
+      throws GitAPIException, IOException {
 
-    final Map.Entry<Boolean, String> checkedRepositoryUrl = convertSshToHttps(
-        remoteRepositoryObject.getUrl());
+    final Map.Entry<Boolean, String> checkedRepositoryUrl =
+        convertSshToHttps(remoteRepositoryObject.getUrl());
 
     final String urlValue = checkedRepositoryUrl.getValue();
     String repoName = "repository";
@@ -230,12 +227,10 @@ public class GitRepositoryHandler { // NOPMD
     if (remoteRepositoryObject.getStoragePath().isBlank()) {
       repoPath = Files.createTempDirectory("TemporaryRepository").toAbsolutePath().toString();
       repoPath = Paths.get(repoPath, repoName).toString();
-      LOGGER.atInfo().addArgument(repoPath)
-          .log("No path given, repository will be cloned to: {}");
+      LOGGER.atInfo().addArgument(repoPath).log("No path given, repository will be cloned to: {}");
     } else if (new File(repoPath).isAbsolute()) {
       repoPath = Paths.get(repoPath, repoName).toString();
-      LOGGER.atInfo().addArgument(repoPath)
-          .log("Repository will be cloned to: {}");
+      LOGGER.atInfo().addArgument(repoPath).log("Repository will be cloned to: {}");
     } else {
       LOGGER.atInfo().log("Found local path for remote repository.");
       repoPath = GitRepositoryHandler.convertRelativeToAbsolutePath(repoPath);
@@ -243,25 +238,30 @@ public class GitRepositoryHandler { // NOPMD
     }
 
     try {
-      LOGGER.atInfo().addArgument(checkedRepositoryUrl.getValue())
+      LOGGER
+          .atInfo()
+          .addArgument(checkedRepositoryUrl.getValue())
           .log("Cloning repository from: {}");
 
       FileIO.cleanDirectory(repoPath);
 
-      final String branchToClone = resolveBranchToClone(
-          remoteRepositoryObject, checkedRepositoryUrl.getValue());
+      final String branchToClone =
+          resolveBranchToClone(remoteRepositoryObject, checkedRepositoryUrl.getValue());
 
-      final var cloneCommand = Git.cloneRepository()
-          .setURI(checkedRepositoryUrl.getValue())
-          .setCredentialsProvider(remoteRepositoryObject.getCredentialsProvider())
-          .setDirectory(new File(repoPath))
-          .setCloneAllBranches(false)
-          .setBranch(branchToClone != null ? branchToClone : Constants.HEAD);
+      final var cloneCommand =
+          Git.cloneRepository()
+              .setURI(checkedRepositoryUrl.getValue())
+              .setCredentialsProvider(remoteRepositoryObject.getCredentialsProvider())
+              .setDirectory(new File(repoPath))
+              .setCloneAllBranches(false)
+              .setBranch(branchToClone != null ? branchToClone : Constants.HEAD);
 
       if (branchToClone != null) {
         cloneCommand.setBranchesToClone(
             Collections.singletonList(Constants.R_HEADS + branchToClone));
-        LOGGER.atInfo().addArgument(branchToClone)
+        LOGGER
+            .atInfo()
+            .addArgument(branchToClone)
             .log("Performing single-branch clone for branch: {}");
       }
 
@@ -269,7 +269,8 @@ public class GitRepositoryHandler { // NOPMD
       if (remoteRepositoryObject.getCloneDepth() != null
           && remoteRepositoryObject.getCloneDepth() > 0) {
         cloneCommand.setDepth(remoteRepositoryObject.getCloneDepth());
-        LOGGER.atInfo()
+        LOGGER
+            .atInfo()
             .addArgument(remoteRepositoryObject.getCloneDepth())
             .log("Performing shallow clone with depth: {}");
       }
@@ -279,8 +280,8 @@ public class GitRepositoryHandler { // NOPMD
       return this.git.getRepository();
     } catch (TransportException te) {
       if (!checkedRepositoryUrl.getKey()) {
-        throw (MalformedURLException) new MalformedURLException(
-            checkedRepositoryUrl.getValue()).initCause(te);
+        throw (MalformedURLException)
+            new MalformedURLException(checkedRepositoryUrl.getValue()).initCause(te);
       }
 
       if (LOGGER.isErrorEnabled()) {
@@ -291,7 +292,7 @@ public class GitRepositoryHandler { // NOPMD
         } else if (te.getMessage().contains("not authorized")) {
           LOGGER.error("Transport Exception thrown, credential are wrong");
         } else {
-          LOGGER.error("Transport Exception thrown: " + te.getMessage()); // NOPMD
+          LOGGER.error("Transport Exception thrown: " + te.getMessage());
         }
       }
       throw te;
@@ -303,26 +304,31 @@ public class GitRepositoryHandler { // NOPMD
     }
   }
 
-  private String resolveBranchToClone(final RemoteRepositoryObject remoteRepositoryObject,
-      final String repositoryUrl) throws GitAPIException {
+  private String resolveBranchToClone(
+      final RemoteRepositoryObject remoteRepositoryObject, final String repositoryUrl)
+      throws GitAPIException {
     final String configuredBranch = remoteRepositoryObject.getBranchName();
     if (!configuredBranch.isBlank()) {
       return configuredBranch;
     }
-    return resolveRemoteDefaultBranch(repositoryUrl,
-        remoteRepositoryObject.getCredentialsProvider());
+    return resolveRemoteDefaultBranch(
+        repositoryUrl, remoteRepositoryObject.getCredentialsProvider());
   }
 
-  private String resolveRemoteDefaultBranch(final String repositoryUrl,
-      final CredentialsProvider credentialsProvider) throws GitAPIException {
-    final Collection<Ref> refs = Git.lsRemoteRepository()
-        .setRemote(repositoryUrl)
-        .setCredentialsProvider(credentialsProvider)
-        .call();
+  private String resolveRemoteDefaultBranch(
+      final String repositoryUrl, final CredentialsProvider credentialsProvider)
+      throws GitAPIException {
+    final Collection<Ref> refs =
+        Git.lsRemoteRepository()
+            .setRemote(repositoryUrl)
+            .setCredentialsProvider(credentialsProvider)
+            .call();
     for (final Ref ref : refs) {
       if (Constants.HEAD.equals(ref.getName()) && ref.isSymbolic()) {
         final String branchName = Repository.shortenRefName(ref.getTarget().getName());
-        LOGGER.atInfo().addArgument(branchName)
+        LOGGER
+            .atInfo()
+            .addArgument(branchName)
             .log("No branch configured, using remote default branch: {}");
         return branchName;
       }
@@ -356,9 +362,13 @@ public class GitRepositoryHandler { // NOPMD
       try {
         if ("true".equals(System.getenv("GITLAB_CI"))
             || this.git.getRepository().findRef("refs/heads/" + branchName) == null) {
-          this.git.checkout().setName(branchName).setCreateBranch(true)
+          this.git
+              .checkout()
+              .setName(branchName)
+              .setCreateBranch(true)
               .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
-              .setStartPoint("origin/" + branchName).call();
+              .setStartPoint("origin/" + branchName)
+              .call();
         } else {
           this.git.checkout().setName(branchName).call();
         }
@@ -374,23 +384,21 @@ public class GitRepositoryHandler { // NOPMD
   }
 
   /**
-   * Returns a Git {@link Repository} object by opening the repository found at
-   * {@code localRepositoryPath}. <br>
-   * If
-   * {@code localRepositoryPath} is empty, the repository gets cloned based on
-   * data defined in
+   * Returns a Git {@link Repository} object by opening the repository found at {@code
+   * localRepositoryPath}. <br>
+   * If {@code localRepositoryPath} is empty, the repository gets cloned based on data defined in
    * {@code remoteRepositoryObject} and the opened repository gets returned.
    *
-   * @param localRepositoryPath    the system path of the local Repository
-   * @param remoteRepositoryObject the {@link RemoteRepositoryObject} object
-   *                               containing the path and url
+   * @param localRepositoryPath the system path of the local Repository
+   * @param remoteRepositoryObject the {@link RemoteRepositoryObject} object containing the path and
+   *     url
    * @return returns an opened Git {@link Repository}
-   * @throws IOException     gets thrown if the path is not accessible or does not
-   *                         point to a folder
+   * @throws IOException gets thrown if the path is not accessible or does not point to a folder
    * @throws GitAPIException gets thrown if the git api encounters an error
    */
-  public Repository getGitRepository(final String localRepositoryPath,
-      final RemoteRepositoryObject remoteRepositoryObject) throws IOException, GitAPIException {
+  public Repository getGitRepository(
+      final String localRepositoryPath, final RemoteRepositoryObject remoteRepositoryObject)
+      throws IOException, GitAPIException {
 
     if (localRepositoryPath.isBlank()) {
       LOGGER.atInfo().log("No local repository given, using remote");
@@ -398,7 +406,8 @@ public class GitRepositoryHandler { // NOPMD
     } else if (new File(localRepositoryPath).isAbsolute()) {
       return this.openGitRepository(localRepositoryPath, remoteRepositoryObject.getBranchName());
     } else {
-      String absolutePath = localRepositoryService.resolveRelativeRepositoryPath(localRepositoryPath).toString();
+      String absolutePath =
+          localRepositoryService.resolveRelativeRepositoryPath(localRepositoryPath).toString();
       return this.openGitRepository(absolutePath, remoteRepositoryObject.getBranchName());
     }
   }
@@ -406,28 +415,20 @@ public class GitRepositoryHandler { // NOPMD
   /**
    * Returns a Git {@link Repository} object by using the parameters set in the
    * application.properties.<br>
-   * The local
-   * repository defined in {@code  explorviz.gitanalysis.local.storage-path} will
-   * be used.
+   * The local repository defined in {@code explorviz.gitanalysis.local.storage-path} will be used.
    * <br>
-   * If {@code  explorviz.gitanalysis.local.storage-path} is empty, the repository
-   * defined in
-   * {@code  explorviz.gitanalysis.remote.url} will be cloned to the location
-   * {@code explorviz.gitanalysis.remote.storage-path}.<br>
-   * If no storage path is given, a temporary directory will be
-   * created. <br>
-   * The branch given in {@code explorviz.gitanalysis.branch} will be used if
-   * present, otherwise the
+   * If {@code explorviz.gitanalysis.local.storage-path} is empty, the repository defined in {@code
+   * explorviz.gitanalysis.remote.url} will be cloned to the location {@code
+   * explorviz.gitanalysis.remote.storage-path}.<br>
+   * If no storage path is given, a temporary directory will be created. <br>
+   * The branch given in {@code explorviz.gitanalysis.branch} will be used if present, otherwise the
    * default (remote) or current (local) will be used.
    *
    * @param config the analysis config
    * @return an opened Git {@link Repository}
-   * @throws PropertyNotDefinedException gets thrown if a needed property is not
-   *                                     present
-   * @throws GitAPIException             gets thrown if the git api encounters an
-   *                                     error
-   * @throws IOException                 gets thrown if JGit cannot open the Git
-   *                                     repository.
+   * @throws PropertyNotDefinedException gets thrown if a needed property is not present
+   * @throws GitAPIException gets thrown if the git api encounters an error
+   * @throws IOException gets thrown if JGit cannot open the Git repository.
    */
   public Repository getGitRepository(AnalysisConfig config)
       throws PropertyNotDefinedException, GitAPIException, IOException {
@@ -439,36 +440,42 @@ public class GitRepositoryHandler { // NOPMD
     if (config.gitUsername().isEmpty() || config.gitPassword().isEmpty()) {
       credentialsProvider = CredentialsProvider.getDefault();
     } else {
-      credentialsProvider = new UsernamePasswordCredentialsProvider(
-          config.gitUsername().get(),
-          config.gitPassword().get());
+      credentialsProvider =
+          new UsernamePasswordCredentialsProvider(
+              config.gitUsername().get(), config.gitPassword().get());
     }
 
-    final Integer depth = config.commitAnalysisLimit().isPresent() ? config.commitAnalysisLimit().get() + 1 : null;
+    final Integer depth =
+        config.commitAnalysisLimit().isPresent() ? config.commitAnalysisLimit().get() + 1 : null;
 
-    return getGitRepository(config.repoPath().orElse(""),
-        new RemoteRepositoryObject(config.repoRemoteUrl().orElse(""),
-            repoLocalStoragePathProperty.orElse(""), credentialsProvider,
-            config.branch().orElse(""), depth));
+    return getGitRepository(
+        config.repoPath().orElse(""),
+        new RemoteRepositoryObject(
+            config.repoRemoteUrl().orElse(""),
+            repoLocalStoragePathProperty.orElse(""),
+            credentialsProvider,
+            config.branch().orElse(""),
+            depth));
   }
 
   /**
    * Returns the changed filenames between two given commits.
    *
-   * @param repository       the current repository
-   * @param oldCommit        the old commit, as a baseline for the difference
-   *                         calculation
-   * @param newCommit        the new commit, gets checked against the old commit
-   * @param pathRestrictions comma sep. list of search strings specifying the
-   *                         folders to analyze
+   * @param repository the current repository
+   * @param oldCommit the old commit, as a baseline for the difference calculation
+   * @param newCommit the new commit, gets checked against the old commit
+   * @param pathRestrictions comma sep. list of search strings specifying the folders to analyze
    * @return triple of FileDescriptor specifying modified, delete and added files
-   * @throws GitAPIException   thrown if git encounters an exception
-   * @throws IOException       thrown if files are not available
+   * @throws GitAPIException thrown if git encounters an exception
+   * @throws IOException thrown if files are not available
    * @throws NotFoundException thrown if the restrictionPath was not found
    */
   public Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>> listDiff(
-      final Repository repository, final Optional<RevCommit> oldCommit, final RevCommit newCommit,
-      final String pathRestrictions) throws GitAPIException, IOException, NotFoundException {
+      final Repository repository,
+      final Optional<RevCommit> oldCommit,
+      final RevCommit newCommit,
+      final String pathRestrictions)
+      throws GitAPIException, IOException, NotFoundException {
     if (pathRestrictions == null || pathRestrictions.isEmpty()) {
       return listDiff(repository, oldCommit, newCommit, new ArrayList<>());
     }
@@ -479,17 +486,18 @@ public class GitRepositoryHandler { // NOPMD
    * Returns the changed filenames between two given commits.
    *
    * @param repository the current repository
-   * @param oldCommit  the old commit, as a baseline for the difference
-   *                   calculation
-   * @param newCommit  the new commit, gets checked against the old commit
+   * @param oldCommit the old commit, as a baseline for the difference calculation
+   * @param newCommit the new commit, gets checked against the old commit
    * @return triple of FileDescriptor specifying modified, delete and added files
    * @throws GitAPIException thrown if git encounters an exception
-   * @throws IOException     thrown if files are not available
+   * @throws IOException thrown if files are not available
    */
   public Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>> listDiff(
-      final Repository repository, // NOPMD
-      final Optional<RevCommit> oldCommit, final RevCommit newCommit,
-      final List<String> pathRestrictions) throws GitAPIException, IOException, NotFoundException {
+      final Repository repository,
+      final Optional<RevCommit> oldCommit,
+      final RevCommit newCommit,
+      final List<String> pathRestrictions)
+      throws GitAPIException, IOException, NotFoundException {
     final List<FileDescriptor> modifiedObjectIdList = new ArrayList<>();
     final List<FileDescriptor> deletedObjectIdList = new ArrayList<>();
     List<FileDescriptor> addedObjectIdList = new ArrayList<>();
@@ -499,10 +507,13 @@ public class GitRepositoryHandler { // NOPMD
     if (oldCommit.isEmpty()) {
       addedObjectIdList = listFilesInCommit(repository, newCommit, filter);
     } else {
-      final List<DiffEntry> diffs = this.git.diff()
-          .setOldTree(prepareTreeParser(repository, oldCommit.get()))
-          .setNewTree(prepareTreeParser(repository, newCommit)).setPathFilter(filter)
-          .call();
+      final List<DiffEntry> diffs =
+          this.git
+              .diff()
+              .setOldTree(prepareTreeParser(repository, oldCommit.get()))
+              .setNewTree(prepareTreeParser(repository, newCommit))
+              .setPathFilter(filter)
+              .call();
 
       try (DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
         diffFormatter.setRepository(repository);
@@ -527,26 +538,30 @@ public class GitRepositoryHandler { // NOPMD
         modifiedObjectIdList, deletedObjectIdList, addedObjectIdList);
   }
 
-  private void putInList(final DiffFormatter diffFormatter, final DiffEntry diff,
+  private void putInList(
+      final DiffFormatter diffFormatter,
+      final DiffEntry diff,
       final List<FileDescriptor> objectIdList)
       throws IOException {
     final FileHeader fileHeader = diffFormatter.toFileHeader(diff);
     final Triple<Integer, Integer, Integer> mods = countModifications(fileHeader.toEditList());
     final String[] parts = diff.getNewPath().split("/");
     objectIdList.add(
-        new FileDescriptor(diff.getNewId().toObjectId(), parts[parts.length - 1], diff.getNewPath(),
-            mods));
+        new FileDescriptor(
+            diff.getNewId().toObjectId(), parts[parts.length - 1], diff.getNewPath(), mods));
   }
 
-  private void putInList2(final DiffFormatter diffFormatter, final DiffEntry diff,
+  private void putInList2(
+      final DiffFormatter diffFormatter,
+      final DiffEntry diff,
       final List<FileDescriptor> objectIdList)
       throws IOException {
     final FileHeader fileHeader = diffFormatter.toFileHeader(diff);
     final Triple<Integer, Integer, Integer> mods = countModifications(fileHeader.toEditList());
     final String[] parts = diff.getOldPath().split("/");
     objectIdList.add(
-        new FileDescriptor(diff.getOldId().toObjectId(), parts[parts.length - 1], diff.getOldPath(),
-            mods));
+        new FileDescriptor(
+            diff.getOldId().toObjectId(), parts[parts.length - 1], diff.getOldPath(), mods));
   }
 
   private Triple<Integer, Integer, Integer> countModifications(final EditList editList) {
@@ -570,70 +585,68 @@ public class GitRepositoryHandler { // NOPMD
   /**
    * Returns a list of all Java Files in the repository.
    *
-   * @param repository       the current repository
-   * @param commit           the commit to get the list of files for
-   * @param pathRestrictions a list of search strings specifying the folders to
-   *                         analyze, if omitted, the entire
-   *                         repository will be searched
-   * @return returns a list of FileDescriptors of all java files within the
-   *         specified folders
-   * @throws IOException       thrown if files are not available
+   * @param repository the current repository
+   * @param commit the commit to get the list of files for
+   * @param pathRestrictions a list of search strings specifying the folders to analyze, if omitted,
+   *     the entire repository will be searched
+   * @return returns a list of FileDescriptors of all java files within the specified folders
+   * @throws IOException thrown if files are not available
    * @throws NotFoundException thrown if the restrictionPath was not found
    */
-  public List<FileDescriptor> listFilesInCommit(final Repository repository, // NOPMD
-      final RevCommit commit, final List<String> pathRestrictions)
+  public List<FileDescriptor> listFilesInCommit(
+      final Repository repository, final RevCommit commit, final List<String> pathRestrictions)
       throws IOException, NotFoundException {
     return listFilesInCommit(repository, commit, getSourceFileTreeFilter(pathRestrictions));
   }
 
   /**
-   * Returns a list of all supported source files in the repository (Java,
-   * TypeScript, JavaScript).
+   * Returns a list of all supported source files in the repository (Java, TypeScript, JavaScript).
    *
-   * @param repository       the current repository
-   * @param commit           the commit to get the list of files for
-   * @param pathRestrictions a comma separated list of search strings specifying
-   *                         the folders to analyze, if omitted, the
-   *                         entire repository will be searched
-   * @return returns a list of FileDescriptors of all supported source files
-   *         within the specified folders
-   * @throws IOException       thrown if files are not available
+   * @param repository the current repository
+   * @param commit the commit to get the list of files for
+   * @param pathRestrictions a comma separated list of search strings specifying the folders to
+   *     analyze, if omitted, the entire repository will be searched
+   * @return returns a list of FileDescriptors of all supported source files within the specified
+   *     folders
+   * @throws IOException thrown if files are not available
    * @throws NotFoundException thrown if the restrictionPath was not found
    */
-  public List<FileDescriptor> listFilesInCommit(final Repository repository, // NOPMD
-      final RevCommit commit, final String pathRestrictions) throws IOException, NotFoundException {
-    return listFilesInCommit(repository, commit,
-        getSourceFileTreeFilter(Arrays.asList(pathRestrictions.split(","))));
+  public List<FileDescriptor> listFilesInCommit(
+      final Repository repository, final RevCommit commit, final String pathRestrictions)
+      throws IOException, NotFoundException {
+    return listFilesInCommit(
+        repository, commit, getSourceFileTreeFilter(Arrays.asList(pathRestrictions.split(","))));
   }
 
-  private List<FileDescriptor> listFilesInCommit(final Repository repository, // NOPMD
-      final RevCommit commit, final TreeFilter filter) throws IOException {
+  private List<FileDescriptor> listFilesInCommit(
+      final Repository repository, final RevCommit commit, final TreeFilter filter)
+      throws IOException {
     ensureCommitTreeParsed(repository, commit);
     final List<FileDescriptor> objectIdList = new ArrayList<>();
-    try (final TreeWalk treeWalk = new TreeWalk(repository)) { // NOPMD
+    try (final TreeWalk treeWalk = new TreeWalk(repository)) {
       treeWalk.addTree(commit.getTree());
       treeWalk.setRecursive(true);
       treeWalk.setFilter(filter);
       while (treeWalk.next()) {
-        objectIdList.add(new FileDescriptor(treeWalk.getObjectId(0), treeWalk.getNameString(),
-            treeWalk.getPathString()));
+        objectIdList.add(
+            new FileDescriptor(
+                treeWalk.getObjectId(0), treeWalk.getNameString(), treeWalk.getPathString()));
       }
       LOGGER.atDebug().addArgument(objectIdList.size()).log("Discovered {} files in commit tree");
     }
     return objectIdList;
-
   }
 
   private TreeFilter getSourceFileTreeFilter(final List<String> pathRestrictions)
       throws NotFoundException {
-    if (pathRestrictions.isEmpty() || pathRestrictions.size() == 1 && pathRestrictions.get(0)
-        .isBlank()) {
+    if (pathRestrictions.isEmpty()
+        || pathRestrictions.size() == 1 && pathRestrictions.get(0).isBlank()) {
       LOGGER.atInfo().log("No path restrictions provided. Analyzing all files.");
       return TreeFilter.ALL;
     } else {
       LOGGER.atInfo().addArgument(pathRestrictions).log("Applying path restrictions: {}");
-      final List<String> pathList = DirectoryFinder.getRelativeDirectory(pathRestrictions,
-          getCurrentRepositoryPath());
+      final List<String> pathList =
+          DirectoryFinder.getRelativeDirectory(pathRestrictions, getCurrentRepositoryPath());
       final List<String> newPathList = new ArrayList<>();
       for (final String path : pathList) {
         newPathList.add(path.replaceFirst("^\\\\|/", "").replaceAll("\\\\", "/"));
@@ -653,11 +666,10 @@ public class GitRepositoryHandler { // NOPMD
   }
 
   /**
-   * Checks if the given commit is unreachable by the given branch (is not part of
-   * the branch).
+   * Checks if the given commit is unreachable by the given branch (is not part of the branch).
    *
    * @param commitId the full SHA-1 id of the commit
-   * @param branch   the branch name
+   * @param branch the branch name
    * @return if the given commit is unreachable by the given branch
    */
   public boolean isUnreachableCommit(final String commitId, final String branch) {
@@ -665,11 +677,10 @@ public class GitRepositoryHandler { // NOPMD
   }
 
   /**
-   * Checks if the given commit is reachable by the given branch (is part of the
-   * branch).
+   * Checks if the given commit is reachable by the given branch (is part of the branch).
    *
    * @param commitId the full SHA-1 id of the commit
-   * @param branch   the branch name
+   * @param branch the branch name
    * @return if the commit is reachable by the given branch
    */
   public boolean isReachableCommit(final String commitId, final String branch) {
@@ -677,26 +688,28 @@ public class GitRepositoryHandler { // NOPMD
       return true;
     }
     try {
-      final Map<ObjectId, String> map = this.git.nameRev().addPrefix(branch)
-          .add(ObjectId.fromString(commitId)).call();
+      final Map<ObjectId, String> map =
+          this.git.nameRev().addPrefix(branch).add(ObjectId.fromString(commitId)).call();
       if (!map.isEmpty()) {
         return true;
       }
     } catch (GitAPIException | MissingObjectException e) {
-      throw new RuntimeException(e); // NOPMD
+      throw new RuntimeException(e);
     }
     return false;
   }
 
   /**
-   * Configures a {@link RevWalk} to traverse commits reachable from the branch tip and emit
-   * them in topological order (oldest first), matching {@code git rev-list --reverse}.
+   * Configures a {@link RevWalk} to traverse commits reachable from the branch tip and emit them in
+   * topological order (oldest first), matching {@code git rev-list --reverse}.
    *
    * @param firstParentCommitsOnly when {@code true}, only follow first-parent links so merged
-   *                               feature-branch commits are excluded
+   *     feature-branch commits are excluded
    */
   public void configureBranchRevWalk(
-      final RevWalk revWalk, final Repository repository, final String branchRef,
+      final RevWalk revWalk,
+      final Repository repository,
+      final String branchRef,
       final boolean firstParentCommitsOnly)
       throws IOException {
     revWalk.sort(RevSort.TOPO);
@@ -713,5 +726,4 @@ public class GitRepositoryHandler { // NOPMD
     }
     revWalk.markStart(revWalk.parseCommit(branchId));
   }
-
 }

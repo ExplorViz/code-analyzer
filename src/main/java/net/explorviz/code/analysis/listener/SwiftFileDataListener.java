@@ -11,10 +11,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR listener for extracting file data from Swift source code.
- */
-public class SwiftFileDataListener extends Swift5ParserBaseListener implements CommonFileDataListener {
+/** ANTLR listener for extracting file data from Swift source code. */
+public class SwiftFileDataListener extends Swift5ParserBaseListener
+    implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SwiftFileDataListener.class);
 
@@ -23,8 +22,8 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
   private int functionCount = 0;
   private int variableCount = 0;
 
-  public SwiftFileDataListener(final SwiftFileDataHandler fileDataHandler,
-      final CommonTokenStream tokens) {
+  public SwiftFileDataListener(
+      final SwiftFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;
     this.tokens = tokens;
   }
@@ -37,7 +36,8 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
     fileDataHandler.addMetric(SLOC, String.valueOf(sloc));
     fileDataHandler.addMetric(CLOC, String.valueOf(cloc));
 
-    LOGGER.atTrace()
+    LOGGER
+        .atTrace()
         .addArgument(fileDataHandler.getFileName())
         .addArgument(sloc)
         .log("{} - SLOC: {}");
@@ -64,8 +64,8 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
     }
 
     enterType(ctx.class_name().identifier().getText(), ctx, false, false);
-    addInheritanceRelations(fileDataHandler.getCurrentClassData(), ctx.type_inheritance_clause(),
-        false);
+    addInheritanceRelations(
+        fileDataHandler.getCurrentClassData(), ctx.type_inheritance_clause(), false);
   }
 
   @Override
@@ -82,8 +82,8 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
     }
 
     enterType(ctx.struct_name().identifier().getText(), ctx, true, false);
-    addInheritanceRelations(fileDataHandler.getCurrentClassData(), ctx.type_inheritance_clause(),
-        true);
+    addInheritanceRelations(
+        fileDataHandler.getCurrentClassData(), ctx.type_inheritance_clause(), true);
   }
 
   @Override
@@ -100,8 +100,8 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
     }
 
     enterType(ctx.protocol_name().identifier().getText(), ctx, false, true);
-    addInheritanceRelations(fileDataHandler.getCurrentClassData(), ctx.type_inheritance_clause(),
-        true);
+    addInheritanceRelations(
+        fileDataHandler.getCurrentClassData(), ctx.type_inheritance_clause(), true);
   }
 
   @Override
@@ -153,8 +153,11 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
     }
   }
 
-  private void enterType(final String typeName, final org.antlr.v4.runtime.ParserRuleContext ctx,
-      final boolean isStruct, final boolean isInterface) {
+  private void enterType(
+      final String typeName,
+      final org.antlr.v4.runtime.ParserRuleContext ctx,
+      final boolean isStruct,
+      final boolean isInterface) {
     final String fqn = fileDataHandler.buildFqn(typeName);
     fileDataHandler.enterClass(typeName, fqn);
 
@@ -175,7 +178,8 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
     classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
   }
 
-  private void addInheritanceRelations(final ClassDataHandler classData,
+  private void addInheritanceRelations(
+      final ClassDataHandler classData,
       final Swift5Parser.Type_inheritance_clauseContext inheritance,
       final boolean treatAllAsInterfaces) {
     if (classData == null || inheritance == null || inheritance.type_inheritance_list() == null) {
@@ -195,9 +199,16 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
     }
   }
 
-  private void addFormattedSuperClass(final ClassDataHandler classData, final String superClassFqn) {
-    classData.setSuperClass(getClassPathFromFqn(superClassFqn, ".swift", fileDataHandler.getFileName(),
-        fileDataHandler.getPackageName()) + "::" + getClassNameFromFqn(superClassFqn));
+  private void addFormattedSuperClass(
+      final ClassDataHandler classData, final String superClassFqn) {
+    classData.setSuperClass(
+        getClassPathFromFqn(
+                superClassFqn,
+                ".swift",
+                fileDataHandler.getFileName(),
+                fileDataHandler.getPackageName())
+            + "::"
+            + getClassNameFromFqn(superClassFqn));
   }
 
   @Override
@@ -206,7 +217,8 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
   }
 
   @Override
-  public void enterRaw_value_style_enum_case(final Swift5Parser.Raw_value_style_enum_caseContext ctx) {
+  public void enterRaw_value_style_enum_case(
+      final Swift5Parser.Raw_value_style_enum_caseContext ctx) {
     addEnumCase(ctx.enum_case_name());
   }
 
@@ -229,8 +241,8 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
         addPropertyField(ctx.variable_name().identifier().getText(), ctx.type_annotation());
       }
     } else if (ctx.pattern_initializer_list() != null) {
-      for (final Swift5Parser.Pattern_initializerContext patternInit : ctx.pattern_initializer_list()
-          .pattern_initializer()) {
+      for (final Swift5Parser.Pattern_initializerContext patternInit :
+          ctx.pattern_initializer_list().pattern_initializer()) {
         countPattern(patternInit.pattern());
         if (fileDataHandler.isInClassContext()) {
           addFieldFromPattern(patternInit.pattern(), null);
@@ -245,8 +257,8 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
       return;
     }
 
-    for (final Swift5Parser.Pattern_initializerContext patternInit : ctx.pattern_initializer_list()
-        .pattern_initializer()) {
+    for (final Swift5Parser.Pattern_initializerContext patternInit :
+        ctx.pattern_initializer_list().pattern_initializer()) {
       countPattern(patternInit.pattern());
       if (fileDataHandler.isInClassContext()) {
         addFieldFromPattern(patternInit.pattern(), null);
@@ -264,30 +276,34 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
       return;
     }
 
-    if (pattern.tuple_pattern() != null && pattern.tuple_pattern().tuple_pattern_element_list() != null) {
-      for (final Swift5Parser.Tuple_pattern_elementContext element : pattern.tuple_pattern()
-          .tuple_pattern_element_list().tuple_pattern_element()) {
+    if (pattern.tuple_pattern() != null
+        && pattern.tuple_pattern().tuple_pattern_element_list() != null) {
+      for (final Swift5Parser.Tuple_pattern_elementContext element :
+          pattern.tuple_pattern().tuple_pattern_element_list().tuple_pattern_element()) {
         countPattern(element.pattern());
       }
     }
   }
 
-  private void addPropertyField(final String fieldName,
-      final Swift5Parser.Type_annotationContext typeAnnotation) {
+  private void addPropertyField(
+      final String fieldName, final Swift5Parser.Type_annotationContext typeAnnotation) {
     final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
     if (classData == null) {
       return;
     }
 
-    final String fieldType = typeAnnotation != null && typeAnnotation.type() != null
-        ? typeAnnotation.type().getText()
-        : "unknown";
+    final String fieldType =
+        typeAnnotation != null && typeAnnotation.type() != null
+            ? typeAnnotation.type().getText()
+            : "unknown";
     classData.addField(fieldName, fieldType, new ArrayList<>());
   }
 
-  private void addFieldFromPattern(final Swift5Parser.PatternContext pattern,
+  private void addFieldFromPattern(
+      final Swift5Parser.PatternContext pattern,
       final Swift5Parser.Type_annotationContext typeAnnotation) {
-    if (pattern == null || pattern.identifier_pattern() == null
+    if (pattern == null
+        || pattern.identifier_pattern() == null
         || pattern.identifier_pattern().identifier() == null) {
       return;
     }
@@ -327,8 +343,9 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
     }
 
     final String className = classData.getProtoBufObject().getName();
-    final MethodDataHandler methodData = classData.addConstructor(className,
-        className + "#" + extractParameterTypes(ctx.parameter_clause()).hashCode());
+    final MethodDataHandler methodData =
+        classData.addConstructor(
+            className, className + "#" + extractParameterTypes(ctx.parameter_clause()).hashCode());
     addParameters(methodData, ctx.parameter_clause());
 
     if (ctx.start != null && ctx.stop != null) {
@@ -356,24 +373,30 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
   }
 
   private String extractReturnType(final Swift5Parser.Function_declarationContext ctx) {
-    if (ctx.function_signature() != null && ctx.function_signature().function_result() != null
+    if (ctx.function_signature() != null
+        && ctx.function_signature().function_result() != null
         && ctx.function_signature().function_result().type() != null) {
       return ctx.function_signature().function_result().type().getText();
     }
     return "Void";
   }
 
-  private MethodDataHandler createMethodHandler(final String methodName, final String returnType,
+  private MethodDataHandler createMethodHandler(
+      final String methodName,
+      final String returnType,
       final Swift5Parser.Function_declarationContext ctx) {
     if (fileDataHandler.isInClassContext()) {
       final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
       if (classData == null) {
         return null;
       }
-      final MethodDataHandler methodData = classData.addMethod(methodName,
-          methodName + "#" + extractParameterTypes(ctx.function_signature().parameter_clause())
-              .hashCode(),
-          returnType);
+      final MethodDataHandler methodData =
+          classData.addMethod(
+              methodName,
+              methodName
+                  + "#"
+                  + extractParameterTypes(ctx.function_signature().parameter_clause()).hashCode(),
+              returnType);
       addParameters(methodData, ctx.function_signature().parameter_clause());
       return methodData;
     }
@@ -385,7 +408,8 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
     return methodData;
   }
 
-  private List<String> extractParameterTypes(final Swift5Parser.Parameter_clauseContext parameters) {
+  private List<String> extractParameterTypes(
+      final Swift5Parser.Parameter_clauseContext parameters) {
     final List<String> paramTypes = new ArrayList<>();
     if (parameters == null || parameters.parameter_list() == null) {
       return paramTypes;
@@ -399,18 +423,20 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener implements C
     return paramTypes;
   }
 
-  private void addParameters(final MethodDataHandler methodData,
-      final Swift5Parser.Parameter_clauseContext parameters) {
+  private void addParameters(
+      final MethodDataHandler methodData, final Swift5Parser.Parameter_clauseContext parameters) {
     if (parameters == null || parameters.parameter_list() == null) {
       return;
     }
 
     for (final Swift5Parser.ParameterContext param : parameters.parameter_list().parameter()) {
-      final String paramType = param.type_annotation() != null && param.type_annotation().type() != null
-          ? param.type_annotation().type().getText()
-          : "unknown";
+      final String paramType =
+          param.type_annotation() != null && param.type_annotation().type() != null
+              ? param.type_annotation().type().getText()
+              : "unknown";
       String paramName = "";
-      if (param.local_parameter_name() != null && param.local_parameter_name().identifier() != null) {
+      if (param.local_parameter_name() != null
+          && param.local_parameter_name().identifier() != null) {
         paramName = param.local_parameter_name().identifier().getText();
       }
       methodData.addParameter(paramName, paramType, new ArrayList<>());

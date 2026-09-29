@@ -23,8 +23,7 @@ import org.mockito.Mockito;
 @QuarkusTest
 class AnalysisServiceDiffBaseTest {
 
-  @Inject
-  AnalysisService analysisService;
+  @Inject AnalysisService analysisService;
 
   @Test
   void usesNullDiffBaseForFirstLocalCommitWithoutStartCommit() throws IOException {
@@ -80,14 +79,14 @@ class AnalysisServiceDiffBaseTest {
     final ObjectId addedHash = ObjectId.fromString("abcdef0123456789abcdef0123456789abcdef01");
     final ObjectId modifiedHash = ObjectId.fromString("fedcba9876543210fedcba9876543210fedcba98");
 
-    final List<FileDescriptor> allFiles = List.of(
-        new FileDescriptor(unchangedHash, "Unchanged.java", "src/Unchanged.java"),
-        new FileDescriptor(addedHash, "Added.java", "src/Added.java"),
-        new FileDescriptor(modifiedHash, "Modified.java", "src/Modified.java"));
-    final var reportTriple = new Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>>(
-        List.of(allFiles.get(2)),
-        List.of(),
-        List.of(allFiles.get(1)));
+    final List<FileDescriptor> allFiles =
+        List.of(
+            new FileDescriptor(unchangedHash, "Unchanged.java", "src/Unchanged.java"),
+            new FileDescriptor(addedHash, "Added.java", "src/Added.java"),
+            new FileDescriptor(modifiedHash, "Modified.java", "src/Modified.java"));
+    final var reportTriple =
+        new Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>>(
+            List.of(allFiles.get(2)), List.of(), List.of(allFiles.get(1)));
 
     final List<FileDescriptor> unchangedFiles =
         analysisService.resolveUnchangedFilesForBootstrapCommit(allFiles, reportTriple);

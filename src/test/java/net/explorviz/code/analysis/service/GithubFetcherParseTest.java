@@ -23,17 +23,15 @@ class GithubFetcherParseTest {
   private static final String REPO = "kieker-monitoring/kieker";
   private static final String ISSUE_BASIC = "issue-basic.json";
 
-  private final GithubFetcherService service =
-      new GithubFetcherService();
+  private final GithubFetcherService service = new GithubFetcherService();
 
   // --- fixture helpers -----------------------------------------------------
 
   /** Loads {@code search.nodes} from a fixture on the test classpath. */
   private static JsonArray loadNodes(final String fixture) {
     final String resource = "/github/" + fixture;
-    try (InputStream in =
-            GithubFetcherParseTest.class.getResourceAsStream(resource);
-         JsonReader reader = Json.createReader(in)) {
+    try (InputStream in = GithubFetcherParseTest.class.getResourceAsStream(resource);
+        JsonReader reader = Json.createReader(in)) {
       return reader.readObject().getJsonObject("search").getJsonArray("nodes");
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -49,8 +47,7 @@ class GithubFetcherParseTest {
     throw new IllegalArgumentException("No node with number " + number);
   }
 
-  private static List<AnnotationType> annotationTypes(
-      final List<TrackableResourceEvent> events) {
+  private static List<AnnotationType> annotationTypes(final List<TrackableResourceEvent> events) {
     return events.stream()
         .map(TrackableResourceEvent::getAnnotationType)
         .collect(Collectors.toList());
@@ -62,8 +59,7 @@ class GithubFetcherParseTest {
   void parseBaseResource_closedIssue_extractsCoreFields() {
     final JsonObject issue = nodeByNumber(loadNodes(ISSUE_BASIC), 3008);
 
-    final TrackableResourceEvent base =
-        service.parseBaseResource(issue, TOKEN, REPO).build();
+    final TrackableResourceEvent base = service.parseBaseResource(issue, TOKEN, REPO).build();
 
     assertEquals(TrackableResourceType.ISSUE, base.getResourceType());
     assertEquals("3008", base.getResourceId());
@@ -81,7 +77,7 @@ class GithubFetcherParseTest {
     final List<TrackableResourceEvent> events = service.mapToEvents(pr, TOKEN, REPO);
     final List<AnnotationType> types = annotationTypes(events);
 
-    //System.out.println(types);
+    // System.out.println(types);
 
     // Use `types` (List<AnnotationType>) to check what mapToEvents produced.
     assertNotNull(types);

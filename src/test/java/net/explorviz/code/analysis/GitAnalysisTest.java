@@ -8,10 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 class GitAnalysisTest {
 
   @BeforeEach
-  void setUp() {
-  }
+  void setUp() {}
 
   @AfterEach
-  void tearDown() {
-  }
+  void tearDown() {}
 }

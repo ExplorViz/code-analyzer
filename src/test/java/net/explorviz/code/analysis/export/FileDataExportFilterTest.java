@@ -35,10 +35,12 @@ class FileDataExportFilterTest {
         .setFilePath("src/Main.java")
         .putMetrics("loc", 42.0)
         .addClasses(ClassData.newBuilder().setName("Main").build())
-        .addFunctions(FunctionData.newBuilder()
-            .setName("run")
-            .addParameters(ParameterData.newBuilder().setName("args").setType("String[]").build())
-            .build())
+        .addFunctions(
+            FunctionData.newBuilder()
+                .setName("run")
+                .addParameters(
+                    ParameterData.newBuilder().setName("args").setType("String[]").build())
+                .build())
         .build();
   }
 }

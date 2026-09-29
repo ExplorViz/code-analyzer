@@ -7,9 +7,7 @@ import net.explorviz.code.proto.ClassData;
 import net.explorviz.code.proto.ClassType;
 import net.explorviz.code.proto.FieldData;
 
-/**
- * ClassData object holds data from analyzed classes.
- */
+/** ClassData object holds data from analyzed classes. */
 public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
 
   private final ClassData.Builder builder;
@@ -17,9 +15,7 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
   private final Map<String, MethodDataHandler> methodDataMap;
   private final Map<String, ClassDataHandler> innerClassDataMap;
 
-  /**
-   * Creates a blank ClassData object.
-   */
+  /** Creates a blank ClassData object. */
   public ClassDataHandler() {
     this.builder = ClassData.newBuilder();
     this.methodDataMap = new HashMap<>();
@@ -33,8 +29,8 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
   /**
    * Adds a methodData object.
    *
-   * @param name       the method's simple name
-   * @param fqn        the method's fully qualified name
+   * @param name the method's simple name
+   * @param fqn the method's fully qualified name
    * @param returnType the return type of the method
    * @return the created methodData object
    */
@@ -57,7 +53,7 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
    * Adds a constructor object.
    *
    * @param name the constructor's simple name
-   * @param fqn  the constructor's fully qualified name
+   * @param fqn the constructor's fully qualified name
    * @return the created methodData object
    */
   public MethodDataHandler addConstructor(final String name, final String fqn) {
@@ -65,8 +61,8 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
     return methodDataMap.get(fqn);
   }
 
-  public void addField(final String fieldName, final String fieldType,
-      final List<String> modifiers) {
+  public void addField(
+      final String fieldName, final String fieldType, final List<String> modifiers) {
     this.builder.addFields(
         FieldData.newBuilder().setName(fieldName).setType(fieldType).addAllModifiers(modifiers));
   }
@@ -111,9 +107,7 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
     return this.builder.getType() == ClassType.ABSTRACT_CLASS;
   }
 
-  /**
-   * Set the current ClassType as class if it wasn't set to anonymous class already.
-   */
+  /** Set the current ClassType as class if it wasn't set to anonymous class already. */
   public void setIsClass() {
     if (this.builder.getType() != ClassType.ANONYMOUS_CLASS) {
       this.builder.setType(ClassType.CLASS);
@@ -149,9 +143,10 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
   }
 
   /**
-   * Adds a new metric entry to the ClassData, returns the old value of the metric if it existed, null otherwise.
+   * Adds a new metric entry to the ClassData, returns the old value of the metric if it existed,
+   * null otherwise.
    *
-   * @param metricName  the name/identifier of the metric
+   * @param metricName the name/identifier of the metric
    * @param metricValue the value of the metric
    * @return the old value of the metric if it existed, null otherwise.
    */
@@ -214,14 +209,28 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
       metricDataString.append(entry.getValue()).append('\n');
     }
     return "{ \n"
-        + "type: " + this.builder.getType().toString() + "\n"
-        + "modifier: " + this.builder.getModifiersList() + "\n"
-        + "superClasses: " + this.builder.getSuperclassesList() + "\n"
-        + "interfaces: " + this.builder.getImplementedInterfacesList() + "\n"
-        + "fields: " + this.builder.getFieldsList() + "\n"
-        + "innerClasses: " + this.innerClassDataMap.keySet() + "\n"
-        + "functions: \n" + methodDataString + "\n"
-        + metricDataString + "\n}";
+        + "type: "
+        + this.builder.getType().toString()
+        + "\n"
+        + "modifier: "
+        + this.builder.getModifiersList()
+        + "\n"
+        + "superClasses: "
+        + this.builder.getSuperclassesList()
+        + "\n"
+        + "interfaces: "
+        + this.builder.getImplementedInterfacesList()
+        + "\n"
+        + "fields: "
+        + this.builder.getFieldsList()
+        + "\n"
+        + "innerClasses: "
+        + this.innerClassDataMap.keySet()
+        + "\n"
+        + "functions: \n"
+        + methodDataString
+        + "\n"
+        + metricDataString
+        + "\n}";
   }
-
 }

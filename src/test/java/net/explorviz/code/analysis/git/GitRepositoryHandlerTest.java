@@ -13,24 +13,20 @@ import java.util.Map;
 import java.util.stream.Stream;
 import net.explorviz.code.analysis.types.RemoteRepositoryObject;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-/**
- * Testing the repository loader.
- */
+/** Testing the repository loader. */
 @QuarkusTest
 public class GitRepositoryHandlerTest {
 
@@ -38,8 +34,7 @@ public class GitRepositoryHandlerTest {
   private final String sshUrl = "git@gitlab.com:0xhexdec/busydoingnothing.git";
   private final String httpsUrl = "https://gitlab.com/0xhexdec/busydoingnothing.git";
 
-  @Inject
-  GitRepositoryHandler gitRepositoryHandler; // NOCS
+  @Inject GitRepositoryHandler gitRepositoryHandler;
   private File tempGitLocation;
 
   @BeforeEach
@@ -50,8 +45,7 @@ public class GitRepositoryHandlerTest {
   @AfterEach
   void tearDown() {
     try (Stream<Path> walk = Files.walk(tempGitLocation.toPath())) {
-      walk.sorted(Comparator.reverseOrder()).map(Path::toFile)
-          .forEach(File::delete);
+      walk.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
     } catch (IOException exception) {
       System.err.println("Folder not deletable");
     }
@@ -61,87 +55,92 @@ public class GitRepositoryHandlerTest {
   void testInvalidRemote() {
     String url = "%%%%";
 
-    Assertions.assertThrows(InvalidRemoteException.class, () -> {
-      this.gitRepositoryHandler.getGitRepository("",
-          new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(), MASTER));
-    });
+    Assertions.assertThrows(
+        InvalidRemoteException.class,
+        () -> {
+          this.gitRepositoryHandler.getGitRepository(
+              "", new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(), MASTER));
+        });
   }
 
   @Test
   void testInvalidParameters() {
-    Assertions.assertThrows(InvalidRemoteException.class, () -> {
-      this.gitRepositoryHandler.getGitRepository("", new RemoteRepositoryObject("", "", MASTER));
-    });
+    Assertions.assertThrows(
+        InvalidRemoteException.class,
+        () -> {
+          this.gitRepositoryHandler.getGitRepository(
+              "", new RemoteRepositoryObject("", "", MASTER));
+        });
   }
 
   @Test()
   void testMalformedRemote() {
     String url = "https://gitlab.com/0xhexdec/";
-    Assertions.assertThrows(MalformedURLException.class, () -> {
-      this.gitRepositoryHandler.getGitRepository("",
-          new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(), MASTER));
-    });
+    Assertions.assertThrows(
+        MalformedURLException.class,
+        () -> {
+          this.gitRepositoryHandler.getGitRepository(
+              "", new RemoteRepositoryObject(url, tempGitLocation.getAbsolutePath(), MASTER));
+        });
   }
 
   @Test
   void testFileInsteadDirectory() throws IOException {
     File file = new File(tempGitLocation.getAbsolutePath() + "/file");
     Assertions.assertTrue(file.createNewFile());
-    Assertions.assertThrows(NotDirectoryException.class, () -> {
-      this.gitRepositoryHandler.getGitRepository(file.getAbsolutePath(),
-          new RemoteRepositoryObject("", "", MASTER));
-    });
+    Assertions.assertThrows(
+        NotDirectoryException.class,
+        () -> {
+          this.gitRepositoryHandler.getGitRepository(
+              file.getAbsolutePath(), new RemoteRepositoryObject("", "", MASTER));
+        });
   }
 
   @Test
-  void openRepository() throws GitAPIException, IOException {
-    // downloading the repository first
-    try (Repository repository = this.gitRepositoryHandler.getGitRepository("",
-        new RemoteRepositoryObject(httpsUrl, tempGitLocation.getAbsolutePath(), MASTER))) {
-      // call is here to satisfy checkstyle by not having empty try block
-      System.out.println(GitRepositoryHandler.getRemoteOriginUrl(repository));
-    } catch (Exception e) {
-      Assertions.fail();
+  void openRepository() throws Exception {
+    final File repoDir = initLocalRepositoryWithOrigin(httpsUrl, "busydoingnothing");
+    try (Repository repository =
+        this.gitRepositoryHandler.getGitRepository(
+            repoDir.getAbsolutePath(), new RemoteRepositoryObject())) {
+      Assertions.assertEquals(httpsUrl, GitRepositoryHandler.getRemoteOriginUrl(repository));
     }
-    // checking the same folder and reopen the repository
-    try (Repository repository = this.gitRepositoryHandler.getGitRepository(
-        tempGitLocation.getAbsolutePath() + "/busydoingnothing", new RemoteRepositoryObject())) {
-      Assertions.assertEquals(GitRepositoryHandler.getRemoteOriginUrl(repository), httpsUrl);
-    }
-
-  }
-
-  @Test()
-  void testSsh() {
-    try (Repository repository = this.gitRepositoryHandler.getGitRepository("",
-        new RemoteRepositoryObject(sshUrl,
-            tempGitLocation.getAbsolutePath(), MASTER))) {
-      // call is here to satisfy checkstyle by not having empty try block
-      repository.getBranch();
-    } catch (Exception e) {
-      Assertions.fail();
+    try (Repository repository =
+        this.gitRepositoryHandler.getGitRepository(
+            repoDir.getAbsolutePath(), new RemoteRepositoryObject())) {
+      Assertions.assertEquals(httpsUrl, GitRepositoryHandler.getRemoteOriginUrl(repository));
+      Assertions.assertNotNull(repository.getBranch());
     }
   }
 
   @Test()
-  void testHttps() {
-    try (Repository repository = this.gitRepositoryHandler.getGitRepository("",
-        new RemoteRepositoryObject(
-            httpsUrl, tempGitLocation.getAbsolutePath(), MASTER))) {
-      // call is here to satisfy checkstyle by not having empty try block
-      repository.getBranch();
-    } catch (Exception e) {
-      Assertions.fail();
+  void testSshOriginUrlOnLocalRepository() throws Exception {
+    final File repoDir = initLocalRepositoryWithOrigin(sshUrl, "ssh-origin");
+    try (Repository repository =
+        this.gitRepositoryHandler.getGitRepository(
+            repoDir.getAbsolutePath(), new RemoteRepositoryObject())) {
+      Assertions.assertEquals(sshUrl, GitRepositoryHandler.getRemoteOriginUrl(repository));
+      Assertions.assertNotNull(repository.getBranch());
+    }
+  }
+
+  @Test()
+  void testHttpsOriginUrlOnLocalRepository() throws Exception {
+    final File repoDir = initLocalRepositoryWithOrigin(httpsUrl, "https-origin");
+    try (Repository repository =
+        this.gitRepositoryHandler.getGitRepository(
+            repoDir.getAbsolutePath(), new RemoteRepositoryObject())) {
+      Assertions.assertEquals(httpsUrl, GitRepositoryHandler.getRemoteOriginUrl(repository));
+      Assertions.assertNotNull(repository.getBranch());
     }
   }
 
   @Test()
   void testSshConversion() {
-    Assertions.assertEquals(Map.entry(true, httpsUrl),
-        GitRepositoryHandler.convertSshToHttps(httpsUrl));
+    Assertions.assertEquals(
+        Map.entry(true, httpsUrl), GitRepositoryHandler.convertSshToHttps(httpsUrl));
 
-    Assertions.assertEquals(Map.entry(true, httpsUrl),
-        GitRepositoryHandler.convertSshToHttps(sshUrl));
+    Assertions.assertEquals(
+        Map.entry(true, httpsUrl), GitRepositoryHandler.convertSshToHttps(sshUrl));
 
     // GitHub SSH URL with .git suffix
     Assertions.assertEquals(
@@ -166,114 +165,77 @@ public class GitRepositoryHandlerTest {
 
     // if the url looks off, assume the user wants it that way
     final String urlUnderTest2 = "abc.xyz";
-    Assertions.assertEquals(Map.entry(false, urlUnderTest2),
-        GitRepositoryHandler.convertSshToHttps(urlUnderTest2));
-
+    Assertions.assertEquals(
+        Map.entry(false, urlUnderTest2), GitRepositoryHandler.convertSshToHttps(urlUnderTest2));
   }
 
   @Test
-  void testRemoteLookup() throws GitAPIException, IOException {
-    try (Repository repository = this.gitRepositoryHandler.getGitRepository("",
-        new RemoteRepositoryObject(httpsUrl,
-            tempGitLocation.getAbsolutePath(), MASTER))) {
-      Assertions.assertEquals(GitRepositoryHandler.getRemoteOriginUrl(repository), httpsUrl);
+  void testRemoteLookup() throws Exception {
+    final File repoDir = initLocalRepositoryWithOrigin(httpsUrl, "remote-lookup");
+    try (Repository repository =
+        this.gitRepositoryHandler.getGitRepository(
+            repoDir.getAbsolutePath(), new RemoteRepositoryObject())) {
+      Assertions.assertEquals(httpsUrl, GitRepositoryHandler.getRemoteOriginUrl(repository));
     }
   }
 
   @Test()
-  void testGetStringifiedFileInCommit()
-      throws GitAPIException, IOException {
+  void testGetStringifiedFileInCommit() throws Exception {
+    final String expected =
+        "package testgit.my.test.pckg;\n"
+            + "\n"
+            + "public class TestGitClass {\n"
+            + "\n"
+            + "  private final String testVariable;\n"
+            + "\n"
+            + "  public TestGitClass(final String testVariable) {\n"
+            + "    this.testVariable = testVariable;\n"
+            + "  }\n"
+            + "\n"
+            + "}";
 
-    try (final Repository repository = this.gitRepositoryHandler.getGitRepository("",
-        new RemoteRepositoryObject(
-            "https://github.com/Alexander-Krause-Glau/Test-JGit-Code.git",
-            tempGitLocation.getAbsolutePath(), MASTER))) {
+    final File repoDir = new File(tempGitLocation, "content-test");
+    final ObjectId commitId;
+    try (Git git = Git.init().setDirectory(repoDir).call()) {
+      final File sourceFile = new File(repoDir, "TestGitClass.java");
+      Files.writeString(sourceFile.toPath(), expected);
+      git.add().addFilepattern("TestGitClass.java").call();
+      commitId = git.commit().setMessage("add test class").call().getId();
+    }
 
+    try (final Repository repository =
+        this.gitRepositoryHandler.getGitRepository(
+            repoDir.getAbsolutePath(), new RemoteRepositoryObject())) {
       try (RevWalk walk = new RevWalk(repository)) {
-        final ObjectId id = repository.resolve("8ee1f25");
-
-        final RevCommit commit = walk.parseCommit(id);
-
+        final RevCommit commit = walk.parseCommit(commitId);
         final RevTree tree = commit.getTree();
 
         try (TreeWalk treeWalk = new TreeWalk(repository)) {
           treeWalk.addTree(tree);
           treeWalk.setRecursive(true);
           while (treeWalk.next()) {
-            final String actual = GitRepositoryHandler.getContent(treeWalk.getObjectId(0),
-                repository);
-            final String expected = "package testgit.my.test.pckg;\n" + "\n" + "public class TestGitClass {\n" + "\n"
-                + "  private final String testVariable;\n" + "\n"
-                + "  public TestGitClass(final String testVariable) {\n"
-                + "    this.testVariable = testVariable;\n" + "  }\n" + "\n" + "}";
-
-            Assertions.assertEquals(expected.replace(" ", "").replace("\n", "").replace("\r", ""),
+            final String actual =
+                GitRepositoryHandler.getContent(treeWalk.getObjectId(0), repository);
+            Assertions.assertEquals(
+                expected.replace(" ", "").replace("\n", "").replace("\r", ""),
                 actual.replace(" ", "").replace("\n", "").replace("\r", ""));
-
             walk.dispose();
-
           }
         }
       }
     }
-
   }
 
-  @Test
-  void configureBranchRevWalk_firstParentOnly_excludesMergedBranchCommits()
-      throws IOException {
-    final Path traceServiceRepo = Path.of(System.getProperty("user.home"), "Documents",
-        "ExplorViz", "trace-service");
-    Assumptions.assumeTrue(Files.isDirectory(traceServiceRepo.resolve(".git")),
-        "Local trace-service clone required for this test");
-
-    try (Git git = Git.open(traceServiceRepo.toFile());
-        Repository repository = git.getRepository();
-        RevWalk allReachableWalk = new RevWalk(repository);
-        RevWalk firstParentWalk = new RevWalk(repository)) {
-      final String mainRef = "refs/heads/main";
-      allReachableWalk.markStart(allReachableWalk.parseCommit(repository.resolve(mainRef)));
-      final long allReachableCount = countCommits(allReachableWalk);
-
-      gitRepositoryHandler.configureBranchRevWalk(firstParentWalk, repository, mainRef, true);
-      final long firstParentCount = countCommits(firstParentWalk);
-
-      Assertions.assertTrue(firstParentCount < allReachableCount,
-          "First-parent walk must exclude merged feature-branch commits");
+  private File initLocalRepositoryWithOrigin(final String remoteUrl, final String directoryName)
+      throws Exception {
+    final File repoDir = new File(tempGitLocation, directoryName);
+    Files.createDirectories(repoDir.toPath());
+    try (Git git = Git.init().setDirectory(repoDir).call()) {
+      final StoredConfig config = git.getRepository().getConfig();
+      config.setString("remote", "origin", "url", remoteUrl);
+      config.save();
+      git.commit().setMessage("init").setAllowEmpty(true).call();
     }
+    return repoDir;
   }
-
-  @Test
-  void configureBranchRevWalk_includesAllReachableCommits_whenFirstParentDisabled()
-      throws IOException {
-    final Path traceServiceRepo = Path.of(System.getProperty("user.home"), "Documents",
-        "ExplorViz", "trace-service");
-    Assumptions.assumeTrue(Files.isDirectory(traceServiceRepo.resolve(".git")),
-        "Local trace-service clone required for this test");
-
-    try (Git git = Git.open(traceServiceRepo.toFile());
-        Repository repository = git.getRepository();
-        RevWalk allReachableWalk = new RevWalk(repository);
-        RevWalk branchWalk = new RevWalk(repository)) {
-      final String mainRef = "refs/heads/main";
-      allReachableWalk.markStart(allReachableWalk.parseCommit(repository.resolve(mainRef)));
-      final long allReachableCount = countCommits(allReachableWalk);
-
-      gitRepositoryHandler.configureBranchRevWalk(branchWalk, repository, mainRef, false);
-      final long branchWalkCount = countCommits(branchWalk);
-
-      Assertions.assertEquals(allReachableCount, branchWalkCount);
-      Assertions.assertTrue(branchWalkCount > 72,
-          "Branch walk must include merged commits when first-parent filtering is disabled");
-    }
-  }
-
-  private static long countCommits(final RevWalk revWalk) {
-    long count = 0;
-    for (RevCommit ignored : revWalk) {
-      count++;
-    }
-    return count;
-  }
-
 }

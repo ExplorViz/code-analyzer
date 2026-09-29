@@ -43,11 +43,6 @@ public abstract class CLexerBase extends Lexer {
         String inputText = input.getText(new Interval(0, input.size() - 1));
 
         if (nopp) {
-            try {
-                Files.writeString(Path.of(outputName), inputText);
-            } catch (IOException e) {
-                // Ignore
-            }
             return CharStreams.fromString(inputText);
         }
 

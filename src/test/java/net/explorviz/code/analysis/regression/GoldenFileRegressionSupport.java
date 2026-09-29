@@ -10,15 +10,12 @@ import java.nio.file.Path;
 import net.explorviz.code.proto.FileData;
 import org.junit.jupiter.api.Assertions;
 
-/**
- * Shared helpers for golden-file parser regression tests.
- */
+/** Shared helpers for golden-file parser regression tests. */
 final class GoldenFileRegressionSupport {
 
   static final String FILE_HASH = "regression-hash";
 
-  private GoldenFileRegressionSupport() {
-  }
+  private GoldenFileRegressionSupport() {}
 
   static String fixturePath(final String languageDir, final String fileName) {
     return "src/test/resources/regression/" + languageDir + "/" + fileName;
@@ -44,7 +41,11 @@ final class GoldenFileRegressionSupport {
   }
 
   static String readFixture(final String languageDir, final String fileName) throws IOException {
-    return Files.readString(Path.of(fixturePath(languageDir, fileName)));
+    final String resource = "/regression/" + languageDir + "/" + fileName;
+    try (InputStream in = GoldenFileRegressionSupport.class.getResourceAsStream(resource)) {
+      Assertions.assertNotNull(in, "Missing regression fixture resource: " + resource);
+      return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+    }
   }
 
   static String toJson(final Message message) throws IOException {
@@ -57,8 +58,8 @@ final class GoldenFileRegressionSupport {
     return builder.build();
   }
 
-  static String readExpectedJson(final Class<?> owner, final String languageDir,
-      final String fileName) throws IOException {
+  static String readExpectedJson(
+      final Class<?> owner, final String languageDir, final String fileName) throws IOException {
     final String resource = expectedResourcePath(languageDir, fileName);
     try (InputStream in = owner.getResourceAsStream(resource)) {
       Assertions.assertNotNull(in, "Missing expected JSON resource: " + resource);
@@ -66,25 +67,37 @@ final class GoldenFileRegressionSupport {
     }
   }
 
-  static void assertMatchesGolden(final Class<?> owner, final String languageDir,
-      final String fileName, final FileData actual) throws IOException {
+  static void assertMatchesGolden(
+      final Class<?> owner, final String languageDir, final String fileName, final FileData actual)
+      throws IOException {
     final String actualJson = toJson(actual);
 
     if (Boolean.getBoolean("updateGoldenFiles")) {
-      Files.writeString(Path.of(expectedFilesystemPath(languageDir, fileName)),
-          actualJson + "\n", StandardCharsets.UTF_8);
+      Files.writeString(
+          Path.of(expectedFilesystemPath(languageDir, fileName)),
+          actualJson + "\n",
+          StandardCharsets.UTF_8);
       return;
     }
 
     final String expectedJson = readExpectedJson(owner, languageDir, fileName);
     final FileData expected = parseFileDataJson(expectedJson);
 
-    Assertions.assertEquals(expected, actual,
-        () -> "Analyzer output diverged from golden file for "
-            + languageDir + "/" + fileName + ".\n"
-            + "If the change is intentional, regenerate with -DupdateGoldenFiles=true\n"
-            + "--- expected ---\n" + expectedJson + "\n"
-            + "--- actual ---\n" + actualJson);
+    Assertions.assertEquals(
+        expected,
+        actual,
+        () ->
+            "Analyzer output diverged from golden file for "
+                + languageDir
+                + "/"
+                + fileName
+                + ".\n"
+                + "If the change is intentional, regenerate with -DupdateGoldenFiles=true\n"
+                + "--- expected ---\n"
+                + expectedJson
+                + "\n"
+                + "--- actual ---\n"
+                + actualJson);
   }
 
   private static String unescapeHtml(final String json) {

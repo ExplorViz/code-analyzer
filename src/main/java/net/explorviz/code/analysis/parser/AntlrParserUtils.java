@@ -35,8 +35,8 @@ import org.slf4j.Logger;
  *
  * <p><b>Optional parse timeout</b>: callers may pass {@code parseTimeoutMs} so the entire SLL → LL
  * → lenient sequence cannot hang indefinitely. Large or ambiguous JS files (vendored libraries,
- * bundles) can stall in SLL alone; the timeout covers that stage as well. On timeout a
- * {@link ParseCancellationException} is thrown so callers can fall back to metrics-only analysis.
+ * bundles) can stall in SLL alone; the timeout covers that stage as well. On timeout a {@link
+ * ParseCancellationException} is thrown so callers can fall back to metrics-only analysis.
  *
  * <p>The timeout is enforced by a {@link DeadlineTokenStream} that checks a wall-clock deadline on
  * every lookahead/{@code consume}. ANTLR prediction does not respond to {@link Thread#interrupt()},
@@ -60,14 +60,13 @@ public final class AntlrParserUtils {
    * @deprecated use {@link #DEFAULT_PARSE_TIMEOUT_MS}; kept for binary compatibility with callers
    *     that timed only the LL stage.
    */
-  @Deprecated
-  public static final long DEFAULT_LL_TIMEOUT_MS = DEFAULT_PARSE_TIMEOUT_MS;
+  @Deprecated public static final long DEFAULT_LL_TIMEOUT_MS = DEFAULT_PARSE_TIMEOUT_MS;
 
   private AntlrParserUtils() {}
 
   /**
-   * Removes the default {@code ConsoleErrorListener} from the lexer so that lexer errors
-   * are not printed to {@code stderr}.
+   * Removes the default {@code ConsoleErrorListener} from the lexer so that lexer errors are not
+   * printed to {@code stderr}.
    */
   public static void configureLexer(final Lexer lexer) {
     lexer.removeErrorListeners();
@@ -75,21 +74,25 @@ public final class AntlrParserUtils {
 
   /**
    * Parses using SLL prediction first; retries with full LL only if SLL cannot resolve an
-   * ambiguity. The LL stage uses a {@link ThresholdBailErrorStrategy} and routes syntax errors
-   * to SLF4J instead of the console.
+   * ambiguity. The LL stage uses a {@link ThresholdBailErrorStrategy} and routes syntax errors to
+   * SLF4J instead of the console.
    *
-   * @param <T>       the parse-tree context type returned by the entry-point rule
-   * @param parser    the configured parser (tokens already consumed)
-   * @param tokens    the token stream, rewound when falling back to LL
-   * @param logger    the caller's SLF4J logger
-   * @param fileName  source file name, included in warning messages
-   * @param parseCall supplier that invokes the grammar's entry-point rule (e.g.
-   *                  {@code parser::compilationUnit})
+   * @param <T> the parse-tree context type returned by the entry-point rule
+   * @param parser the configured parser (tokens already consumed)
+   * @param tokens the token stream, rewound when falling back to LL
+   * @param logger the caller's SLF4J logger
+   * @param fileName source file name, included in warning messages
+   * @param parseCall supplier that invokes the grammar's entry-point rule (e.g. {@code
+   *     parser::compilationUnit})
    * @return the root parse-tree node
    * @throws ParseCancellationException if the error threshold is exceeded during LL recovery
    */
-  public static <T> T parseTwoStage(final Parser parser, final CommonTokenStream tokens,
-      final Logger logger, final String fileName, final Supplier<T> parseCall) {
+  public static <T> T parseTwoStage(
+      final Parser parser,
+      final CommonTokenStream tokens,
+      final Logger logger,
+      final String fileName,
+      final Supplier<T> parseCall) {
     return parseTwoStage(parser, tokens, logger, fileName, null, 0L, parseCall);
   }
 
@@ -99,8 +102,12 @@ public final class AntlrParserUtils {
    * value {@code <= 0} means no timeout. On timeout a {@link ParseCancellationException} is thrown
    * so callers can fall back to metrics-only analysis.
    */
-  public static <T> T parseTwoStage(final Parser parser, final CommonTokenStream tokens,
-      final Logger logger, final String fileName, final long parseTimeoutMs,
+  public static <T> T parseTwoStage(
+      final Parser parser,
+      final CommonTokenStream tokens,
+      final Logger logger,
+      final String fileName,
+      final long parseTimeoutMs,
       final Supplier<T> parseCall) {
     return parseTwoStage(parser, tokens, logger, fileName, null, parseTimeoutMs, parseCall);
   }
@@ -109,21 +116,29 @@ public final class AntlrParserUtils {
    * Same as {@link #parseTwoStage(Parser, CommonTokenStream, Logger, String, Supplier)} but also
    * records syntax-error messages in {@code syntaxErrors} (for tests and diagnostics).
    */
-  static <T> T parseTwoStage(final Parser parser, final CommonTokenStream tokens,
-      final Logger logger, final String fileName, final List<String> syntaxErrors,
+  static <T> T parseTwoStage(
+      final Parser parser,
+      final CommonTokenStream tokens,
+      final Logger logger,
+      final String fileName,
+      final List<String> syntaxErrors,
       final Supplier<T> parseCall) {
     return parseTwoStage(parser, tokens, logger, fileName, syntaxErrors, 0L, parseCall);
   }
 
-  static <T> T parseTwoStage(final Parser parser, final CommonTokenStream tokens,
-      final Logger logger, final String fileName, final List<String> syntaxErrors,
-      final long parseTimeoutMs, final Supplier<T> parseCall) {
+  static <T> T parseTwoStage(
+      final Parser parser,
+      final CommonTokenStream tokens,
+      final Logger logger,
+      final String fileName,
+      final List<String> syntaxErrors,
+      final long parseTimeoutMs,
+      final Supplier<T> parseCall) {
     if (parseTimeoutMs <= 0L) {
       return parseTwoStageUnbounded(parser, tokens, logger, fileName, syntaxErrors, parseCall);
     }
 
-    final long deadlineNanos =
-        System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(parseTimeoutMs);
+    final long deadlineNanos = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(parseTimeoutMs);
     final TokenStream previous = parser.getInputStream();
     final DeadlineTokenStream deadlineStream =
         new DeadlineTokenStream(tokens, deadlineNanos, parseTimeoutMs, fileName);
@@ -140,8 +155,12 @@ public final class AntlrParserUtils {
     }
   }
 
-  private static <T> T parseTwoStageUnbounded(final Parser parser, final CommonTokenStream tokens,
-      final Logger logger, final String fileName, final List<String> syntaxErrors,
+  private static <T> T parseTwoStageUnbounded(
+      final Parser parser,
+      final CommonTokenStream tokens,
+      final Logger logger,
+      final String fileName,
+      final List<String> syntaxErrors,
       final Supplier<T> parseCall) {
 
     // Stage 1: SLL — fast, works for the vast majority of valid source files.
@@ -181,16 +200,24 @@ public final class AntlrParserUtils {
   }
 
   /**
-   * Parses with full LL prediction and default error recovery, returning the best-effort parse
-   * tree even when the source contains unexpanded macros or other non-standard constructs.
+   * Parses with full LL prediction and default error recovery, returning the best-effort parse tree
+   * even when the source contains unexpanded macros or other non-standard constructs.
    */
-  public static <T> T parseLenient(final Parser parser, final CommonTokenStream tokens,
-      final Logger logger, final String fileName, final Supplier<T> parseCall) {
+  public static <T> T parseLenient(
+      final Parser parser,
+      final CommonTokenStream tokens,
+      final Logger logger,
+      final String fileName,
+      final Supplier<T> parseCall) {
     return parseLenient(parser, tokens, logger, fileName, null, parseCall);
   }
 
-  static <T> T parseLenient(final Parser parser, final CommonTokenStream tokens,
-      final Logger logger, final String fileName, final List<String> syntaxErrors,
+  static <T> T parseLenient(
+      final Parser parser,
+      final CommonTokenStream tokens,
+      final Logger logger,
+      final String fileName,
+      final List<String> syntaxErrors,
       final Supplier<T> parseCall) {
     tokens.seek(0);
     parser.reset();
@@ -205,8 +232,8 @@ public final class AntlrParserUtils {
 
   /**
    * Behaves like {@link DefaultErrorStrategy} (attempts single-token insertion/deletion recovery)
-   * but throws {@link ParseCancellationException} after {@code maxErrors} recovery attempts.
-   * This prevents the parser from spending minutes on a file the grammar cannot handle.
+   * but throws {@link ParseCancellationException} after {@code maxErrors} recovery attempts. This
+   * prevents the parser from spending minutes on a file the grammar cannot handle.
    */
   static final class ThresholdBailErrorStrategy extends DefaultErrorStrategy {
 
@@ -248,16 +275,20 @@ public final class AntlrParserUtils {
       this(logger, fileName, null);
     }
 
-    LoggingErrorListener(final Logger logger, final String fileName,
-        final List<String> syntaxErrors) {
+    LoggingErrorListener(
+        final Logger logger, final String fileName, final List<String> syntaxErrors) {
       this.logger = logger;
       this.fileName = fileName;
       this.syntaxErrors = syntaxErrors;
     }
 
     @Override
-    public void syntaxError(final Recognizer<?, ?> recognizer, final Object offendingSymbol,
-        final int line, final int charPositionInLine, final String msg,
+    public void syntaxError(
+        final Recognizer<?, ?> recognizer,
+        final Object offendingSymbol,
+        final int line,
+        final int charPositionInLine,
+        final String msg,
         final RecognitionException e) {
       final String formatted =
           "Parse error in %s at %d:%d — %s".formatted(fileName, line, charPositionInLine, msg);
@@ -271,9 +302,9 @@ public final class AntlrParserUtils {
   /**
    * Token stream decorator that aborts the parse once a wall-clock deadline is exceeded.
    *
-   * <p>Extends {@link CommonTokenStream} (rather than only implementing {@link TokenStream}) because
-   * several language-specific parser bases cast {@code _input} to {@code CommonTokenStream} /
-   * {@code BufferedTokenStream} for semantic predicates.
+   * <p>Extends {@link CommonTokenStream} (rather than only implementing {@link TokenStream})
+   * because several language-specific parser bases cast {@code _input} to {@code CommonTokenStream}
+   * / {@code BufferedTokenStream} for semantic predicates.
    *
    * <p>ANTLR adaptive prediction calls {@link #LT(int)} / {@link #LA(int)} millions of times during
    * catastrophic backtracking, so checking the deadline there stops the parse on the same thread
@@ -287,8 +318,11 @@ public final class AntlrParserUtils {
     private final String fileName;
     private volatile boolean timedOut;
 
-    DeadlineTokenStream(final CommonTokenStream input, final long deadlineNanos,
-        final long timeoutMs, final String fileName) {
+    DeadlineTokenStream(
+        final CommonTokenStream input,
+        final long deadlineNanos,
+        final long timeoutMs,
+        final String fileName) {
       super(input.getTokenSource());
       this.input = input;
       this.deadlineNanos = deadlineNanos;

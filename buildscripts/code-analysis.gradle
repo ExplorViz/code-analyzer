@@ -1,4 +1,3 @@
-apply plugin: 'pmd'
 apply plugin: 'checkstyle'
 apply plugin: 'jacoco'
 
@@ -12,15 +11,6 @@ jacocoTestReport {
   }
 }
 
-pmd {
-  // Empty ruleset is necessary for exclude-pattern
-  // https://stackoverflow.com/questions/32247190/pmd-exclude-pattern-with-gradle
-  ruleSets = []
-  ruleSetFiles = files("code-analysis/pmd.xml")
-  ignoreFailures = false
-  toolVersion = "6.53.0"
-}
-
 checkstyle {
   configDirectory = file("code-analysis")
   configFile = file("code-analysis/checkstyle.xml")
@@ -29,24 +19,39 @@ checkstyle {
   toolVersion = "10.12.5"
 }
 
+def antlrCheckstyleExcludes = [
+  '**/TypeScriptLexerBase.java',
+  '**/TypeScriptParserBase.java',
+  '**/PythonLexerBase.java',
+  '**/PythonParserBase.java',
+  '**/PythonVersion.java',
+  '**/CParserBase.java',
+  '**/CLexerBase.java',
+  '**/Symbol.java',
+  '**/SymbolTable.java',
+  '**/TypeClassification.java',
+  '**/GoParserBase.java',
+  '**/CSharpLexerBase.java',
+  '**/CSharpParserBase.java',
+  '**/RustLexerBase.java',
+  '**/RustParserBase.java',
+  '**/PhpLexerBase.java',
+  '**/SwiftSupport.java',
+  '**/SwiftSupportLexer.java',
+]
+
 // Exclude ANTLR generated base classes from checkstyle (external files from ANTLR repository)
 tasks.withType(Checkstyle) {
-  exclude '**/TypeScriptLexerBase.java'
-  exclude '**/TypeScriptParserBase.java'
-  exclude '**/PythonLexerBase.java'
-  exclude '**/PythonParserBase.java'
-  exclude '**/PythonVersion.java'
-  exclude '**/CParserBase.java'
-  exclude '**/CLexerBase.java'
-  exclude '**/Symbol.java'
-  exclude '**/SymbolTable.java'
-  exclude '**/TypeClassification.java'
-  exclude '**/GoParserBase.java'
-  exclude '**/CSharpLexerBase.java'
-  exclude '**/CSharpParserBase.java'
-  exclude '**/RustLexerBase.java'
-  exclude '**/RustParserBase.java'
-  exclude '**/PhpLexerBase.java'
-  exclude '**/SwiftSupport.java'
-  exclude '**/SwiftSupportLexer.java'
+  antlrCheckstyleExcludes.each { exclude it }
+}
+
+spotless {
+  java {
+    target 'src/*/java/**/*.java'
+    targetExclude antlrCheckstyleExcludes
+    googleJavaFormat()
+    removeUnusedImports()
+    trimTrailingWhitespace()
+    endWithNewline()
+  }
 }

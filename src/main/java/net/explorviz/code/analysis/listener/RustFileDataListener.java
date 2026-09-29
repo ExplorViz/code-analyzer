@@ -11,9 +11,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR listener for extracting file data from Rust source code.
- */
+/** ANTLR listener for extracting file data from Rust source code. */
 public class RustFileDataListener extends RustParserBaseListener implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RustFileDataListener.class);
@@ -24,8 +22,8 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
   private int variableCount = 0;
   private String currentImplType;
 
-  public RustFileDataListener(final RustFileDataHandler fileDataHandler,
-      final CommonTokenStream tokens) {
+  public RustFileDataListener(
+      final RustFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;
     this.tokens = tokens;
   }
@@ -38,7 +36,8 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
     fileDataHandler.addMetric(SLOC, String.valueOf(sloc));
     fileDataHandler.addMetric(CLOC, String.valueOf(cloc));
 
-    LOGGER.atTrace()
+    LOGGER
+        .atTrace()
         .addArgument(fileDataHandler.getFileName())
         .addArgument(sloc)
         .log("{} - SLOC: {}");
@@ -289,14 +288,17 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
     }
   }
 
-  private MethodDataHandler createFunctionHandler(final String functionName, final String returnType,
-      final RustParser.Function_Context ctx) {
+  private MethodDataHandler createFunctionHandler(
+      final String functionName, final String returnType, final RustParser.Function_Context ctx) {
     if (currentImplType != null) {
       final ClassDataHandler classData =
           fileDataHandler.getClassData(fileDataHandler.buildFqn(currentImplType));
       if (classData != null) {
-        final MethodDataHandler methodData = classData.addMethod(functionName,
-            functionName + "#" + extractParameterTypes(ctx).hashCode(), returnType);
+        final MethodDataHandler methodData =
+            classData.addMethod(
+                functionName,
+                functionName + "#" + extractParameterTypes(ctx).hashCode(),
+                returnType);
         addFunctionParameters(methodData, ctx);
         return methodData;
       }
@@ -305,14 +307,18 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
     if (fileDataHandler.isInClassContext()) {
       final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
       if (classData != null) {
-        final MethodDataHandler methodData = classData.addMethod(functionName,
-            functionName + "#" + extractParameterTypes(ctx).hashCode(), returnType);
+        final MethodDataHandler methodData =
+            classData.addMethod(
+                functionName,
+                functionName + "#" + extractParameterTypes(ctx).hashCode(),
+                returnType);
         addFunctionParameters(methodData, ctx);
         return methodData;
       }
     }
 
-    final MethodDataHandler methodData = fileDataHandler.addGlobalFunction(functionName, returnType);
+    final MethodDataHandler methodData =
+        fileDataHandler.addGlobalFunction(functionName, returnType);
     addFunctionParameters(methodData, ctx);
     return methodData;
   }
@@ -341,8 +347,8 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
     return paramTypes;
   }
 
-  private void addFunctionParameters(final MethodDataHandler methodData,
-      final RustParser.Function_Context ctx) {
+  private void addFunctionParameters(
+      final MethodDataHandler methodData, final RustParser.Function_Context ctx) {
     if (ctx.functionParameters() == null) {
       return;
     }

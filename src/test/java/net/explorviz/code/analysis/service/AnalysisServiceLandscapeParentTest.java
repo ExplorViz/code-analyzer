@@ -31,8 +31,7 @@ class AnalysisServiceLandscapeParentTest {
 
     Assertions.assertEquals(
         List.of(
-            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-            "cccccccccccccccccccccccccccccccccccccccc"),
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "cccccccccccccccccccccccccccccccccccccccc"),
         parentIds);
   }
 
@@ -94,15 +93,13 @@ class AnalysisServiceLandscapeParentTest {
             true,
             Set.of("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
 
-    Assertions.assertEquals(
-        List.of("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), parentIds);
+    Assertions.assertEquals(List.of("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), parentIds);
   }
 
   @Test
   void hasRelevantChangesWhenAnyFileListIsNonEmpty() {
     final ObjectId hash = ObjectId.fromString("0123456789abcdef0123456789abcdef01234567");
-    final FileDescriptor file =
-        new FileDescriptor(hash, "File.java", "src/File.java");
+    final FileDescriptor file = new FileDescriptor(hash, "File.java", "src/File.java");
 
     Assertions.assertTrue(
         analysisService.hasRelevantFilteredFileChanges(List.of(file), List.of(), List.of()));

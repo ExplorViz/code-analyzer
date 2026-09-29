@@ -40,27 +40,27 @@ class FallbackFileDataHandlerFactoryTest {
   @ParameterizedTest
   @MethodSource("supportedProgrammingLanguages")
   void createsFallbackWithLanguageLocAndSize(final String filePath, final Language language) {
-    final FileDescriptor file = new FileDescriptor(ObjectId.zeroId(), filePath,
-        filePath);
+    final FileDescriptor file = new FileDescriptor(ObjectId.zeroId(), filePath, filePath);
 
-    final TextFileDataHandler handler = FallbackFileDataHandlerFactory.create(file, CONTENT,
-        language);
+    final TextFileDataHandler handler =
+        FallbackFileDataHandlerFactory.create(file, CONTENT, language);
 
     Assertions.assertEquals(language, handler.getProtoBufObject().getLanguage());
     Assertions.assertEquals("2.0", handler.getMetricValue("lineCount"));
-    Assertions.assertEquals(String.valueOf((double) CONTENT.length()), handler.getMetricValue("size"));
+    Assertions.assertEquals(
+        String.valueOf((double) CONTENT.length()), handler.getMetricValue("size"));
   }
 
   @ParameterizedTest
   @MethodSource("supportedProgrammingLanguages")
   void infersLanguageFromFilePath(final String filePath, final Language language) {
-    final FileDescriptor file = new FileDescriptor(ObjectId.zeroId(), filePath,
-        filePath);
+    final FileDescriptor file = new FileDescriptor(ObjectId.zeroId(), filePath, filePath);
 
     final TextFileDataHandler handler = FallbackFileDataHandlerFactory.create(file, CONTENT);
 
     Assertions.assertEquals(language, handler.getProtoBufObject().getLanguage());
     Assertions.assertEquals("2.0", handler.getMetricValue("lineCount"));
-    Assertions.assertEquals(String.valueOf((double) CONTENT.length()), handler.getMetricValue("size"));
+    Assertions.assertEquals(
+        String.valueOf((double) CONTENT.length()), handler.getMetricValue("size"));
   }
 }

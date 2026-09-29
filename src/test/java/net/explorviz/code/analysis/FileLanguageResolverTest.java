@@ -42,21 +42,21 @@ class FileLanguageResolverTest {
 
   @Test
   void prefersFileNameOverReportedPathWhenBothProvided() {
-    Assertions.assertEquals(Language.JAVA,
-        FileLanguageResolver.resolveFromFileName("Main.java", "src/unknown.bin"));
+    Assertions.assertEquals(
+        Language.JAVA, FileLanguageResolver.resolveFromFileName("Main.java", "src/unknown.bin"));
   }
 
   @Test
   void fallsBackToReportedPathWhenFileNameHasNoExtension() {
-    Assertions.assertEquals(Language.PYTHON,
-        FileLanguageResolver.resolveFromFileName("script", "src/script.py"));
+    Assertions.assertEquals(
+        Language.PYTHON, FileLanguageResolver.resolveFromFileName("script", "src/script.py"));
   }
 
   @Test
   void returnsUnspecifiedForUnknownExtension() {
-    Assertions.assertEquals(Language.LANGUAGE_UNSPECIFIED,
-        FileLanguageResolver.resolveFromFileName("archive.zip"));
-    Assertions.assertEquals(Language.LANGUAGE_UNSPECIFIED,
-        FileLanguageResolver.resolveFromFileName((String[]) null));
+    Assertions.assertEquals(
+        Language.LANGUAGE_UNSPECIFIED, FileLanguageResolver.resolveFromFileName("archive.zip"));
+    Assertions.assertEquals(
+        Language.LANGUAGE_UNSPECIFIED, FileLanguageResolver.resolveFromFileName((String[]) null));
   }
 }

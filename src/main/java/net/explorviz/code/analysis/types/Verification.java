@@ -5,13 +5,10 @@ import com.github.javaparser.ast.body.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Class to hold some hashing methods.
- */
+/** Class to hold some hashing methods. */
 public final class Verification {
 
-  private Verification() {
-  }
+  private Verification() {}
 
   /**
    * Calculates the hash for a parameter list provided as String List.

@@ -14,9 +14,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR Listener-based implementation for extracting file data from Java source code.
- */
+/** ANTLR Listener-based implementation for extracting file data from Java source code. */
 public class JavaFileDataListener extends JavaParserBaseListener implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(JavaFileDataListener.class);
@@ -30,7 +28,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   private int functionCount = 0;
   private int variableCount = 0;
 
-  public JavaFileDataListener(final JavaFileDataHandler fileDataHandler,
+  public JavaFileDataListener(
+      final JavaFileDataHandler fileDataHandler,
       final boolean wildcardImportProperty,
       final org.antlr.v4.runtime.CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;
@@ -48,7 +47,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     fileDataHandler.addMetric(SLOC, String.valueOf(sloc));
     fileDataHandler.addMetric(CLOC, String.valueOf(cloc));
 
-    LOGGER.atTrace()
+    LOGGER
+        .atTrace()
         .addArgument(fileDataHandler.getFileName())
         .addArgument(sloc)
         .log("{} - SLOC: {}");
@@ -108,14 +108,23 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
     if (ctx.typeType() != null) {
       final String superClassFqn = resolveTypeName(ctx.typeType().getText());
-      fileDataHandler.getCurrentClassData()
-          .setSuperClass(getClassPathFromFqn(superClassFqn, ".java", fileDataHandler.getFileName(),
-              fileDataHandler.getPackageName()) + "::" + getClassNameFromFqn(superClassFqn));
+      fileDataHandler
+          .getCurrentClassData()
+          .setSuperClass(
+              getClassPathFromFqn(
+                      superClassFqn,
+                      ".java",
+                      fileDataHandler.getFileName(),
+                      fileDataHandler.getPackageName())
+                  + "::"
+                  + getClassNameFromFqn(superClassFqn));
     }
 
     if (ctx.IMPLEMENTS() != null && !ctx.typeList().isEmpty()) {
       for (final JavaParser.TypeTypeContext typeCtx : ctx.typeList(0).typeType()) {
-        fileDataHandler.getCurrentClassData().addImplementedInterface(resolveTypeName(typeCtx.getText()));
+        fileDataHandler
+            .getCurrentClassData()
+            .addImplementedInterface(resolveTypeName(typeCtx.getText()));
       }
     }
   }
@@ -139,7 +148,9 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
     if (ctx.EXTENDS() != null && !ctx.typeList().isEmpty()) {
       for (final JavaParser.TypeTypeContext typeCtx : ctx.typeList(0).typeType()) {
-        fileDataHandler.getCurrentClassData().addImplementedInterface(resolveTypeName(typeCtx.getText()));
+        fileDataHandler
+            .getCurrentClassData()
+            .addImplementedInterface(resolveTypeName(typeCtx.getText()));
       }
     }
   }
@@ -186,20 +197,22 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
     if (ctx.IMPLEMENTS() != null && ctx.typeList() != null) {
       for (final JavaParser.TypeTypeContext typeCtx : ctx.typeList().typeType()) {
-        fileDataHandler.getCurrentClassData()
+        fileDataHandler
+            .getCurrentClassData()
             .addImplementedInterface(resolveTypeName(typeCtx.getText()));
       }
     }
 
     if (ctx.recordHeader() != null && ctx.recordHeader().recordComponentList() != null) {
-      for (final JavaParser.RecordComponentContext component : ctx.recordHeader()
-          .recordComponentList().recordComponent()) {
+      for (final JavaParser.RecordComponentContext component :
+          ctx.recordHeader().recordComponentList().recordComponent()) {
         if (component.identifier() == null || component.typeType() == null) {
           continue;
         }
         final String fieldName = component.identifier().getText();
         final String fieldType = resolveTypeName(component.typeType().getText());
-        fileDataHandler.getCurrentClassData()
+        fileDataHandler
+            .getCurrentClassData()
             .addField(fieldName, fieldType, List.of("private", "final"));
         variableCount++;
       }
@@ -219,12 +232,13 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     }
 
     final String constructorName = ctx.identifier().getText();
-    final String constructorFqn = fileDataHandler.getCurrentClassFqn() + "." + constructorName + "#";
+    final String constructorFqn =
+        fileDataHandler.getCurrentClassFqn() + "." + constructorName + "#";
     fileDataHandler.enterMethod(constructorFqn);
     functionCount++;
 
-    final MethodDataHandler constructor = fileDataHandler.getCurrentClassData()
-        .addConstructor(constructorName, constructorFqn);
+    final MethodDataHandler constructor =
+        fileDataHandler.getCurrentClassData().addConstructor(constructorName, constructorFqn);
     if (ctx.modifier() != null) {
       for (final JavaParser.ModifierContext modCtx : ctx.modifier()) {
         final String modText = modCtx.getText();
@@ -268,8 +282,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   }
 
   @Override
-  public void exitAnnotationTypeDeclaration(
-      final JavaParser.AnnotationTypeDeclarationContext ctx) {
+  public void exitAnnotationTypeDeclaration(final JavaParser.AnnotationTypeDeclarationContext ctx) {
     fileDataHandler.leaveClass();
   }
 
@@ -291,8 +304,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
       returnType = resolveTypeName(elementRest.typeType().getText());
     }
 
-    final MethodDataHandler methodData = fileDataHandler.getCurrentClassData()
-        .addMethod(methodName, methodFqn, returnType);
+    final MethodDataHandler methodData =
+        fileDataHandler.getCurrentClassData().addMethod(methodName, methodFqn, returnType);
     if (ctx.start != null && ctx.stop != null) {
       methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
     }
@@ -334,7 +347,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void enterFieldDeclaration(final JavaParser.FieldDeclarationContext ctx) {
-    if (ctx.variableDeclarators() == null || ctx.typeType() == null
+    if (ctx.variableDeclarators() == null
+        || ctx.typeType() == null
         || !fileDataHandler.isInClassContext()) {
       return;
     }
@@ -342,7 +356,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     final String fieldType = resolveTypeName(ctx.typeType().getText());
     final List<String> modifiers = extractMemberModifiers(ctx);
 
-    for (final JavaParser.VariableDeclaratorContext varCtx : ctx.variableDeclarators().variableDeclarator()) {
+    for (final JavaParser.VariableDeclaratorContext varCtx :
+        ctx.variableDeclarators().variableDeclarator()) {
       final String fieldName = varCtx.variableDeclaratorId().identifier().getText();
       final String fieldFqn = fileDataHandler.getCurrentClassFqn() + "." + fieldName;
       fileDataHandler.enterMethod(fieldFqn);
@@ -354,7 +369,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void enterMethodDeclaration(final JavaParser.MethodDeclarationContext ctx) {
-    if (ctx.identifier() == null || ctx.formalParameters() == null
+    if (ctx.identifier() == null
+        || ctx.formalParameters() == null
         || !fileDataHandler.isInClassContext()) {
       return;
     }
@@ -362,8 +378,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     final String methodName = ctx.identifier().getText();
     final List<String> parameterTypes = extractParameterTypes(ctx.formalParameters());
     final String parameterHash = Verification.parameterHash(parameterTypes);
-    final String methodFqn = fileDataHandler.getCurrentClassFqn() + "." + methodName
-        + "#" + parameterHash;
+    final String methodFqn =
+        fileDataHandler.getCurrentClassFqn() + "." + methodName + "#" + parameterHash;
 
     fileDataHandler.enterMethod(methodFqn);
     functionCount++;
@@ -373,8 +389,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
       returnType = resolveTypeName(ctx.typeTypeOrVoid().getText());
     }
 
-    final MethodDataHandler methodData = fileDataHandler.getCurrentClassData()
-        .addMethod(methodName, methodFqn, returnType);
+    final MethodDataHandler methodData =
+        fileDataHandler.getCurrentClassData().addMethod(methodName, methodFqn, returnType);
 
     for (final String modifier : extractMemberModifiers(ctx)) {
       methodData.addModifier(modifier);
@@ -402,7 +418,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
       return;
     }
 
-    final JavaParser.InterfaceCommonBodyDeclarationContext body = ctx.interfaceCommonBodyDeclaration();
+    final JavaParser.InterfaceCommonBodyDeclarationContext body =
+        ctx.interfaceCommonBodyDeclaration();
     if (body.identifier() == null || body.formalParameters() == null) {
       return;
     }
@@ -410,8 +427,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     final String methodName = body.identifier().getText();
     final List<String> parameterTypes = extractParameterTypes(body.formalParameters());
     final String parameterHash = Verification.parameterHash(parameterTypes);
-    final String methodFqn = fileDataHandler.getCurrentClassFqn() + "." + methodName
-        + "#" + parameterHash;
+    final String methodFqn =
+        fileDataHandler.getCurrentClassFqn() + "." + methodName + "#" + parameterHash;
 
     fileDataHandler.enterMethod(methodFqn);
     functionCount++;
@@ -421,8 +438,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
       returnType = resolveTypeName(body.typeTypeOrVoid().getText());
     }
 
-    final MethodDataHandler methodData = fileDataHandler.getCurrentClassData()
-        .addMethod(methodName, methodFqn, returnType);
+    final MethodDataHandler methodData =
+        fileDataHandler.getCurrentClassData().addMethod(methodName, methodFqn, returnType);
 
     for (final String modifier : extractInterfaceMethodModifiers(ctx)) {
       methodData.addModifier(modifier);
@@ -446,7 +463,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void enterConstructorDeclaration(final JavaParser.ConstructorDeclarationContext ctx) {
-    if (ctx.identifier() == null || ctx.formalParameters() == null
+    if (ctx.identifier() == null
+        || ctx.formalParameters() == null
         || !fileDataHandler.isInClassContext()) {
       return;
     }
@@ -454,14 +472,14 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     final String constructorName = ctx.identifier().getText();
     final List<String> parameterTypes = extractParameterTypes(ctx.formalParameters());
     final String parameterHash = Verification.parameterHash(parameterTypes);
-    final String constructorFqn = fileDataHandler.getCurrentClassFqn() + "." + constructorName
-        + "#" + parameterHash;
+    final String constructorFqn =
+        fileDataHandler.getCurrentClassFqn() + "." + constructorName + "#" + parameterHash;
 
     fileDataHandler.enterMethod(constructorFqn);
     functionCount++;
 
-    final MethodDataHandler constructor = fileDataHandler.getCurrentClassData()
-        .addConstructor(constructorName, constructorFqn);
+    final MethodDataHandler constructor =
+        fileDataHandler.getCurrentClassData().addConstructor(constructorName, constructorFqn);
 
     for (final String modifier : extractMemberModifiers(ctx)) {
       constructor.addModifier(modifier);
@@ -511,7 +529,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     }
     if (parent instanceof JavaParser.MemberDeclarationContext) {
       final ParseTree grandParent = parent.getParent();
-      if (grandParent instanceof JavaParser.ClassBodyDeclarationContext classBodyDeclarationContext) {
+      if (grandParent
+          instanceof JavaParser.ClassBodyDeclarationContext classBodyDeclarationContext) {
         return classBodyDeclarationContext.modifier();
       }
     }
@@ -537,14 +556,15 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     if (parent instanceof JavaParser.ClassBodyDeclarationContext classBodyDeclarationContext) {
       return classBodyDeclarationContext.modifier();
     }
-    if (parent instanceof JavaParser.InterfaceBodyDeclarationContext interfaceBodyDeclarationContext) {
+    if (parent
+        instanceof JavaParser.InterfaceBodyDeclarationContext interfaceBodyDeclarationContext) {
       return interfaceBodyDeclarationContext.modifier();
     }
     return List.of();
   }
 
-  private boolean hasModifier(final List<? extends ParserRuleContext> modifiers,
-      final String modifier) {
+  private boolean hasModifier(
+      final List<? extends ParserRuleContext> modifiers, final String modifier) {
     if (modifiers == null) {
       return false;
     }
@@ -595,8 +615,8 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     return parameterTypes;
   }
 
-  private void addParameters(final MethodDataHandler methodData,
-      final JavaParser.FormalParametersContext ctx) {
+  private void addParameters(
+      final MethodDataHandler methodData, final JavaParser.FormalParametersContext ctx) {
     if (ctx == null) {
       return;
     }
@@ -672,10 +692,26 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
       return wildcardImport + "." + baseType + genericsPart + arraySuffix;
     }
 
-    final List<String> javaLangTypes = Arrays.asList(
-        "String", "Integer", "Long", "Double", "Float", "Boolean", "Character",
-        "Byte", "Short", "Object", "Class", "System", "Math", "Thread",
-        "Runnable", "Exception", "RuntimeException", "Error");
+    final List<String> javaLangTypes =
+        Arrays.asList(
+            "String",
+            "Integer",
+            "Long",
+            "Double",
+            "Float",
+            "Boolean",
+            "Character",
+            "Byte",
+            "Short",
+            "Object",
+            "Class",
+            "System",
+            "Math",
+            "Thread",
+            "Runnable",
+            "Exception",
+            "RuntimeException",
+            "Error");
     if (javaLangTypes.contains(baseType)) {
       return "java.lang." + baseType + genericsPart + arraySuffix;
     }
@@ -698,8 +734,9 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   }
 
   private boolean isPrimitiveType(final String type) {
-    return Arrays.asList("byte", "short", "int", "long", "float", "double",
-        "boolean", "char", "void").contains(type);
+    return Arrays.asList(
+            "byte", "short", "int", "long", "float", "double", "boolean", "char", "void")
+        .contains(type);
   }
 
   private int getCloc(final ParserRuleContext ctx) {

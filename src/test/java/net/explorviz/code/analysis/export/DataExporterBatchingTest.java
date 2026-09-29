@@ -22,8 +22,12 @@ class DataExporterBatchingTest {
     final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
     final CountDownLatch analysisFinished = new CountDownLatch(1);
 
-    final Thread batcher = Thread.ofVirtual().start(() -> exporter.persistFilesFromQueueInBatches(
-        completedFiles, analysisFinished, 500, 8));
+    final Thread batcher =
+        Thread.ofVirtual()
+            .start(
+                () ->
+                    exporter.persistFilesFromQueueInBatches(
+                        completedFiles, analysisFinished, 500, 8));
 
     for (int i = 0; i < 5; i++) {
       completedFiles.offer(FileData.getDefaultInstance());
@@ -42,8 +46,12 @@ class DataExporterBatchingTest {
 
     completedFiles.offer(FileData.getDefaultInstance());
 
-    final Thread batcher = Thread.ofVirtual().start(() -> exporter.persistFilesFromQueueInBatches(
-        completedFiles, analysisFinished, 500, 8));
+    final Thread batcher =
+        Thread.ofVirtual()
+            .start(
+                () ->
+                    exporter.persistFilesFromQueueInBatches(
+                        completedFiles, analysisFinished, 500, 8));
 
     analysisFinished.countDown();
     batcher.join();
@@ -57,8 +65,12 @@ class DataExporterBatchingTest {
     final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
     final CountDownLatch analysisFinished = new CountDownLatch(1);
 
-    final Thread batcher = Thread.ofVirtual().start(() -> exporter.persistFilesFromQueueInBatches(
-        completedFiles, analysisFinished, 500, 8));
+    final Thread batcher =
+        Thread.ofVirtual()
+            .start(
+                () ->
+                    exporter.persistFilesFromQueueInBatches(
+                        completedFiles, analysisFinished, 500, 8));
 
     for (int i = 0; i < 1200; i++) {
       completedFiles.offer(FileData.getDefaultInstance());
@@ -77,9 +89,13 @@ class DataExporterBatchingTest {
     private final List<Integer> batchSizes = Collections.synchronizedList(new ArrayList<>());
 
     @Override
-    public StateData getStateData(final String repositoryName, final String branchName,
-        final String token, final Map<String, String> applicationPaths,
-        final String repositoryUrl, final boolean skipLatestCommitLookup) {
+    public StateData getStateData(
+        final String repositoryName,
+        final String branchName,
+        final String token,
+        final Map<String, String> applicationPaths,
+        final String repositoryUrl,
+        final boolean skipLatestCommitLookup) {
       throw new UnsupportedOperationException();
     }
 

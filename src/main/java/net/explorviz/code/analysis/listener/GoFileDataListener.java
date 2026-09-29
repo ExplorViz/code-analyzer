@@ -11,9 +11,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR listener for extracting file data from Go source code.
- */
+/** ANTLR listener for extracting file data from Go source code. */
 public class GoFileDataListener extends GoParserBaseListener implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GoFileDataListener.class);
@@ -23,8 +21,8 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
   private int functionCount = 0;
   private int variableCount = 0;
 
-  public GoFileDataListener(final GoFileDataHandler fileDataHandler,
-      final CommonTokenStream tokens) {
+  public GoFileDataListener(
+      final GoFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;
     this.tokens = tokens;
   }
@@ -37,7 +35,8 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
     fileDataHandler.addMetric(SLOC, String.valueOf(sloc));
     fileDataHandler.addMetric(CLOC, String.valueOf(cloc));
 
-    LOGGER.atTrace()
+    LOGGER
+        .atTrace()
         .addArgument(fileDataHandler.getFileName())
         .addArgument(sloc)
         .log("{} - SLOC: {}");
@@ -140,7 +139,8 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
     methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodHandler.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
 
-    LOGGER.atTrace()
+    LOGGER
+        .atTrace()
         .addArgument(functionName)
         .addArgument(paramTypes.size())
         .log("Function: {} ({} params)");
@@ -159,7 +159,8 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
     final ClassDataHandler classData = fileDataHandler.getClassData(fqn);
 
     if (classData == null) {
-      LOGGER.atTrace()
+      LOGGER
+          .atTrace()
           .addArgument(methodName)
           .addArgument(receiverType)
           .log("Method {} on unknown type {}");
@@ -216,8 +217,8 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
     return paramTypes;
   }
 
-  private void addSignatureParameters(final MethodDataHandler methodData,
-      final GoParser.SignatureContext signature) {
+  private void addSignatureParameters(
+      final MethodDataHandler methodData, final GoParser.SignatureContext signature) {
     if (signature.parameters() == null) {
       return;
     }

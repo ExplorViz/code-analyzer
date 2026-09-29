@@ -19,7 +19,6 @@ import net.explorviz.code.analysis.export.GrpcExporter;
 import net.explorviz.code.analysis.export.JsonExporter;
 import net.explorviz.code.analysis.service.AnalysisCancellationResult;
 import net.explorviz.code.analysis.service.AnalysisConfig;
-import net.explorviz.code.analysis.service.AnalysisProgressState;
 import net.explorviz.code.analysis.service.AnalysisStatusService;
 import net.explorviz.code.analysis.service.ConcurrentAnalysisService;
 import net.explorviz.code.analysis.service.LocalRepositoryService;
@@ -27,37 +26,29 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * REST resource for triggering Git analysis operations.
- */
+/** REST resource for triggering Git analysis operations. */
 @Path("/api/analysis")
 public class AnalysisResource {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AnalysisResource.class);
 
   @ConfigProperty(name = "explorviz.gitanalysis.send-to-remote", defaultValue = "true")
-  /* default */ boolean sendToRemoteProperty; // NOCS
+  /* default */ boolean sendToRemoteProperty;
 
-  @Inject
-  /* default */ ConcurrentAnalysisService analysisService; // NOCS
+  @Inject /* default */ ConcurrentAnalysisService analysisService;
 
-  @Inject
-  /* default */ GrpcExporter grpcExporter; // NOCS
+  @Inject /* default */ GrpcExporter grpcExporter;
 
-  @Inject
-  /* default */ AnalysisStatusService analysisStatusService; // NOCS
+  @Inject /* default */ AnalysisStatusService analysisStatusService;
 
-  @Inject
-  /* default */ LocalRepositoryService localRepositoryService; // NOCS
+  @Inject /* default */ LocalRepositoryService localRepositoryService;
 
   /**
-   * Triggers a Git repository analysis with the provided configuration. The
-   * request is queued and processed
-   * asynchronously to handle concurrent requests safely.
+   * Triggers a Git repository analysis with the provided configuration. The request is queued and
+   * processed asynchronously to handle concurrent requests safely.
    *
    * @param request The analysis request containing configuration
-   * @return Response indicating the request was accepted (202) or an error
-   *         occurred
+   * @return Response indicating the request was accepted (202) or an error occurred
    */
   @POST
   @Path("/trigger")
@@ -72,8 +63,10 @@ public class AnalysisResource {
     }
 
     try {
-      final String repoInfo = request.getRepoPath() != null ? request.getRepoPath()
-          : (request.getRepoRemoteUrl() != null ? request.getRepoRemoteUrl() : "unknown");
+      final String repoInfo =
+          request.getRepoPath() != null
+              ? request.getRepoPath()
+              : (request.getRepoRemoteUrl() != null ? request.getRepoRemoteUrl() : "unknown");
       LOGGER.info("📥 Received analysis request for repository: {}", repoInfo);
 
       final String landscapeToken = request.getLandscapeToken();
@@ -85,31 +78,35 @@ public class AnalysisResource {
       if (request.isSendToRemote()) {
         exporter = grpcExporter;
       } else {
-        exporter = new JsonExporter(config.getRepositoryName(), config.primaryApplicationNameForExport());
+        exporter =
+            new JsonExporter(config.getRepositoryName(), config.primaryApplicationNameForExport());
       }
 
       // Submit to queue for async processing
-      analysisService.analyzeAndSendRepoAsync(config, exporter)
-          .whenComplete((result, error) -> {
-            if (analysisStatusService.getStatus(landscapeToken)
-                .map(analysisStatusService::isTerminalStatus)
-                .orElse(false)) {
-              return;
-            }
-            if (error != null) {
-              if (isCancelledError(error)) {
-                analysisStatusService.markCancelled(landscapeToken);
-                LOGGER.info("🛑 Async analysis cancelled for {}", repoInfo);
-              } else {
-                analysisStatusService.markFailed(landscapeToken);
-                LOGGER.error("❌ Async analysis failed for {}: {}",
-                    repoInfo, error.getMessage());
-              }
-            } else {
-              analysisStatusService.markFinished(landscapeToken);
-              LOGGER.info("✅ Async analysis completed for {}", repoInfo);
-            }
-          });
+      analysisService
+          .analyzeAndSendRepoAsync(config, exporter)
+          .whenComplete(
+              (result, error) -> {
+                if (analysisStatusService
+                    .getStatus(landscapeToken)
+                    .map(analysisStatusService::isTerminalStatus)
+                    .orElse(false)) {
+                  return;
+                }
+                if (error != null) {
+                  if (isCancelledError(error)) {
+                    analysisStatusService.markCancelled(landscapeToken);
+                    LOGGER.info("🛑 Async analysis cancelled for {}", repoInfo);
+                  } else {
+                    analysisStatusService.markFailed(landscapeToken);
+                    LOGGER.error(
+                        "❌ Async analysis failed for {}: {}", repoInfo, error.getMessage());
+                  }
+                } else {
+                  analysisStatusService.markFinished(landscapeToken);
+                  LOGGER.info("✅ Async analysis completed for {}", repoInfo);
+                }
+              });
 
       LOGGER.info("✅ Analysis request queued for repository: {}", repoInfo);
       return Response.status(Response.Status.ACCEPTED)
@@ -131,12 +128,16 @@ public class AnalysisResource {
     final AnalysisCancellationResult result = analysisService.cancelAnalysis(landscapeToken);
     return switch (result) {
       case CANCELLED -> Response.ok("Analysis cancellation requested").build();
-      case NOT_FOUND -> Response.status(Response.Status.NOT_FOUND)
-          .entity("No analysis job found for landscapeToken=" + landscapeToken)
-          .build();
-      case ALREADY_TERMINAL -> Response.status(Response.Status.CONFLICT)
-          .entity("Analysis job is already in a terminal state for landscapeToken=" + landscapeToken)
-          .build();
+      case NOT_FOUND ->
+          Response.status(Response.Status.NOT_FOUND)
+              .entity("No analysis job found for landscapeToken=" + landscapeToken)
+              .build();
+      case ALREADY_TERMINAL ->
+          Response.status(Response.Status.CONFLICT)
+              .entity(
+                  "Analysis job is already in a terminal state for landscapeToken="
+                      + landscapeToken)
+              .build();
     };
   }
 
@@ -168,29 +169,38 @@ public class AnalysisResource {
   @GET
   @Path("/status/{landscapeToken}")
   @Produces(MediaType.TEXT_PLAIN)
-  public Response getStatusByLandscapeToken(@PathParam("landscapeToken") final String landscapeToken) {
-    return analysisStatusService.getStatus(landscapeToken)
+  public Response getStatusByLandscapeToken(
+      @PathParam("landscapeToken") final String landscapeToken) {
+    return analysisStatusService
+        .getStatus(landscapeToken)
         .map(status -> Response.ok(status).build())
-        .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-            .entity("No analysis status found for landscapeToken=" + landscapeToken)
-            .build());
+        .orElseGet(
+            () ->
+                Response.status(Response.Status.NOT_FOUND)
+                    .entity("No analysis status found for landscapeToken=" + landscapeToken)
+                    .build());
   }
 
   @GET
   @Path("/state/{landscapeToken}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getStateByLandscapeToken(@PathParam("landscapeToken") final String landscapeToken) {
-    return analysisStatusService.getState(landscapeToken)
+  public Response getStateByLandscapeToken(
+      @PathParam("landscapeToken") final String landscapeToken) {
+    return analysisStatusService
+        .getState(landscapeToken)
         .map(state -> Response.ok(state).build())
-        .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-            .entity("No analysis state found for landscapeToken=" + landscapeToken)
-            .build());
+        .orElseGet(
+            () ->
+                Response.status(Response.Status.NOT_FOUND)
+                    .entity("No analysis state found for landscapeToken=" + landscapeToken)
+                    .build());
   }
 
   @GET
   @Path("/state/stream/{landscapeToken}")
   @Produces(MediaType.SERVER_SENT_EVENTS)
-  public void streamStateByLandscapeToken(@PathParam("landscapeToken") final String landscapeToken,
+  public void streamStateByLandscapeToken(
+      @PathParam("landscapeToken") final String landscapeToken,
       final SseEventSink eventSink,
       final Sse sse) {
     analysisStatusService.subscribeToStateUpdates(landscapeToken, eventSink, sse);

@@ -2,15 +2,15 @@
 
 echo "Running pre-commit hook"
 
-./gradlew checkstyleMain
+./gradlew spotlessApply
 if [ $? -ne 0 ]; then
-  echo "Checkstyle violations found, fix before commit"
+  echo "Spotless formatting failed"
   exit 1
 fi
 
-./gradlew pmdMain
+./gradlew checkstyleMain
 if [ $? -ne 0 ]; then
-  echo "PMD violations found, fix before commit"
+  echo "Checkstyle violations found, fix before commit"
   exit 1
 fi
 

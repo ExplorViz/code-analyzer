@@ -9,11 +9,9 @@ import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.FileIdentifier;
 
-/**
- * The CommitReportHandler is used to create commit reports.
- */
+/** The CommitReportHandler is used to create commit reports. */
 @ApplicationScoped
-public class CommitReportHandler { // NOPMD
+public class CommitReportHandler {
 
   private final List<FileIdentifier> addedFiles = new ArrayList<>();
   private final List<FileIdentifier> deletedFiles = new ArrayList<>();
@@ -23,8 +21,8 @@ public class CommitReportHandler { // NOPMD
   private ContributorData.Builder contributorBuilder;
 
   /**
-   * Creates a blank handler, use
-   * {@link CommitReportHandler#init(String, java.util.List, String)} to initialize it.
+   * Creates a blank handler, use {@link CommitReportHandler#init(String, java.util.List, String)}
+   * to initialize it.
    */
   public CommitReportHandler() {
     this.builder = CommitData.newBuilder();
@@ -32,8 +30,8 @@ public class CommitReportHandler { // NOPMD
   }
 
   /**
-   * Clears the commitReportData from old data entries. Gets called in
-   * {@link CommitReportHandler#init(String, java.util.List, String)} automatically.
+   * Clears the commitReportData from old data entries. Gets called in {@link
+   * CommitReportHandler#init(String, java.util.List, String)} automatically.
    */
   public void clear() {
     this.builder = CommitData.newBuilder();
@@ -47,9 +45,9 @@ public class CommitReportHandler { // NOPMD
   /**
    * Initialize the current report handler.
    *
-   * @param commitId        the id of the commit
+   * @param commitId the id of the commit
    * @param parentCommitIds git parent commit ids (may be empty for root commits)
-   * @param branchName      the name of the branch
+   * @param branchName the name of the branch
    */
   public void init(
       final String commitId, final List<String> parentCommitIds, final String branchName) {
@@ -119,9 +117,7 @@ public class CommitReportHandler { // NOPMD
     builder.setAnalysisFileCount(analysisFileCount);
   }
 
-  /**
-   * Returns the commit data. * * @return commit data object
-   */
+  /** Returns the commit data. * * @return commit data object */
   public CommitData getCommitData() {
     builder.addAllAddedFiles(addedFiles);
     builder.addAllModifiedFiles(modifiedFiles);

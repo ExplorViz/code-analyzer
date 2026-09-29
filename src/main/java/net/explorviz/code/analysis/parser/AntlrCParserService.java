@@ -16,19 +16,16 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR-based parser service for analyzing C source code.
- */
+/** ANTLR-based parser service for analyzing C source code. */
 @ApplicationScoped
 public class AntlrCParserService {
 
   public static final Logger LOGGER = LoggerFactory.getLogger(AntlrCParserService.class);
 
-  @Inject
-  AntlrParseSettings parseSettings = new AntlrParseSettings();
+  @Inject AntlrParseSettings parseSettings = new AntlrParseSettings();
 
-  public CFileDataHandler parseFileContent(final String fileContent, final String fileName,
-      final String fileHash) {
+  public CFileDataHandler parseFileContent(
+      final String fileContent, final String fileName, final String fileHash) {
     try {
       LOGGER.trace("Parsing C file content for {}", fileName);
       final CharStream charStream = CharStreams.fromString(fileContent, fileName);
@@ -55,8 +52,8 @@ public class AntlrCParserService {
     }
   }
 
-  private CFileDataHandler parse(final CharStream charStream, final String fileName,
-      final String fileHash) {
+  private CFileDataHandler parse(
+      final CharStream charStream, final String fileName, final String fileHash) {
     final CLexer lexer = new CLexer(charStream);
     AntlrParserUtils.configureLexer(lexer);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -71,8 +68,14 @@ public class AntlrCParserService {
 
     ParseTree compilationUnit = null;
     try {
-      compilationUnit = AntlrParserUtils.parseTwoStage(parser, tokens, LOGGER, fileName,
-          parseSettings.parseTimeoutMs(), parser::compilationUnit);
+      compilationUnit =
+          AntlrParserUtils.parseTwoStage(
+              parser,
+              tokens,
+              LOGGER,
+              fileName,
+              parseSettings.parseTimeoutMs(),
+              parser::compilationUnit);
     } catch (Exception e) {
       LOGGER.warn("Could not build parse tree for {}: {}", fileName, e.getMessage());
     }

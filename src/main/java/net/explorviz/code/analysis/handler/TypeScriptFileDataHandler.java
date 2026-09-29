@@ -8,9 +8,7 @@ import java.util.Stack;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
 
-/**
- * FileData handler for TypeScript and JavaScript files.
- */
+/** FileData handler for TypeScript and JavaScript files. */
 public class TypeScriptFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 
@@ -84,9 +82,7 @@ public class TypeScriptFileDataHandler extends AbstractFileDataHandler
     return modulePath.toString();
   }
 
-  /**
-   * Builds a fully qualified name for a top-level or nested type, method, or function.
-   */
+  /** Builds a fully qualified name for a top-level or nested type, method, or function. */
   public String buildFqn(final String name) {
     final String parentClassFqn = getCurrentClassFqnOrNull();
     if (parentClassFqn != null) {
@@ -100,8 +96,9 @@ public class TypeScriptFileDataHandler extends AbstractFileDataHandler
   }
 
   public String buildMethodFqn(final String methodName, final List<String> parameterTypes) {
-    return buildFqn(methodName) + "#" + net.explorviz.code.analysis.types.Verification.parameterHash(
-        parameterTypes);
+    return buildFqn(methodName)
+        + "#"
+        + net.explorviz.code.analysis.types.Verification.parameterHash(parameterTypes);
   }
 
   public void enterClass(final String name, final String fqn) {
@@ -184,9 +181,10 @@ public class TypeScriptFileDataHandler extends AbstractFileDataHandler
       builder.addFunctions(handler.getProtoBufObject());
     }
 
-    final Language language = fileName.endsWith(".ts") || fileName.endsWith(".tsx")
-        ? Language.TYPESCRIPT
-        : Language.JAVASCRIPT;
+    final Language language =
+        fileName.endsWith(".ts") || fileName.endsWith(".tsx")
+            ? Language.TYPESCRIPT
+            : Language.JAVASCRIPT;
     builder.setLanguage(language);
 
     return builder.build();
@@ -197,7 +195,8 @@ public class TypeScriptFileDataHandler extends AbstractFileDataHandler
     final int INITIAL_STRING_CAPACITY = 500;
     final StringBuilder result = new StringBuilder(INITIAL_STRING_CAPACITY);
 
-    result.append("Language: ")
+    result
+        .append("Language: ")
         .append(fileName.endsWith(".ts") ? "TypeScript" : "JavaScript")
         .append("\n");
     result.append("Package/Module: ").append(builder.getPackageName()).append("\n");

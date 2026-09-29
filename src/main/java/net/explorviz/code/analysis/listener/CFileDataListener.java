@@ -10,9 +10,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ANTLR listener for extracting file data from C source code.
- */
+/** ANTLR listener for extracting file data from C source code. */
 public class CFileDataListener extends CParserBaseListener implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CFileDataListener.class);
@@ -22,8 +20,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
   private int functionCount = 0;
   private int variableCount = 0;
 
-  public CFileDataListener(final CFileDataHandler fileDataHandler,
-      final CommonTokenStream tokens) {
+  public CFileDataListener(final CFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;
     this.tokens = tokens;
   }
@@ -34,9 +31,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
     // populateLexerMetrics() before the walk (also covers parse-tree failures).
   }
 
-  /**
-   * Populates file-level metrics from lexer tokens when a full parse tree is unavailable.
-   */
+  /** Populates file-level metrics from lexer tokens when a full parse tree is unavailable. */
   public void populateLexerMetrics() {
     final int sloc = getSlocIncludingPreprocessor();
     final int cloc = getCloc();
@@ -45,7 +40,8 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
     fileDataHandler.addMetric(CLOC, String.valueOf(cloc));
     extractIncludes();
 
-    LOGGER.atTrace()
+    LOGGER
+        .atTrace()
         .addArgument(fileDataHandler.getFileName())
         .addArgument(sloc)
         .log("{} - SLOC: {}");
@@ -77,7 +73,8 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
       }
 
       final String trimmed = text.trim();
-      if (trimmed.startsWith("#include") || trimmed.startsWith("#define")
+      if (trimmed.startsWith("#include")
+          || trimmed.startsWith("#define")
           || trimmed.startsWith("#if")) {
         codeLines.add(token.getLine());
       }
@@ -203,11 +200,16 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
         final String currentClassName = getSimpleName(fileDataHandler.getCurrentClassFqnOrNull());
         final MethodDataHandler methodData;
         if (functionName.equals(currentClassName)) {
-          methodData = classData.addConstructor(functionName,
-              functionName + "#" + extractParameterTypes(ctx.declarator()).hashCode());
+          methodData =
+              classData.addConstructor(
+                  functionName,
+                  functionName + "#" + extractParameterTypes(ctx.declarator()).hashCode());
         } else {
-          methodData = classData.addMethod(functionName,
-              functionName + "#" + extractParameterTypes(ctx.declarator()).hashCode(), returnType);
+          methodData =
+              classData.addMethod(
+                  functionName,
+                  functionName + "#" + extractParameterTypes(ctx.declarator()).hashCode(),
+                  returnType);
         }
         addFunctionParameters(methodData, ctx.declarator());
         if (ctx.start != null && ctx.stop != null) {
@@ -239,8 +241,8 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
     }
 
     final String fieldType = extractTypeFromSpecifierQualifierList(ctx.specifierQualifierList());
-    for (final CParser.MemberDeclaratorContext memberDecl : ctx.memberDeclaratorList()
-        .memberDeclarator()) {
+    for (final CParser.MemberDeclaratorContext memberDecl :
+        ctx.memberDeclaratorList().memberDeclarator()) {
       if (memberDecl.declarator() != null) {
         final String fieldName = extractDeclaratorName(memberDecl.declarator());
         if (fieldName != null && !fieldName.contains("(")) {
@@ -344,8 +346,12 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
   }
 
   private void appendStorageOrQualifier(final StringBuilder typeBuilder, final String text) {
-    if ("static".equals(text) || "extern".equals(text) || "inline".equals(text)
-        || "typedef".equals(text) || "const".equals(text) || "volatile".equals(text)) {
+    if ("static".equals(text)
+        || "extern".equals(text)
+        || "inline".equals(text)
+        || "typedef".equals(text)
+        || "const".equals(text)
+        || "volatile".equals(text)) {
       return;
     }
     appendTypeText(typeBuilder, text);
@@ -355,8 +361,8 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
     final List<String> paramTypes = new ArrayList<>();
     final CParser.ParameterTypeListContext params = findParameterTypeList(ctx);
     if (params != null && params.parameterList() != null) {
-      for (final CParser.ParameterDeclarationContext param : params.parameterList()
-          .parameterDeclaration()) {
+      for (final CParser.ParameterDeclarationContext param :
+          params.parameterList().parameterDeclaration()) {
         String type = "unknown";
         if (param.declarationSpecifiers() != null) {
           type = extractTypeFromDeclarationSpecifiers(param.declarationSpecifiers());
@@ -367,7 +373,8 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
     return paramTypes;
   }
 
-  private CParser.ParameterTypeListContext findParameterTypeList(final CParser.DeclaratorContext ctx) {
+  private CParser.ParameterTypeListContext findParameterTypeList(
+      final CParser.DeclaratorContext ctx) {
     if (ctx.directDeclarator() != null) {
       return findParameterTypeListInDirect(ctx.directDeclarator());
     }
@@ -385,18 +392,19 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
     return null;
   }
 
-  private void addFunctionParameters(final MethodDataHandler methodData,
-      final CParser.DeclaratorContext ctx) {
+  private void addFunctionParameters(
+      final MethodDataHandler methodData, final CParser.DeclaratorContext ctx) {
     final CParser.ParameterTypeListContext params = findParameterTypeList(ctx);
     if (params == null || params.parameterList() == null) {
       return;
     }
 
-    for (final CParser.ParameterDeclarationContext param : params.parameterList()
-        .parameterDeclaration()) {
-      String paramType = param.declarationSpecifiers() != null
-          ? extractTypeFromDeclarationSpecifiers(param.declarationSpecifiers())
-          : "unknown";
+    for (final CParser.ParameterDeclarationContext param :
+        params.parameterList().parameterDeclaration()) {
+      String paramType =
+          param.declarationSpecifiers() != null
+              ? extractTypeFromDeclarationSpecifiers(param.declarationSpecifiers())
+              : "unknown";
       String paramName = "";
       if (param.declarator() != null) {
         paramName = extractDeclaratorName(param.declarator());

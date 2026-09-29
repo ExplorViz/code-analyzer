@@ -8,9 +8,7 @@ import java.util.Stack;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
 
-/**
- * FileData handler for C++ files.
- */
+/** FileData handler for C++ files. */
 public class CppFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 
@@ -28,8 +26,12 @@ public class CppFileDataHandler extends AbstractFileDataHandler
     this.classDataMap = new HashMap<>();
     this.globalFunctionHandlers = new ArrayList<>();
     this.rootClasses = new ArrayList<>();
-    this.isCppFile = fileName.endsWith(".cpp") || fileName.endsWith(".cxx")
-        || fileName.endsWith(".cc") || fileName.endsWith(".hpp") || fileName.endsWith(".hxx");
+    this.isCppFile =
+        fileName.endsWith(".cpp")
+            || fileName.endsWith(".cxx")
+            || fileName.endsWith(".cc")
+            || fileName.endsWith(".hpp")
+            || fileName.endsWith(".hxx");
   }
 
   public void enterNamespace(final String name) {
@@ -42,9 +44,7 @@ public class CppFileDataHandler extends AbstractFileDataHandler
     }
   }
 
-  /**
-   * Returns the current namespace as a '::' separated string.
-   */
+  /** Returns the current namespace as a '::' separated string. */
   public String getCurrentNamespace() {
     if (namespaceStack.isEmpty()) {
       return "";
