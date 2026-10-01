@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import net.explorviz.code.analysis.types.FileDescriptor;
-import net.explorviz.code.analysis.types.Triple;
+import net.explorviz.code.analysis.types.FileDiff;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
@@ -84,12 +84,11 @@ class AnalysisServiceDiffBaseTest {
             new FileDescriptor(unchangedHash, "Unchanged.java", "src/Unchanged.java"),
             new FileDescriptor(addedHash, "Added.java", "src/Added.java"),
             new FileDescriptor(modifiedHash, "Modified.java", "src/Modified.java"));
-    final var reportTriple =
-        new Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>>(
-            List.of(allFiles.get(2)), List.of(), List.of(allFiles.get(1)));
+    final FileDiff fileDiff =
+        new FileDiff(List.of(allFiles.get(1)), List.of(allFiles.get(2)), List.of(), List.of());
 
     final List<FileDescriptor> unchangedFiles =
-        analysisService.resolveUnchangedFilesForBootstrapCommit(allFiles, reportTriple);
+        analysisService.resolveUnchangedFilesForBootstrapCommit(allFiles, fileDiff);
 
     Assertions.assertEquals(1, unchangedFiles.size());
     Assertions.assertEquals("src/Unchanged.java", unchangedFiles.get(0).reportedPath);

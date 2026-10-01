@@ -3,7 +3,9 @@ package net.explorviz.code.analysis.handler;
 import com.google.protobuf.Timestamp;
 import java.util.List;
 import net.explorviz.code.analysis.types.FileDescriptor;
+import net.explorviz.code.analysis.types.RenamedFile;
 import net.explorviz.code.proto.CommitData;
+import net.explorviz.code.proto.FileRename;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,6 +72,39 @@ class CommitReportHandlerTest {
 
     Assertions.assertEquals(1, commitData.getAddedFilesCount());
     Assertions.assertEquals(1, commitData.getModifiedFilesCount());
+  }
+
+  @Test
+  void includesRenamedFilesWithBothSides() {
+    final FileDescriptor oldFile = file("3333333333333333333333333333333333333333", "src/Old.java");
+    final FileDescriptor newFile =
+        file("4444444444444444444444444444444444444444", "src/pkg/New.java");
+    handler.addDeleted(oldFile);
+    handler.addAdded(newFile);
+    handler.addRenamed(new RenamedFile(oldFile, newFile, 87));
+
+    final CommitData commitData = handler.getCommitData();
+
+    Assertions.assertEquals(1, commitData.getRenamedFilesCount());
+    final FileRename rename = commitData.getRenamedFiles(0);
+    Assertions.assertEquals("src/Old.java", rename.getOldFile().getFilePath());
+    Assertions.assertEquals(
+        "3333333333333333333333333333333333333333", rename.getOldFile().getFileHash());
+    Assertions.assertEquals("src/pkg/New.java", rename.getNewFile().getFilePath());
+    Assertions.assertEquals(
+        "4444444444444444444444444444444444444444", rename.getNewFile().getFileHash());
+    Assertions.assertEquals(87, rename.getSimilarity());
+  }
+
+  @Test
+  void clearResetsRenamedFiles() {
+    final FileDescriptor oldFile = file("3333333333333333333333333333333333333333", "src/Old.java");
+    final FileDescriptor newFile = file("4444444444444444444444444444444444444444", "src/New.java");
+    handler.addRenamed(new RenamedFile(oldFile, newFile, 100));
+
+    handler.init("commit-2", List.of(), "main");
+
+    Assertions.assertEquals(0, handler.getCommitData().getRenamedFilesCount());
   }
 
   private void addSampleFiles() {

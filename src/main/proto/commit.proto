@@ -36,6 +36,19 @@ message CommitData {
 
   // All git parent commits, oldest-to-newest analysis order is derived from these links.
   repeated string parent_commit_ids = 15;
+
+  // Files git detected as moved relative to the parent commit. Every entry is also reported as
+  // a deleted file (old_file) and an added file (new_file), so receivers that do not know about
+  // renames keep working and simply see a deletion and an addition.
+  repeated FileRename renamed_files = 16;
+}
+
+message FileRename {
+  FileIdentifier old_file = 1;
+  FileIdentifier new_file = 2;
+
+  // Content similarity in percent (100 = identical content, i.e. a pure move).
+  int32 similarity = 3;
 }
 
 message FileIdentifier {

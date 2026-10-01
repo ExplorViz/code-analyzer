@@ -50,7 +50,8 @@ import net.explorviz.code.analysis.parser.AntlrRustParserService;
 import net.explorviz.code.analysis.parser.AntlrSwiftParserService;
 import net.explorviz.code.analysis.parser.AntlrTypeScriptParserService;
 import net.explorviz.code.analysis.types.FileDescriptor;
-import net.explorviz.code.analysis.types.Triple;
+import net.explorviz.code.analysis.types.FileDiff;
+import net.explorviz.code.analysis.types.RenamedFile;
 import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.Language;
@@ -327,17 +328,16 @@ public class AnalysisService {
                   branch);
             }
 
-            final var reportTriple =
+            final FileDiff fileDiff =
                 gitRepositoryHandler.listDiff(
                     repository,
                     Optional.ofNullable(baseCommit),
                     commit,
                     config.pathRestrictionForDiff());
 
-            final List<FileDescriptor> descriptorAddedList = new ArrayList<>(reportTriple.right());
-            final List<FileDescriptor> descriptorModifiedList =
-                new ArrayList<>(reportTriple.left());
-            final List<FileDescriptor> descriptorDeletedList = reportTriple.middle();
+            final List<FileDescriptor> descriptorAddedList = fileDiff.added();
+            final List<FileDescriptor> descriptorModifiedList = fileDiff.modified();
+            final List<FileDescriptor> descriptorDeletedList = fileDiff.deleted();
 
             final GlobFilterStats globFilterStats = new GlobFilterStats();
             globFilterStats.merge(
@@ -347,6 +347,7 @@ public class AnalysisService {
             globFilterStats.merge(
                 applyGlobFiltering(descriptorDeletedList, restrictMatchers, excludeMatchers));
             logGlobFilterSummary(commit.getName(), globFilterStats);
+            removeRenamesOutsideScope(fileDiff);
 
             if (config.skipCommitsWithoutRelevantFileChanges()
                 && !hasRelevantFilteredFileChanges(
@@ -364,7 +365,8 @@ public class AnalysisService {
                 .atDebug()
                 .addArgument(descriptorAddedList.size())
                 .addArgument(descriptorModifiedList.size())
-                .log("Files added: {}, files modified: {}");
+                .addArgument(fileDiff.renamed().size())
+                .log("Files added: {}, files modified: {}, files renamed: {}");
 
             final List<FileDescriptor> unchangedFiles = List.of();
 
@@ -382,9 +384,7 @@ public class AnalysisService {
                   commit,
                   exporter,
                   branch,
-                  descriptorAddedList,
-                  descriptorModifiedList,
-                  descriptorDeletedList,
+                  fileDiff,
                   unchangedFiles,
                   tagsByCommitId,
                   lastFullyAnalyzedCommitHash,
@@ -406,9 +406,7 @@ public class AnalysisService {
                 filesToAnalyze,
                 exporter,
                 branch,
-                descriptorAddedList,
-                descriptorModifiedList,
-                descriptorDeletedList,
+                fileDiff,
                 unchangedFiles,
                 tagsByCommitId,
                 lastFullyAnalyzedCommitHash,
@@ -727,12 +725,11 @@ public class AnalysisService {
   }
 
   /* package */ List<FileDescriptor> resolveUnchangedFilesForBootstrapCommit(
-      final List<FileDescriptor> allFilesInCommit,
-      final Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>> reportTriple) {
+      final List<FileDescriptor> allFilesInCommit, final FileDiff fileDiff) {
     final Set<String> changedPaths = new HashSet<>();
-    reportTriple.right().forEach(file -> changedPaths.add(file.reportedPath));
-    reportTriple.left().forEach(file -> changedPaths.add(file.reportedPath));
-    reportTriple.middle().forEach(file -> changedPaths.add(file.reportedPath));
+    fileDiff.added().forEach(file -> changedPaths.add(file.reportedPath));
+    fileDiff.modified().forEach(file -> changedPaths.add(file.reportedPath));
+    fileDiff.deleted().forEach(file -> changedPaths.add(file.reportedPath));
 
     final List<FileDescriptor> unchangedFiles = new ArrayList<>();
     for (final FileDescriptor file : allFilesInCommit) {
@@ -821,9 +818,7 @@ public class AnalysisService {
       final List<FileDescriptor> filesToAnalyze,
       final DataExporter exporter,
       final String branchName,
-      final List<FileDescriptor> addedFiles,
-      final List<FileDescriptor> modifiedFiles,
-      final List<FileDescriptor> deletedFiles,
+      final FileDiff fileDiff,
       final List<FileDescriptor> unchangedFiles,
       final Map<ObjectId, List<String>> tagsByCommitId,
       final String lastFullyAnalyzedCommitHash,
@@ -838,9 +833,7 @@ public class AnalysisService {
         commit,
         exporter,
         branchName,
-        addedFiles,
-        modifiedFiles,
-        deletedFiles,
+        fileDiff,
         unchangedFiles,
         tagsByCommitId,
         lastFullyAnalyzedCommitHash,
@@ -1057,9 +1050,7 @@ public class AnalysisService {
       final RevCommit commit,
       final DataExporter exporter,
       final String branchName,
-      final List<FileDescriptor> addedFiles,
-      final List<FileDescriptor> modifiedFiles,
-      final List<FileDescriptor> deletedFiles,
+      final FileDiff fileDiff,
       final List<FileDescriptor> unchangedFiles,
       final Map<ObjectId, List<String>> tagsByCommitId,
       final String lastFullyAnalyzedCommitHash,
@@ -1076,7 +1067,7 @@ public class AnalysisService {
     commitReportHandler.init(commit.getId().getName(), parentCommitIds, branchName);
 
     commitReportHandler.setAnalysisFileCount(
-        addedFiles.size() + modifiedFiles.size() + unchangedFiles.size());
+        fileDiff.added().size() + fileDiff.modified().size() + unchangedFiles.size());
 
     commitReportHandler.setAuthorDate(
         Timestamp.newBuilder()
@@ -1087,16 +1078,20 @@ public class AnalysisService {
             .setSeconds(commit.getCommitterIdent().getWhen().getTime() / 1000)
             .build());
 
-    for (final FileDescriptor addedFile : addedFiles) {
+    for (final FileDescriptor addedFile : fileDiff.added()) {
       commitReportHandler.addAdded(addedFile);
     }
 
-    for (final FileDescriptor deletedFile : deletedFiles) {
+    for (final FileDescriptor deletedFile : fileDiff.deleted()) {
       commitReportHandler.addDeleted(deletedFile);
     }
 
-    for (final FileDescriptor modifiedFile : modifiedFiles) {
+    for (final FileDescriptor modifiedFile : fileDiff.modified()) {
       commitReportHandler.addModified(modifiedFile);
+    }
+
+    for (final RenamedFile renamedFile : fileDiff.renamed()) {
+      commitReportHandler.addRenamed(renamedFile);
     }
 
     for (final FileDescriptor unchangedFile : unchangedFiles) {
@@ -1510,6 +1505,23 @@ public class AnalysisService {
         .log(
             "Commit {}: skipped {} file(s) outside inclusion patterns and {} file(s) matching"
                 + " exclusion patterns");
+  }
+
+  /**
+   * Drops renames of which only one side survived glob filtering. Such a file is, from the point of
+   * view of the analysis scope, a plain addition or deletion, and a receiver could not resolve the
+   * file that is out of scope.
+   */
+  /* package */ static void removeRenamesOutsideScope(final FileDiff fileDiff) {
+    if (fileDiff.renamed().isEmpty()) {
+      return;
+    }
+    final Set<FileDescriptor> added = new HashSet<>(fileDiff.added());
+    final Set<FileDescriptor> deleted = new HashSet<>(fileDiff.deleted());
+    fileDiff
+        .renamed()
+        .removeIf(
+            renamed -> !added.contains(renamed.newFile()) || !deleted.contains(renamed.oldFile()));
   }
 
   private GlobFilterStats applyGlobFiltering(

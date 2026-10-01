@@ -5,9 +5,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.util.ArrayList;
 import java.util.List;
 import net.explorviz.code.analysis.types.FileDescriptor;
+import net.explorviz.code.analysis.types.RenamedFile;
 import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.ContributorData;
 import net.explorviz.code.proto.FileIdentifier;
+import net.explorviz.code.proto.FileRename;
 
 /** The CommitReportHandler is used to create commit reports. */
 @ApplicationScoped
@@ -17,6 +19,7 @@ public class CommitReportHandler {
   private final List<FileIdentifier> deletedFiles = new ArrayList<>();
   private final List<FileIdentifier> modifiedFiles = new ArrayList<>();
   private final List<FileIdentifier> unchangedFiles = new ArrayList<>();
+  private final List<FileRename> renamedFiles = new ArrayList<>();
   private CommitData.Builder builder;
   private ContributorData.Builder contributorBuilder;
 
@@ -40,6 +43,7 @@ public class CommitReportHandler {
     this.deletedFiles.clear();
     this.modifiedFiles.clear();
     this.unchangedFiles.clear();
+    this.renamedFiles.clear();
   }
 
   /**
@@ -89,6 +93,19 @@ public class CommitReportHandler {
     unchangedFiles.add(toFileId(fileDescriptor));
   }
 
+  /**
+   * Records a rename. The old and new file must additionally be reported via {@link
+   * #addDeleted(FileDescriptor)} and {@link #addAdded(FileDescriptor)}.
+   */
+  public void addRenamed(final RenamedFile renamedFile) {
+    renamedFiles.add(
+        FileRename.newBuilder()
+            .setOldFile(toFileId(renamedFile.oldFile()))
+            .setNewFile(toFileId(renamedFile.newFile()))
+            .setSimilarity(renamedFile.similarity())
+            .build());
+  }
+
   public void addTags(final List<String> tags) {
     builder.addAllTags(tags);
   }
@@ -123,6 +140,7 @@ public class CommitReportHandler {
     builder.addAllModifiedFiles(modifiedFiles);
     builder.addAllDeletedFiles(deletedFiles);
     builder.addAllUnchangedFiles(unchangedFiles);
+    builder.addAllRenamedFiles(renamedFiles);
     return builder.build();
   }
 }

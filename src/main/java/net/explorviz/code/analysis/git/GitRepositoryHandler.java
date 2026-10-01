@@ -23,7 +23,9 @@ import net.explorviz.code.analysis.exceptions.PropertyNotDefinedException;
 import net.explorviz.code.analysis.service.AnalysisConfig;
 import net.explorviz.code.analysis.service.LocalRepositoryService;
 import net.explorviz.code.analysis.types.FileDescriptor;
+import net.explorviz.code.analysis.types.FileDiff;
 import net.explorviz.code.analysis.types.RemoteRepositoryObject;
+import net.explorviz.code.analysis.types.RenamedFile;
 import net.explorviz.code.analysis.types.Triple;
 import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.Git;
@@ -35,6 +37,7 @@ import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.diff.EditList;
+import org.eclipse.jgit.diff.RenameDetector;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -42,7 +45,6 @@ import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.patch.FileHeader;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -64,6 +66,15 @@ import org.slf4j.LoggerFactory;
 public class GitRepositoryHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GitRepositoryHandler.class);
+
+  /** Minimum content similarity in percent for a deleted and an added file to count as renamed. */
+  private static final int RENAME_SIMILARITY_THRESHOLD = 50;
+
+  /**
+   * Maximum number of added or deleted files for which similarity-based rename detection runs. It
+   * compares every deleted file with every added file, so it is bounded to keep large commits fast.
+   */
+  private static final int RENAME_DETECTION_LIMIT = 1000;
 
   private static String repositoryPath;
 
@@ -465,17 +476,16 @@ public class GitRepositoryHandler {
    * @param oldCommit the old commit, as a baseline for the difference calculation
    * @param newCommit the new commit, gets checked against the old commit
    * @param pathRestrictions comma sep. list of search strings specifying the folders to analyze
-   * @return triple of FileDescriptor specifying modified, delete and added files
-   * @throws GitAPIException thrown if git encounters an exception
+   * @return the added, modified, deleted and renamed files
    * @throws IOException thrown if files are not available
    * @throws NotFoundException thrown if the restrictionPath was not found
    */
-  public Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>> listDiff(
+  public FileDiff listDiff(
       final Repository repository,
       final Optional<RevCommit> oldCommit,
       final RevCommit newCommit,
       final String pathRestrictions)
-      throws GitAPIException, IOException, NotFoundException {
+      throws IOException, NotFoundException {
     if (pathRestrictions == null || pathRestrictions.isEmpty()) {
       return listDiff(repository, oldCommit, newCommit, new ArrayList<>());
     }
@@ -488,83 +498,96 @@ public class GitRepositoryHandler {
    * @param repository the current repository
    * @param oldCommit the old commit, as a baseline for the difference calculation
    * @param newCommit the new commit, gets checked against the old commit
-   * @return triple of FileDescriptor specifying modified, delete and added files
-   * @throws GitAPIException thrown if git encounters an exception
+   * @return the added, modified, deleted and renamed files. A rename is additionally listed as a
+   *     deletion of the old and an addition of the new file, see {@link FileDiff}.
    * @throws IOException thrown if files are not available
    */
-  public Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>> listDiff(
+  public FileDiff listDiff(
       final Repository repository,
       final Optional<RevCommit> oldCommit,
       final RevCommit newCommit,
       final List<String> pathRestrictions)
-      throws GitAPIException, IOException, NotFoundException {
-    final List<FileDescriptor> modifiedObjectIdList = new ArrayList<>();
-    final List<FileDescriptor> deletedObjectIdList = new ArrayList<>();
-    List<FileDescriptor> addedObjectIdList = new ArrayList<>();
-
+      throws IOException, NotFoundException {
     final TreeFilter filter = getSourceFileTreeFilter(pathRestrictions);
+    final FileDiff fileDiff =
+        new FileDiff(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
 
     if (oldCommit.isEmpty()) {
-      addedObjectIdList = listFilesInCommit(repository, newCommit, filter);
-    } else {
-      final List<DiffEntry> diffs =
-          this.git
-              .diff()
-              .setOldTree(prepareTreeParser(repository, oldCommit.get()))
-              .setNewTree(prepareTreeParser(repository, newCommit))
-              .setPathFilter(filter)
-              .call();
+      fileDiff.added().addAll(listFilesInCommit(repository, newCommit, filter));
+      return fileDiff;
+    }
 
-      try (DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
-        diffFormatter.setRepository(repository);
-        for (final DiffEntry diff : diffs) {
-          if (diff.getChangeType().equals(DiffEntry.ChangeType.DELETE)) {
-            putInList2(diffFormatter, diff, deletedObjectIdList);
-            continue;
-          } else if (diff.getChangeType().equals(DiffEntry.ChangeType.RENAME)) {
-            putInList2(diffFormatter, diff, deletedObjectIdList);
-            putInList(diffFormatter, diff, addedObjectIdList);
-          } else if (diff.getChangeType().equals(DiffEntry.ChangeType.COPY)) {
-            putInList(diffFormatter, diff, addedObjectIdList);
-          } else if (diff.getChangeType().equals(DiffEntry.ChangeType.MODIFY)) {
-            putInList(diffFormatter, diff, modifiedObjectIdList);
-          } else if (diff.getChangeType().equals(DiffEntry.ChangeType.ADD)) {
-            putInList(diffFormatter, diff, addedObjectIdList);
-          }
-        }
+    try (DiffFormatter diffFormatter = createRenameDetectingDiffFormatter(repository, filter)) {
+      final List<DiffEntry> entries =
+          diffFormatter.scan(
+              prepareTreeParser(repository, oldCommit.get()),
+              prepareTreeParser(repository, newCommit));
+      for (final DiffEntry entry : entries) {
+        collectDiffEntry(diffFormatter, entry, fileDiff);
       }
     }
-    return new Triple<List<FileDescriptor>, List<FileDescriptor>, List<FileDescriptor>>(
-        modifiedObjectIdList, deletedObjectIdList, addedObjectIdList);
+    return fileDiff;
   }
 
-  private void putInList(
-      final DiffFormatter diffFormatter,
-      final DiffEntry diff,
-      final List<FileDescriptor> objectIdList)
+  /**
+   * Creates a formatter that pairs deleted and added files into renames.
+   *
+   * <p>Detection is configured explicitly rather than inherited from the repository's {@code
+   * diff.renames} setting, so that results do not depend on the user's local git configuration.
+   * Files with identical content are always paired; the more expensive similarity matching is
+   * skipped by JGit if more than {@link #RENAME_DETECTION_LIMIT} files are added or deleted.
+   */
+  private static DiffFormatter createRenameDetectingDiffFormatter(
+      final Repository repository, final TreeFilter filter) {
+    final DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE);
+    diffFormatter.setRepository(repository);
+    diffFormatter.setPathFilter(filter);
+    diffFormatter.setDetectRenames(true);
+    final RenameDetector renameDetector = diffFormatter.getRenameDetector();
+    renameDetector.setRenameScore(RENAME_SIMILARITY_THRESHOLD);
+    renameDetector.setRenameLimit(RENAME_DETECTION_LIMIT);
+    return diffFormatter;
+  }
+
+  private static void collectDiffEntry(
+      final DiffFormatter diffFormatter, final DiffEntry entry, final FileDiff fileDiff)
       throws IOException {
-    final FileHeader fileHeader = diffFormatter.toFileHeader(diff);
-    final Triple<Integer, Integer, Integer> mods = countModifications(fileHeader.toEditList());
-    final String[] parts = diff.getNewPath().split("/");
-    objectIdList.add(
-        new FileDescriptor(
-            diff.getNewId().toObjectId(), parts[parts.length - 1], diff.getNewPath(), mods));
+    final Triple<Integer, Integer, Integer> modifications =
+        countModifications(diffFormatter.toFileHeader(entry).toEditList());
+
+    switch (entry.getChangeType()) {
+      case ADD, COPY -> fileDiff.added().add(describeNewFile(entry, modifications));
+      case MODIFY -> fileDiff.modified().add(describeNewFile(entry, modifications));
+      case DELETE -> fileDiff.deleted().add(describeOldFile(entry, modifications));
+      case RENAME -> {
+        final FileDescriptor oldFile = describeOldFile(entry, modifications);
+        final FileDescriptor newFile = describeNewFile(entry, modifications);
+        fileDiff.deleted().add(oldFile);
+        fileDiff.added().add(newFile);
+        fileDiff.renamed().add(new RenamedFile(oldFile, newFile, entry.getScore()));
+      }
+    }
   }
 
-  private void putInList2(
-      final DiffFormatter diffFormatter,
-      final DiffEntry diff,
-      final List<FileDescriptor> objectIdList)
-      throws IOException {
-    final FileHeader fileHeader = diffFormatter.toFileHeader(diff);
-    final Triple<Integer, Integer, Integer> mods = countModifications(fileHeader.toEditList());
-    final String[] parts = diff.getOldPath().split("/");
-    objectIdList.add(
-        new FileDescriptor(
-            diff.getOldId().toObjectId(), parts[parts.length - 1], diff.getOldPath(), mods));
+  private static FileDescriptor describeNewFile(
+      final DiffEntry entry, final Triple<Integer, Integer, Integer> modifications) {
+    return describeFile(entry.getNewId().toObjectId(), entry.getNewPath(), modifications);
   }
 
-  private Triple<Integer, Integer, Integer> countModifications(final EditList editList) {
+  private static FileDescriptor describeOldFile(
+      final DiffEntry entry, final Triple<Integer, Integer, Integer> modifications) {
+    return describeFile(entry.getOldId().toObjectId(), entry.getOldPath(), modifications);
+  }
+
+  private static FileDescriptor describeFile(
+      final ObjectId objectId,
+      final String path,
+      final Triple<Integer, Integer, Integer> modifications) {
+    final String fileName = path.substring(path.lastIndexOf('/') + 1);
+    return new FileDescriptor(objectId, fileName, path, modifications);
+  }
+
+  private static Triple<Integer, Integer, Integer> countModifications(final EditList editList) {
     int modifiedLines = 0;
     int addedLines = 0;
     int deletedLines = 0;
