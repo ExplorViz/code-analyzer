@@ -2,6 +2,12 @@
 
 This project is a tool that analyzes a Git repository containing a java project.
 
+## Build and test prerequisites
+
+Use JDK 21 and the included Gradle 9.7 wrapper. The project uses Quarkus 3.40.1.1 LTS.
+Run `./gradlew build jacocoTestReport` to package the application, run tests and code checks,
+and generate coverage reports.
+
 ## Usage and Run Modes
 
 The property `explorviz.gitanalysis.run-mode` determines if the code-analyzer runs continuously with REST APIs or in a non-interactive mode for CI environments.

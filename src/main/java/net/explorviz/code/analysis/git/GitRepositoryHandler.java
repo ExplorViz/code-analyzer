@@ -566,6 +566,8 @@ public class GitRepositoryHandler {
         fileDiff.added().add(newFile);
         fileDiff.renamed().add(new RenamedFile(oldFile, newFile, entry.getScore()));
       }
+      default ->
+          throw new IllegalStateException("Unsupported change type: " + entry.getChangeType());
     }
   }
 

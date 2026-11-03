@@ -3,7 +3,8 @@ apply plugin: 'jacoco'
 
 jacocoTestReport {
 
-  executionData { tasks.withType(Test).findAll { it.jacoco.destinationFile.exists() }*.jacoco.destinationFile }
+  executionData(tasks.withType(Test))
+  mustRunAfter(tasks.withType(Test))
 
   reports {
     xml.required = true
@@ -41,8 +42,13 @@ def antlrCheckstyleExcludes = [
 ]
 
 // Exclude ANTLR generated base classes from checkstyle (external files from ANTLR repository)
-tasks.withType(Checkstyle) {
+tasks.withType(Checkstyle).configureEach {
   antlrCheckstyleExcludes.each { exclude it }
+}
+
+// Check maintained sources rather than generated ANTLR and gRPC output under build/.
+tasks.named('checkstyleMain') {
+  source = fileTree('src/main/java')
 }
 
 spotless {
