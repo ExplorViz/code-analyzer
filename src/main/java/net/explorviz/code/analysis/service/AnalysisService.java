@@ -790,14 +790,21 @@ public class AnalysisService {
     }
   }
 
-  private Map<ObjectId, List<String>> buildTagsByCommitId(final Repository repository)
-      throws GitAPIException {
+  /**
+   * Maps each tagged commit to the names of its tags. Annotated tags point to a tag object rather
+   * than to the commit, so they are peeled to the commit they reference.
+   */
+  /* package */ static Map<ObjectId, List<String>> buildTagsByCommitId(final Repository repository)
+      throws GitAPIException, IOException {
     final Map<ObjectId, List<String>> tagsByCommitId = new HashMap<>();
     final List<Ref> tags = Git.wrap(repository).tagList().call();
     for (final Ref tag : tags) {
-      tagsByCommitId
-          .computeIfAbsent(tag.getObjectId(), ignored -> new ArrayList<>())
-          .add(tag.getName());
+      final Ref peeledTag = repository.getRefDatabase().peel(tag);
+      final ObjectId commitId =
+          peeledTag.getPeeledObjectId() != null
+              ? peeledTag.getPeeledObjectId()
+              : peeledTag.getObjectId();
+      tagsByCommitId.computeIfAbsent(commitId, ignored -> new ArrayList<>()).add(tag.getName());
     }
     return tagsByCommitId;
   }
