@@ -121,6 +121,26 @@ public class AnalysisStatusService {
         });
   }
 
+  /**
+   * Counts {@code filePath} as analyzed and clears {@code currentAnalysingFile} when it still
+   * matches {@code filePath}. Combines {@link #clearCurrentAnalyzingFile} and {@link
+   * #incrementAnalyzedFile} into a single state update and notification.
+   */
+  public void completeAnalyzedFile(final String landscapeToken, final String filePath) {
+    updateExistingStateAndNotify(
+        landscapeToken,
+        state ->
+            new AnalysisProgressState(
+                state.status(),
+                state.totalCommits(),
+                state.analyzedCommits(),
+                state.totalFiles(),
+                state.analyzedFiles() + 1,
+                filePath != null && filePath.equals(state.currentAnalysingFile())
+                    ? null
+                    : state.currentAnalysingFile()));
+  }
+
   public void incrementAnalyzedFile(final String landscapeToken) {
     updateExistingStateAndNotify(
         landscapeToken,

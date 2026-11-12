@@ -170,10 +170,21 @@ public class GitRepositoryHandler {
    * @throws IOException Thrown if JGit cannot open the Git repo.
    */
   public static String getContent(final ObjectId blobId, final Repository repo) throws IOException {
+    return new String(getBytes(blobId, repo), StandardCharsets.UTF_8);
+  }
+
+  /**
+   * Returns the raw bytes of a git blob.
+   *
+   * @param blobId The {@link ObjectId}.
+   * @param repo The {@link Repository}.
+   * @return The blob content.
+   * @throws IOException Thrown if JGit cannot read the blob.
+   */
+  public static byte[] getBytes(final ObjectId blobId, final Repository repo) throws IOException {
     try (ObjectReader objectReader = repo.newObjectReader()) {
       final ObjectLoader objectLoader = objectReader.open(blobId);
-      final byte[] bytes = objectLoader.getBytes();
-      return new String(bytes, StandardCharsets.UTF_8);
+      return objectLoader.getBytes();
     }
   }
 
@@ -552,13 +563,20 @@ public class GitRepositoryHandler {
   private static void collectDiffEntry(
       final DiffFormatter diffFormatter, final DiffEntry entry, final FileDiff fileDiff)
       throws IOException {
+    if (entry.getChangeType() == DiffEntry.ChangeType.DELETE) {
+      // Line modifications of deleted files are never reported, so skip loading and diffing the
+      // old blob.
+      fileDiff.deleted().add(describeOldFile(entry, null));
+      return;
+    }
+
     final Triple<Integer, Integer, Integer> modifications =
         countModifications(diffFormatter.toFileHeader(entry).toEditList());
 
     switch (entry.getChangeType()) {
       case ADD, COPY -> fileDiff.added().add(describeNewFile(entry, modifications));
       case MODIFY -> fileDiff.modified().add(describeNewFile(entry, modifications));
-      case DELETE -> fileDiff.deleted().add(describeOldFile(entry, modifications));
+      case DELETE -> throw new IllegalStateException("Deleted files are handled above");
       case RENAME -> {
         final FileDescriptor oldFile = describeOldFile(entry, modifications);
         final FileDescriptor newFile = describeNewFile(entry, modifications);

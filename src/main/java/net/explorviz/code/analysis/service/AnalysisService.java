@@ -4,6 +4,7 @@ import com.google.protobuf.Timestamp;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -844,107 +845,41 @@ public class AnalysisService {
     LOGGER.atTrace().addArgument(filesToAnalyze.toString()).log("Files: {}");
 
     final long analysisStartedAt = System.nanoTime();
-    final List<CompletableFuture<FileData>> analysisTasks =
-        submitFileAnalysisTasks(config, repository, commit, filesToAnalyze);
-    CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture<?>[0]))
-        .whenComplete(
-            (ignored, error) ->
-                LOGGER
-                    .atDebug()
-                    .addArgument(commit.getName())
-                    .addArgument(analysisTasks.size())
-                    .addArgument((System.nanoTime() - analysisStartedAt) / 1_000_000L)
-                    .log("File analysis for commit {} ({} files) took {} ms"));
-
-    pipelinePersistAnalyzedFiles(exporter, analysisTasks, commit.getName());
+    pipelineAnalyzeAndPersistFiles(config, repository, commit, filesToAnalyze, exporter);
+    LOGGER
+        .atDebug()
+        .addArgument(commit.getName())
+        .addArgument(filesToAnalyze.size())
+        .addArgument((System.nanoTime() - analysisStartedAt) / 1_000_000L)
+        .log("File analysis and persistence for commit {} ({} files) took {} ms");
   }
 
-  private List<CompletableFuture<FileData>> submitFileAnalysisTasks(
+  /**
+   * Analyzes the given files in parallel and persists the results while the analysis is still
+   * running.
+   *
+   * <p>A single batch accumulator minimizes gRPC batches per commit; up to {@code
+   * filePersistConcurrencyProperty} sends may run in parallel so Neo4j can process several
+   * transactions concurrently. Each FileRevision subtree is owned by exactly one file, so
+   * concurrent transactions never conflict.
+   *
+   * <p>The number of files in flight is bounded before a task is submitted, so executor threads
+   * never block while waiting for a slot. Finished results go straight to the persist queue and are
+   * not retained until the whole commit is done.
+   */
+  private void pipelineAnalyzeAndPersistFiles(
       final AnalysisConfig config,
       final Repository repository,
       final RevCommit commit,
-      final List<FileDescriptor> descriptorList) {
-    final String commitAuthor = commit.getAuthorIdent().getEmailAddress();
-    final int parallelism = resolveFileAnalysisParallelism();
-    final Semaphore inFlightTasks = new Semaphore(parallelism);
-    final List<CompletableFuture<FileData>> analysisTasks = new ArrayList<>(descriptorList.size());
-
-    for (final FileDescriptor fileDescriptor : descriptorList) {
-      analysisTasks.add(
-          managedExecutor.supplyAsync(
-              () -> {
-                try {
-                  ensureNotCancelled(config.landscapeToken());
-                  inFlightTasks.acquire();
-                  analysisStatusService.setCurrentAnalyzingFile(
-                      config.landscapeToken(), fileDescriptor.reportedPath);
-
-                  LOGGER
-                      .atDebug()
-                      .addArgument(fileDescriptor.reportedPath)
-                      .log("Analyzing file: {}");
-
-                  AbstractFileDataHandler fileDataHandler =
-                      analyzeFileForCommit(
-                          config, repository, fileDescriptor, commit.getName(), commitAuthor);
-                  if (fileDataHandler == null) {
-                    LOGGER
-                        .atWarn()
-                        .addArgument(fileDescriptor.reportedPath)
-                        .log(
-                            "Analysis of file {} failed - sending minimal file data with updated hash");
-                    fileDataHandler = createMinimalFileDataHandler(fileDescriptor, commit);
-                    GitMetricCollector.addCommitGitMetrics(fileDataHandler, commitAuthor);
-                    fileDataHandler.setLandscapeToken(config.landscapeToken());
-                    fileDataHandler.setRepositoryName(config.getRepositoryName());
-                  }
-
-                  return toExportFileData(fileDataHandler, config);
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                  if (analysisStatusService.isCancellationRequested(config.landscapeToken())) {
-                    throw new AnalysisCancelledException(config.landscapeToken());
-                  }
-                  LOGGER.warn("File analysis interrupted for {}", fileDescriptor.reportedPath);
-                  final AbstractFileDataHandler minimalHandler =
-                      createMinimalFileDataHandler(fileDescriptor, commit);
-                  GitMetricCollector.addCommitGitMetrics(minimalHandler, commitAuthor);
-                  minimalHandler.setLandscapeToken(config.landscapeToken());
-                  minimalHandler.setRepositoryName(config.getRepositoryName());
-                  return toExportFileData(minimalHandler, config);
-                } finally {
-                  inFlightTasks.release();
-                  analysisStatusService.clearCurrentAnalyzingFile(
-                      config.landscapeToken(), fileDescriptor.reportedPath);
-                  analysisStatusService.incrementAnalyzedFile(config.landscapeToken());
-                }
-              }));
-    }
-    return analysisTasks;
-  }
-
-  private FileData toExportFileData(
-      final AbstractFileDataHandler fileDataHandler, final AnalysisConfig config) {
-    return FileDataExportFilter.filter(
-        fileDataHandler.getProtoBufObject(), config.includeDataStructures());
-  }
-
-  private void pipelinePersistAnalyzedFiles(
-      final DataExporter exporter,
-      final List<CompletableFuture<FileData>> analysisTasks,
-      final String commitId) {
-    if (analysisTasks.isEmpty()) {
+      final List<FileDescriptor> descriptorList,
+      final DataExporter exporter) {
+    if (descriptorList.isEmpty()) {
       return;
     }
 
-    // Pipeline: analysis and persistence run concurrently.
-    // A single batch accumulator minimizes gRPC batches per commit; up to
-    // filePersistConcurrencyProperty sends may run in parallel so Neo4j can
-    // process several transactions concurrently. Each FileRevision subtree is
-    // owned by exactly one file, so concurrent transactions never conflict.
+    final String commitId = commit.getName();
     final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
     final CountDownLatch analysisFinished = new CountDownLatch(1);
-
     final Thread persistThread =
         Thread.ofVirtual()
             .name("file-persist-" + commitId)
@@ -956,28 +891,106 @@ public class AnalysisService {
                         filePersistBatchSizeProperty,
                         filePersistConcurrencyProperty));
 
-    for (final CompletableFuture<FileData> analysisTask : analysisTasks) {
+    try {
+      final List<CompletableFuture<Void>> analysisTasks =
+          submitFileAnalysisTasks(config, repository, commit, descriptorList, completedFiles);
+      CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture<?>[0])).join();
+    } finally {
+      // Always release the persist thread, also when the analysis failed or was cancelled.
+      analysisFinished.countDown();
+      try {
+        persistThread.join();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  private List<CompletableFuture<Void>> submitFileAnalysisTasks(
+      final AnalysisConfig config,
+      final Repository repository,
+      final RevCommit commit,
+      final List<FileDescriptor> descriptorList,
+      final BlockingQueue<FileData> completedFiles) {
+    final String commitId = commit.getName();
+    final String commitAuthor = commit.getAuthorIdent().getEmailAddress();
+    final Semaphore inFlightTasks = new Semaphore(resolveFileAnalysisParallelism());
+    final List<CompletableFuture<Void>> analysisTasks = new ArrayList<>(descriptorList.size());
+
+    for (final FileDescriptor fileDescriptor : descriptorList) {
+      ensureNotCancelled(config.landscapeToken());
+      try {
+        inFlightTasks.acquire();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new AnalysisCancelledException(config.landscapeToken());
+      }
+
+      final CompletableFuture<Void> analysisTask;
+      try {
+        analysisTask =
+            managedExecutor.runAsync(
+                () -> {
+                  try {
+                    ensureNotCancelled(config.landscapeToken());
+                    analysisStatusService.setCurrentAnalyzingFile(
+                        config.landscapeToken(), fileDescriptor.reportedPath);
+                    completedFiles.offer(
+                        analyzeFileOrFallback(
+                            config, repository, fileDescriptor, commit, commitAuthor));
+                  } finally {
+                    inFlightTasks.release();
+                    analysisStatusService.completeAnalyzedFile(
+                        config.landscapeToken(), fileDescriptor.reportedPath);
+                  }
+                });
+      } catch (RuntimeException e) {
+        inFlightTasks.release();
+        throw e;
+      }
+
       analysisTask.whenComplete(
-          (fileData, error) -> {
+          (ignored, error) -> {
             if (error != null) {
               LOGGER.error(
-                  "Unexpected analysis failure during pipelined persist for commit {}: {}",
+                  "Unexpected analysis failure for file {} in commit {}: {}",
+                  fileDescriptor.reportedPath,
                   commitId,
                   error.getMessage());
             }
-            if (fileData != null) {
-              completedFiles.offer(fileData);
-            }
           });
+      analysisTasks.add(analysisTask);
     }
+    return analysisTasks;
+  }
 
-    CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture<?>[0])).join();
-    analysisFinished.countDown();
-    try {
-      persistThread.join();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+  private FileData analyzeFileOrFallback(
+      final AnalysisConfig config,
+      final Repository repository,
+      final FileDescriptor fileDescriptor,
+      final RevCommit commit,
+      final String commitAuthor) {
+    LOGGER.atDebug().addArgument(fileDescriptor.reportedPath).log("Analyzing file: {}");
+
+    AbstractFileDataHandler fileDataHandler =
+        analyzeFileForCommit(config, repository, fileDescriptor, commit.getName(), commitAuthor);
+    if (fileDataHandler == null) {
+      LOGGER
+          .atWarn()
+          .addArgument(fileDescriptor.reportedPath)
+          .log("Analysis of file {} failed - sending minimal file data with updated hash");
+      fileDataHandler = createMinimalFileDataHandler(fileDescriptor, commit);
+      GitMetricCollector.addCommitGitMetrics(fileDataHandler, commitAuthor);
+      fileDataHandler.setLandscapeToken(config.landscapeToken());
+      fileDataHandler.setRepositoryName(config.getRepositoryName());
     }
+    return toExportFileData(fileDataHandler, config);
+  }
+
+  private FileData toExportFileData(
+      final AbstractFileDataHandler fileDataHandler, final AnalysisConfig config) {
+    return FileDataExportFilter.filter(
+        fileDataHandler.getProtoBufObject(), config.includeDataStructures());
   }
 
   private void ensureNotCancelled(final String landscapeToken) {
@@ -993,33 +1006,27 @@ public class AnalysisService {
       final FileDescriptor fileDescriptor,
       final String commitSha,
       final String commitAuthor) {
+    final byte[] fileBytes;
     try {
-      LOGGER.atDebug().addArgument(fileDescriptor.reportedPath).log("Analyzing file: {}");
-
-      AbstractFileDataHandler fileDataHandler =
-          fileAnalysis(config, repository, fileDescriptor, commitSha);
-      if (fileDataHandler == null) {
-        return null;
-      }
-
-      try {
-        final long fileSize = GitRepositoryHandler.getBlobSize(fileDescriptor.objectId, repository);
-        fileDataHandler.addMetric(CommonFileDataListener.FILE_SIZE, String.valueOf(fileSize));
-      } catch (IOException e) {
-        LOGGER.error(
-            "File size of file {} could not be analyzed: {}",
-            fileDescriptor.relativePath,
-            e.getMessage());
-      }
-
-      GitMetricCollector.addCommitGitMetrics(fileDataHandler, commitAuthor);
-      fileDataHandler.setLandscapeToken(config.landscapeToken());
-      fileDataHandler.setRepositoryName(config.getRepositoryName());
-      return fileDataHandler;
+      fileBytes = GitRepositoryHandler.getBytes(fileDescriptor.objectId, repository);
     } catch (IOException e) {
-      LOGGER.error("Failed to analyze file {}: {}", fileDescriptor.reportedPath, e.getMessage());
+      // skipping unreadable files
+      LOGGER.error("Failed to read file {}: {}", fileDescriptor.reportedPath, e.getMessage());
       return null;
     }
+
+    final AbstractFileDataHandler fileDataHandler =
+        fileAnalysis(
+            config, fileDescriptor, commitSha, new String(fileBytes, StandardCharsets.UTF_8));
+    if (fileDataHandler == null) {
+      return null;
+    }
+
+    fileDataHandler.addMetric(CommonFileDataListener.FILE_SIZE, String.valueOf(fileBytes.length));
+    GitMetricCollector.addCommitGitMetrics(fileDataHandler, commitAuthor);
+    fileDataHandler.setLandscapeToken(config.landscapeToken());
+    fileDataHandler.setRepositoryName(config.getRepositoryName());
+    return fileDataHandler;
   }
 
   private int resolveFileAnalysisParallelism() {
@@ -1156,26 +1163,16 @@ public class AnalysisService {
    * to parsers and text files to basic metric collection.
    *
    * @param config the analysis configuration
-   * @param repository the git repository
    * @param file the file descriptor
    * @param commitSha the commit SHA
+   * @param fileContent the file content, decoded as UTF-8
    * @return the file data handler
-   * @throws IOException if file content cannot be read
    */
   private AbstractFileDataHandler fileAnalysis(
       final AnalysisConfig config,
-      final Repository repository,
       final FileDescriptor file,
-      final String commitSha)
-      throws IOException {
-    final String fileContent;
-    try {
-      fileContent = GitRepositoryHandler.getContent(file.objectId, repository);
-    } catch (Exception e) {
-      // skipping unreadable files
-      return null;
-    }
-
+      final String commitSha,
+      final String fileContent) {
     final String fileName = file.fileName.toLowerCase();
     final long loc = fileContent.lines().count();
 
@@ -1208,7 +1205,7 @@ public class AnalysisService {
                 ? Language.TYPESCRIPT
                 : Language.JAVASCRIPT;
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing TypeScript/JavaScript file: {} (size: {} bytes)");
@@ -1223,7 +1220,7 @@ public class AnalysisService {
                 tsJsLanguage);
       } else if (fileName.endsWith(".java")) {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Java file with ANTLR: {} (size: {} bytes)");
@@ -1238,7 +1235,7 @@ public class AnalysisService {
                 Language.JAVA);
       } else if (fileName.endsWith(".py")) {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Python file with ANTLR: {} (size: {} bytes)");
@@ -1253,7 +1250,7 @@ public class AnalysisService {
                 Language.PYTHON);
       } else if (fileName.endsWith(".go")) {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Go file with ANTLR: {} (size: {} bytes)");
@@ -1268,7 +1265,7 @@ public class AnalysisService {
                 Language.GO);
       } else if (fileName.endsWith(".cs")) {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing C# file with ANTLR: {} (size: {} bytes)");
@@ -1283,7 +1280,7 @@ public class AnalysisService {
                 Language.CSHARP);
       } else if (fileName.endsWith(".rs")) {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Rust file with ANTLR: {} (size: {} bytes)");
@@ -1298,7 +1295,7 @@ public class AnalysisService {
                 Language.RUST);
       } else if (fileName.endsWith(".kt") || fileName.endsWith(".kts")) {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Kotlin file with ANTLR: {} (size: {} bytes)");
@@ -1313,7 +1310,7 @@ public class AnalysisService {
                 Language.KOTLIN);
       } else if (fileName.endsWith(".php")) {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing PHP file with ANTLR: {} (size: {} bytes)");
@@ -1328,7 +1325,7 @@ public class AnalysisService {
                 Language.PHP);
       } else if (fileName.endsWith(".swift")) {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing Swift file with ANTLR: {} (size: {} bytes)");
@@ -1343,7 +1340,7 @@ public class AnalysisService {
                 Language.SWIFT);
       } else if (fileName.endsWith(".c") || fileName.endsWith(".h")) {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing C file with ANTLR: {} (size: {} bytes)");
@@ -1362,7 +1359,7 @@ public class AnalysisService {
           || fileName.endsWith(".hpp")
           || fileName.endsWith(".hxx")) {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("Parsing C++ file with ANTLR: {} (size: {} bytes)");
@@ -1377,7 +1374,7 @@ public class AnalysisService {
                 Language.CPP);
       } else if (isTextFile(file, fileContent)) {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .addArgument(fileContent.length())
             .log("📄 Processing detected text file: {} (size: {} bytes)");
@@ -1392,12 +1389,12 @@ public class AnalysisService {
 
         fileDataHandler = textHandler;
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .log("✅ Successfully processed text file: {}");
       } else {
         LOGGER
-            .atInfo()
+            .atDebug()
             .addArgument(file.reportedPath)
             .log("📄 Processing other file (size only): {}");
 
