@@ -23,7 +23,6 @@ stages:
   - build
   - code-analysis
   - test
-  - publish
 
 build:
   stage: build
@@ -76,31 +75,3 @@ unit-test:
       - build/reports/tests/test/
       - build/reports/jacoco/test/html/
       - build/reports/jacoco/test/jacocoTestReport.xml
-
-.push-dockerhub-base-job:
-  stage: publish
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-  script:
-    - ./gradlew clean assemble
-      -Dquarkus.container-image.build=true
-      -Dquarkus.container-image.push=true
-      -Dquarkus.container-image.additional-tags=$CI_COMMIT_SHORT_SHA
-      -Dquarkus.container-image.username=$DOCKERHUB_USERNAME
-      -Dquarkus.container-image.password=$DOCKERHUB_PASSWORD
-  after_script:
-    - echo "Image was uploaded to Dockerhub; explorviz/${DOCKERHUB_IMAGE_NAME}:latest and explorviz/${DOCKERHUB_IMAGE_NAME}:$CI_COMMIT_SHORT_SHA"
-
-push-dockerhub-mr:
-  stage: publish
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  script:
-    - ./gradlew clean assemble
-      -Dquarkus.container-image.build=true
-      -Dquarkus.container-image.push=true
-      -Dquarkus.container-image.tag=mr-$CI_MERGE_REQUEST_IID
-      -Dquarkus.container-image.username=$DOCKERHUB_USERNAME
-      -Dquarkus.container-image.password=$DOCKERHUB_PASSWORD
-  after_script:
-    - echo "Image was uploaded to Dockerhub; explorviz/${DOCKERHUB_IMAGE_NAME}:mr-$CI_MERGE_REQUEST_IID"
