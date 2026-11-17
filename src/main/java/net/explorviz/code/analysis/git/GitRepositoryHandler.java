@@ -744,7 +744,8 @@ public class GitRepositoryHandler {
 
   /**
    * Configures a {@link RevWalk} to traverse commits reachable from the branch tip and emit them in
-   * topological order (oldest first), matching {@code git rev-list --reverse}.
+   * topological order (oldest first, every parent before its children), matching {@code git
+   * rev-list --topo-order --reverse}.
    *
    * @param firstParentCommitsOnly when {@code true}, only follow first-parent links so merged
    *     feature-branch commits are excluded
@@ -755,18 +756,48 @@ public class GitRepositoryHandler {
       final String branchRef,
       final boolean firstParentCommitsOnly)
       throws IOException {
+    configureBranchRevWalk(revWalk, repository, branchRef, null, firstParentCommitsOnly);
+  }
+
+  /**
+   * Configures a {@link RevWalk} like {@link #configureBranchRevWalk(RevWalk, Repository, String,
+   * boolean)}, but only emits commits that are not reachable from {@code excludedRef}, matching
+   * {@code git rev-list --topo-order --reverse excludedRef..tipRef}.
+   *
+   * @param tipRef the newest commit (or branch) of the walk
+   * @param excludedRef the commit whose ancestors (including itself) are excluded, may be {@code
+   *     null}
+   * @param firstParentCommitsOnly when {@code true}, only follow first-parent links so merged
+   *     feature-branch commits are excluded
+   */
+  public void configureBranchRevWalk(
+      final RevWalk revWalk,
+      final Repository repository,
+      final String tipRef,
+      final String excludedRef,
+      final boolean firstParentCommitsOnly)
+      throws IOException {
+    // RevWalk#sort(RevSort) replaces all previously selected strategies, so REVERSE must be added.
     revWalk.sort(RevSort.TOPO);
-    revWalk.sort(RevSort.REVERSE);
+    revWalk.sort(RevSort.REVERSE, true);
     if (firstParentCommitsOnly) {
       revWalk.setFirstParent(true);
     }
 
-    LOGGER.atTrace().addArgument(branchRef).log("Walking branch: {}");
+    LOGGER.atTrace().addArgument(tipRef).log("Walking branch: {}");
 
-    final ObjectId branchId = repository.resolve(branchRef);
-    if (branchId == null) {
-      throw new IOException("Branch not found: " + branchRef);
+    revWalk.markStart(revWalk.parseCommit(resolveCommitId(repository, tipRef)));
+    if (excludedRef != null && !excludedRef.isBlank()) {
+      revWalk.markUninteresting(revWalk.parseCommit(resolveCommitId(repository, excludedRef)));
     }
-    revWalk.markStart(revWalk.parseCommit(branchId));
+  }
+
+  private static ObjectId resolveCommitId(final Repository repository, final String ref)
+      throws IOException {
+    final ObjectId commitId = repository.resolve(ref);
+    if (commitId == null) {
+      throw new IOException("Commit or branch not found: " + ref);
+    }
+    return commitId;
   }
 }

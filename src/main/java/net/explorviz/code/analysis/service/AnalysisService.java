@@ -274,10 +274,12 @@ public class AnalysisService {
       final List<java.nio.file.PathMatcher> excludeMatchers =
           compileMatchers(config.excludeFromAnalysisExpressions());
 
-      String lastCheckedCommitHash = startCommit.filter(hash -> !hash.isBlank()).orElse(null);
-      String lastFullyAnalyzedCommitHash = lastCheckedCommitHash;
-      final Set<String> analyzedCommitHashes = new HashSet<>();
-      startCommit.filter(hash -> !hash.isBlank()).ifPresent(analyzedCommitHashes::add);
+      // Ancestors of a start commit are only known to the receiver when it resumes a persisted
+      // analysis; locally, the start commit itself is the first commit that gets analyzed.
+      final boolean resumesPersistedAnalysis =
+          exporter.isRemote() && startCommit.filter(hash -> !hash.isBlank()).isPresent();
+      final PersistedCommitTracker persistedCommits =
+          new PersistedCommitTracker(commitsInRange, resumesPersistedAnalysis);
       int fullAnalysisCount = 0;
       int processedCommitCount = 0;
       for (int index = 0; index < commitsToProcess.size(); index++) {
@@ -293,7 +295,8 @@ public class AnalysisService {
               .addArgument(walkEntry.hash())
               .log("Skipping commit not selected for sampling: {}");
           recordSkippedCommitInWalk(config);
-          lastCheckedCommitHash = walkEntry.hash();
+          persistedCommits.markSkipped(
+              walkEntry.hash(), persistedCommits.resolveDiffBase(walkEntry.parentHashes()));
           continue;
         }
 
@@ -305,26 +308,18 @@ public class AnalysisService {
         try {
           LOGGER.atDebug().addArgument(commit.getName()).log("Analyzing commit: {}");
 
-          final boolean isFirstAnalyzedCommit = fullAnalysisCount == 0;
           final RevCommit baseCommit =
-              resolveDiffBaseCommit(
-                  repository,
-                  commit,
-                  fullAnalysisCount,
-                  exporter.isRemote(),
-                  startCommit,
-                  lastCheckedCommitHash,
-                  lastFullyAnalyzedCommitHash,
-                  analyzedCommitHashes);
-          final boolean disposeDiffBaseCommit =
-              baseCommit != null
-                  && (commit.getParentCount() == 0
-                      || !baseCommit.getId().equals(commit.getParent(0).getId()));
+              resolveDiffBaseCommit(repository, walkEntry, persistedCommits);
+          final String baseCommitHash = baseCommit == null ? null : baseCommit.getName();
+          final List<String> reportedParentIds =
+              persistedCommits.resolveReportedParents(walkEntry.parentHashes(), baseCommitHash);
 
           try {
-            if (isFirstAnalyzedCommit && baseCommit == null) {
+            if (baseCommit == null) {
               LOGGER.info(
-                  "First commit analyzed for repository {} on branch {} — analyzing all files",
+                  "Commit {} of repository {} on branch {} has no analyzed parent — analyzing all"
+                      + " files",
+                  commit.getName(),
                   config.getRepositoryName(),
                   branch);
             }
@@ -358,7 +353,8 @@ public class AnalysisService {
                   .addArgument(commit.getName())
                   .log("Skipping commit without file changes in analysis scope: {}");
               recordSkippedCommitInWalk(config);
-              lastCheckedCommitHash = walkEntry.hash();
+              // Within the analysis scope, the commit equals its diff base.
+              persistedCommits.markSkipped(walkEntry.hash(), baseCommitHash);
               continue;
             }
 
@@ -388,15 +384,12 @@ public class AnalysisService {
                   fileDiff,
                   unchangedFiles,
                   tagsByCommitId,
-                  lastFullyAnalyzedCommitHash,
-                  analyzedCommitHashes);
+                  reportedParentIds);
 
               fullAnalysisCount++;
               processedCommitCount++;
               analysisStatusService.incrementAnalyzedCommit(config.landscapeToken());
-              lastFullyAnalyzedCommitHash = commit.getName();
-              analyzedCommitHashes.add(commit.getName());
-              lastCheckedCommitHash = walkEntry.hash();
+              persistedCommits.markPersisted(walkEntry.hash());
               continue;
             }
 
@@ -410,17 +403,14 @@ public class AnalysisService {
                 fileDiff,
                 unchangedFiles,
                 tagsByCommitId,
-                lastFullyAnalyzedCommitHash,
-                analyzedCommitHashes);
+                reportedParentIds);
 
             fullAnalysisCount++;
             processedCommitCount++;
             analysisStatusService.incrementAnalyzedCommit(config.landscapeToken());
-            lastFullyAnalyzedCommitHash = commit.getName();
-            analyzedCommitHashes.add(commit.getName());
-            lastCheckedCommitHash = walkEntry.hash();
+            persistedCommits.markPersisted(walkEntry.hash());
           } finally {
-            if (disposeDiffBaseCommit && baseCommit != null) {
+            if (baseCommit != null) {
               baseCommit.disposeBody();
             }
           }
@@ -531,71 +521,30 @@ public class AnalysisService {
   }
 
   /**
-   * Resolves the old commit for {@code git diff}. When commits were skipped (sampling or
-   * irrelevant-change filtering), diffs against the last fully analyzed commit so landscape-service
-   * receives the cumulative added/modified/deleted set.
+   * Resolves the old commit for {@code git diff}: the commit known to the receiver that represents
+   * the first git parent (see {@link PersistedCommitTracker}). When commits were skipped (sampling
+   * or irrelevant-change filtering), this is the nearest persisted ancestor so the receiver gets
+   * the cumulative added/modified/deleted set. Returns {@code null} when all files must be
+   * reported, i.e. for root commits, the first analyzed commit, and when the base is not available
+   * locally.
    */
   /* package */ RevCommit resolveDiffBaseCommit(
       final Repository repository,
-      final RevCommit commit,
-      final int commitCount,
-      final boolean remoteExport,
-      final Optional<String> startCommit,
-      final String lastCheckedCommitHash,
-      final String lastFullyAnalyzedCommitHash,
-      final Set<String> analyzedCommitHashes)
+      final CommitWalkEntry walkEntry,
+      final PersistedCommitTracker persistedCommits)
       throws IOException {
-    if (hasGapSinceLastFullAnalysis(lastFullyAnalyzedCommitHash, commit, analyzedCommitHashes)) {
-      return parseCommitByHash(repository, lastFullyAnalyzedCommitHash);
-    }
-    final boolean isFirstAnalyzedCommit = commitCount == 0;
-    if (isFirstAnalyzedCommit && (!remoteExport || startCommit.isEmpty())) {
+    final String baseHash = persistedCommits.resolveDiffBase(walkEntry.parentHashes());
+    if (baseHash == null) {
       return null;
     }
-    if (commit.getParentCount() > 0) {
-      final RevCommit parent = commit.getParent(0);
-      if (!isCommitAvailableInRepository(repository, parent.getName())) {
-        return null;
-      }
-      try (RevWalk revWalk = new RevWalk(repository)) {
-        revWalk.parseBody(parent);
-      }
-      return parent;
+    if (!isCommitAvailableInRepository(repository, baseHash)) {
+      LOGGER.warn(
+          "Diff base {} of commit {} is not available locally — analyzing all files",
+          baseHash,
+          walkEntry.hash());
+      return null;
     }
-    if (lastCheckedCommitHash != null && !lastCheckedCommitHash.isBlank()) {
-      return parseCommitByHash(repository, lastCheckedCommitHash);
-    }
-    return null;
-  }
-
-  /** Uses all git parent links so branch commit trees preserve merge topology. */
-  /* package */ List<String> resolveStoredParentCommitIds(final RevCommit commit) {
-    final List<String> parentIds = new ArrayList<>(commit.getParentCount());
-    for (int parentIndex = 0; parentIndex < commit.getParentCount(); parentIndex++) {
-      parentIds.add(commit.getParent(parentIndex).getName());
-    }
-    return parentIds;
-  }
-
-  /* package */ List<String> resolveLandscapeParentCommitIds(final RevCommit commit) {
-    return resolveStoredParentCommitIds(commit);
-  }
-
-  /**
-   * Parent commit ids for {@link CommitData}. When {@code
-   * connectToLastAnalyzedWhenCommitsWereSkipped} is enabled, commits after ignored ones link to the
-   * last persisted commit instead of git parents.
-   */
-  /* package */ List<String> resolveLandscapeParentCommitIds(
-      final RevCommit commit,
-      final String lastFullyAnalyzedCommitHash,
-      final boolean connectToLastAnalyzedWhenCommitsWereSkipped,
-      final Set<String> analyzedCommitHashes) {
-    if (connectToLastAnalyzedWhenCommitsWereSkipped
-        && hasGapSinceLastFullAnalysis(lastFullyAnalyzedCommitHash, commit, analyzedCommitHashes)) {
-      return List.of(lastFullyAnalyzedCommitHash);
-    }
-    return resolveStoredParentCommitIds(commit);
+    return parseCommitByHash(repository, baseHash);
   }
 
   /* package */ boolean hasRelevantFilteredFileChanges(
@@ -691,39 +640,12 @@ public class AnalysisService {
 
   private boolean isCommitAvailableInRepository(
       final Repository repository, final String commitHash) throws IOException {
-    return repository.resolve(commitHash) != null;
+    // Repository#resolve does not check whether a full object id exists, so ask the database.
+    return repository.getObjectDatabase().has(ObjectId.fromString(commitHash));
   }
 
   /* package */ record CommitRangeSelection(
       int commitsToAnalyze, int commitsToSkipBeforeAnalyzing) {}
-
-  /**
-   * Returns {@code true} when skipped commits sit between the last fully analyzed commit and {@code
-   * commit}, so landscape-service cannot inherit unchanged files from its git parent.
-   *
-   * <p>When the walk analyzes commits from merged branches, the last fully analyzed commit may
-   * belong to a parallel branch while {@code commit}'s first git parent was already analyzed. That
-   * is not a gap — only an unanalyzed first parent counts as one.
-   */
-  /* package */ boolean hasGapSinceLastFullAnalysis(
-      final String lastFullyAnalyzedCommitHash,
-      final RevCommit commit,
-      final Set<String> analyzedCommitHashes) {
-    if (lastFullyAnalyzedCommitHash == null || lastFullyAnalyzedCommitHash.isBlank()) {
-      return false;
-    }
-    if (commit.getParentCount() == 0) {
-      return false;
-    }
-    final String firstParentHash = commit.getParent(0).getName();
-    if (lastFullyAnalyzedCommitHash.equals(firstParentHash)) {
-      return false;
-    }
-    if (analyzedCommitHashes.contains(firstParentHash)) {
-      return false;
-    }
-    return true;
-  }
 
   /* package */ List<FileDescriptor> resolveUnchangedFilesForBootstrapCommit(
       final List<FileDescriptor> allFilesInCommit, final FileDiff fileDiff) {
@@ -750,7 +672,16 @@ public class AnalysisService {
     return parseCommitByHash(repository, entry.hash());
   }
 
-  private List<CommitWalkEntry> collectCommitWalkEntries(
+  /**
+   * Collects the commits to analyze in topological order (every parent before its children).
+   *
+   * <p>The range is defined by reachability, as in {@code git rev-list start..end}, not by the
+   * position of the start commit in the walk: when not only first-parent commits are walked,
+   * commits of merged side branches may be emitted before the start commit although they are no
+   * ancestors of it, or after it although they are. The start commit itself is only included for
+   * local exports, as remote exports resume after an already persisted start commit.
+   */
+  /* package */ List<CommitWalkEntry> collectCommitWalkEntries(
       final Repository repository,
       final String fullBranch,
       final Optional<String> startCommit,
@@ -758,36 +689,31 @@ public class AnalysisService {
       final boolean remoteExport,
       final boolean firstParentCommitsOnly)
       throws IOException {
+    final String start = startCommit.filter(hash -> !hash.isBlank()).orElse(null);
+    final String tip = endCommit.filter(hash -> !hash.isBlank()).orElse(fullBranch);
     try (RevWalk revWalk = new RevWalk(repository)) {
-      prepareRevWalk(repository, revWalk, fullBranch, firstParentCommitsOnly);
+      gitRepositoryHandler.configureBranchRevWalk(
+          revWalk, repository, tip, start, firstParentCommitsOnly);
 
       final List<CommitWalkEntry> commits = new ArrayList<>();
-      boolean inAnalysisRange = startCommit.isEmpty() || "".equals(startCommit.get());
-
-      for (RevCommit commit : revWalk) {
-        if (!inAnalysisRange) {
-          if (commit.name().equals(startCommit.get())) {
-            inAnalysisRange = true;
-            if (remoteExport) {
-              commit.disposeBody();
-              continue;
-            }
-          } else {
-            commit.disposeBody();
-            continue;
-          }
-        }
-        commits.add(new CommitWalkEntry(commit.name(), commit.getCommitTime()));
-        final boolean reachedEndCommit =
-            endCommit.isPresent() && commit.name().equals(endCommit.get());
-        commit.disposeBody();
-        if (reachedEndCommit) {
-          break;
-        }
+      if (start != null && !remoteExport) {
+        // All ancestors of the start commit are excluded, so it precedes every walked commit.
+        commits.add(toCommitWalkEntry(revWalk.parseCommit(repository.resolve(start))));
       }
-
+      for (final RevCommit commit : revWalk) {
+        commits.add(toCommitWalkEntry(commit));
+        commit.disposeBody();
+      }
       return commits;
     }
+  }
+
+  private static CommitWalkEntry toCommitWalkEntry(final RevCommit commit) {
+    final List<String> parentHashes = new ArrayList<>(commit.getParentCount());
+    for (int parentIndex = 0; parentIndex < commit.getParentCount(); parentIndex++) {
+      parentHashes.add(commit.getParent(parentIndex).getName());
+    }
+    return new CommitWalkEntry(commit.getName(), commit.getCommitTime(), parentHashes);
   }
 
   /**
@@ -809,16 +735,6 @@ public class AnalysisService {
     return tagsByCommitId;
   }
 
-  private void prepareRevWalk(
-      final Repository repository,
-      final RevWalk revWalk,
-      final String branch,
-      final boolean firstParentCommitsOnly)
-      throws IOException {
-    gitRepositoryHandler.configureBranchRevWalk(
-        revWalk, repository, branch, firstParentCommitsOnly);
-  }
-
   private void commitAnalysis(
       final AnalysisConfig config,
       final Repository repository,
@@ -829,8 +745,7 @@ public class AnalysisService {
       final FileDiff fileDiff,
       final List<FileDescriptor> unchangedFiles,
       final Map<ObjectId, List<String>> tagsByCommitId,
-      final String lastFullyAnalyzedCommitHash,
-      final Set<String> analyzedCommitHashes)
+      final List<String> parentCommitIds)
       throws GitAPIException, NotFoundException, IOException {
 
     ensureNotCancelled(config.landscapeToken());
@@ -844,8 +759,7 @@ public class AnalysisService {
         fileDiff,
         unchangedFiles,
         tagsByCommitId,
-        lastFullyAnalyzedCommitHash,
-        analyzedCommitHashes);
+        parentCommitIds);
 
     antlrParserService.reset();
 
@@ -1055,10 +969,6 @@ public class AnalysisService {
     analysisStatusService.incrementAnalyzedCommit(config.landscapeToken());
   }
 
-  private boolean shouldReconnectParentAcrossSkippedCommits(final AnalysisConfig config) {
-    return config.skipCommitsWithoutRelevantFileChanges() || CommitSampler.isEnabled(config);
-  }
-
   private void createCommitReport(
       final AnalysisConfig config,
       final RevCommit commit,
@@ -1067,16 +977,9 @@ public class AnalysisService {
       final FileDiff fileDiff,
       final List<FileDescriptor> unchangedFiles,
       final Map<ObjectId, List<String>> tagsByCommitId,
-      final String lastFullyAnalyzedCommitHash,
-      final Set<String> analyzedCommitHashes)
+      final List<String> parentCommitIds)
       throws NotFoundException, IOException, GitAPIException {
     final CommitReportHandler commitReportHandler = new CommitReportHandler();
-
-    final List<String> parentCommitIds =
-        shouldReconnectParentAcrossSkippedCommits(config)
-            ? resolveLandscapeParentCommitIds(
-                commit, lastFullyAnalyzedCommitHash, true, analyzedCommitHashes)
-            : resolveLandscapeParentCommitIds(commit);
 
     commitReportHandler.init(commit.getId().getName(), parentCommitIds, branchName);
 

@@ -72,7 +72,8 @@ class AnalysisServiceCommitRangeTest {
             analysisService.shouldExcludeAsShallowCloneBoundary(shallowRepository, shallowTip));
 
         final List<CommitWalkEntry> commitsInRange =
-            List.of(new CommitWalkEntry(shallowTip.getName(), shallowTip.getCommitTime()));
+            List.of(
+                new CommitWalkEntry(shallowTip.getName(), shallowTip.getCommitTime(), List.of()));
 
         final AnalysisService.CommitRangeSelection adjustedSelection =
             analysisService.adjustSkipForShallowCloneBoundary(

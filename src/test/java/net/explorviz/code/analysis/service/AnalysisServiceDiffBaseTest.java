@@ -6,19 +6,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import net.explorviz.code.analysis.types.FileDescriptor;
 import net.explorviz.code.analysis.types.FileDiff;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevWalk;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mockito;
 
 @QuarkusTest
 class AnalysisServiceDiffBaseTest {
@@ -27,22 +23,34 @@ class AnalysisServiceDiffBaseTest {
 
   @Test
   void usesNullDiffBaseForFirstLocalCommitWithoutStartCommit() throws IOException {
-    final RevCommit commit = Mockito.mock(RevCommit.class);
-    Mockito.when(commit.getParentCount()).thenReturn(0);
+    final CommitWalkEntry root = new CommitWalkEntry("a".repeat(40), 0, List.of());
 
     Assertions.assertNull(
         analysisService.resolveDiffBaseCommit(
-            null, commit, 0, false, Optional.empty(), null, null, Set.of()));
+            null, root, new PersistedCommitTracker(List.of(root), false)));
   }
 
   @Test
-  void usesNullDiffBaseWhenGitParentMissingAndNoLastCheckedCommit() throws IOException {
-    final RevCommit commit = Mockito.mock(RevCommit.class);
-    Mockito.when(commit.getParentCount()).thenReturn(0);
+  void usesNullDiffBaseWhenParentIsNotKnownToReceiver() throws IOException {
+    final CommitWalkEntry commit = new CommitWalkEntry("a".repeat(40), 0, List.of("b".repeat(40)));
 
     Assertions.assertNull(
         analysisService.resolveDiffBaseCommit(
-            null, commit, 0, true, Optional.of("parent"), null, null, Set.of()));
+            null, commit, new PersistedCommitTracker(List.of(commit), false)));
+  }
+
+  @Test
+  void usesNullDiffBaseWhenPersistedParentIsMissingLocally(@TempDir final File repoDir)
+      throws Exception {
+    try (Git git = Git.init().setDirectory(repoDir).call();
+        Repository repository = git.getRepository()) {
+      final CommitWalkEntry commit =
+          new CommitWalkEntry("a".repeat(40), 0, List.of("b".repeat(40)));
+
+      Assertions.assertNull(
+          analysisService.resolveDiffBaseCommit(
+              repository, commit, new PersistedCommitTracker(List.of(commit), true)));
+    }
   }
 
   @Test
@@ -52,20 +60,21 @@ class AnalysisServiceDiffBaseTest {
       final var readme = repoDir.toPath().resolve("README");
       Files.writeString(readme, "v1");
       git.add().addFilepattern("README").call();
-      final RevCommit parent = git.commit().setMessage("first").call();
+      final RevCommit parent = git.commit().setMessage("first").setSign(false).call();
 
       Files.writeString(readme, "v2");
       git.add().addFilepattern("README").call();
-      final RevCommit child = git.commit().setMessage("second").call();
+      final RevCommit child = git.commit().setMessage("second").setSign(false).call();
 
-      final RevCommit childForDiff;
-      try (RevWalk walk = new RevWalk(repository)) {
-        childForDiff = walk.parseCommit(child.getId());
-      }
+      final CommitWalkEntry parentEntry = new CommitWalkEntry(parent.getName(), 0, List.of());
+      final CommitWalkEntry childEntry =
+          new CommitWalkEntry(child.getName(), 1, List.of(parent.getName()));
+      final PersistedCommitTracker tracker =
+          new PersistedCommitTracker(List.of(parentEntry, childEntry), false);
+      tracker.markPersisted(parent.getName());
 
       final RevCommit diffBase =
-          analysisService.resolveDiffBaseCommit(
-              repository, childForDiff, 1, false, Optional.empty(), "ignored", null, Set.of());
+          analysisService.resolveDiffBaseCommit(repository, childEntry, tracker);
 
       Assertions.assertNotNull(diffBase);
       Assertions.assertEquals(parent.getId(), diffBase.getId());
@@ -92,5 +101,16 @@ class AnalysisServiceDiffBaseTest {
 
     Assertions.assertEquals(1, unchangedFiles.size());
     Assertions.assertEquals("src/Unchanged.java", unchangedFiles.get(0).reportedPath);
+  }
+
+  @Test
+  void hasRelevantChangesWhenAnyFileListIsNonEmpty() {
+    final ObjectId hash = ObjectId.fromString("0123456789abcdef0123456789abcdef01234567");
+    final FileDescriptor file = new FileDescriptor(hash, "File.java", "src/File.java");
+
+    Assertions.assertTrue(
+        analysisService.hasRelevantFilteredFileChanges(List.of(file), List.of(), List.of()));
+    Assertions.assertFalse(
+        analysisService.hasRelevantFilteredFileChanges(List.of(), List.of(), List.of()));
   }
 }
