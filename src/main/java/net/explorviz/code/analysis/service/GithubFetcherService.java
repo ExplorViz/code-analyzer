@@ -63,10 +63,31 @@ public class GithubFetcherService {
   private static final int NUM_COMMITS = 25;
   private static final int NUM_ISSUE_REFERENCES = 20;
 
-  private long tmapTotal = 0;
-  private long tpersistTotal = 0;
-  private long tqueryTotal = 0;
-  private long numUpdates = 0;
+  /**
+   * Owner and name of a GitHub repository in an https, ssh or scp-like clone URL, with optional
+   * {@code .git} suffix and trailing slashes.
+   */
+  private static final Pattern GITHUB_REPOSITORY_PATTERN =
+      Pattern.compile("github\\.com[:/]+([^/\\s]+)/([^/\\s]+?)(?:\\.git)?/*$");
+
+  /** Timing statistics of a single social data fetch. */
+  private static final class FetchStatistics {
+    private long mapNanos;
+    private long persistNanos;
+    private long queryNanos;
+    private long updates;
+
+    private void add(final long queryNanos, final long mapNanos, final long persistNanos) {
+      this.queryNanos += queryNanos;
+      this.mapNanos += mapNanos;
+      this.persistNanos += persistNanos;
+      updates++;
+    }
+
+    private long averageMillis(final long totalNanos) {
+      return updates == 0 ? 0 : TimeUnit.NANOSECONDS.toMillis(totalNanos / updates);
+    }
+  }
 
   Optional<CompletableFuture<Void>> fetchSocialData(
       final AnalysisConfig config,
@@ -148,8 +169,16 @@ public class GithubFetcherService {
       final long tStart = System.nanoTime();
       validateToken(githubClient);
 
+      final FetchStatistics statistics = new FetchStatistics();
       fetchData(
-          exporter, githubClient, landscapeToken, repoOwnerAndName, "issues", startDate, endDate);
+          exporter,
+          githubClient,
+          landscapeToken,
+          repoOwnerAndName,
+          "issues",
+          startDate,
+          endDate,
+          statistics);
       fetchData(
           exporter,
           githubClient,
@@ -157,19 +186,17 @@ public class GithubFetcherService {
           repoOwnerAndName,
           "pullRequests",
           startDate,
-          endDate);
+          endDate,
+          statistics);
 
       LOGGER.info("✅ Completed all social fetch queries.");
 
-      long tqueryAvg = tqueryTotal / numUpdates;
-      long tmapAvg = tmapTotal / numUpdates;
-      long tpersistAvg = tpersistTotal / numUpdates;
-
       LOGGER.info(
-          "tQuery avg: {}ms, tMap avg: {}ms, tPersist avg: {}ms, social analysis took {} seconds with PAGE_SIZE: {}",
-          TimeUnit.NANOSECONDS.toMillis(tqueryAvg),
-          TimeUnit.NANOSECONDS.toMillis(tmapAvg),
-          TimeUnit.NANOSECONDS.toMillis(tpersistAvg),
+          "tQuery avg: {}ms, tMap avg: {}ms, tPersist avg: {}ms, social analysis took {} seconds"
+              + " with PAGE_SIZE: {}",
+          statistics.averageMillis(statistics.queryNanos),
+          statistics.averageMillis(statistics.mapNanos),
+          statistics.averageMillis(statistics.persistNanos),
           String.format(Locale.ROOT, "%.2f", (System.nanoTime() - tStart) / 1_000_000_000.0),
           PAGE_SIZE);
 
@@ -197,18 +224,24 @@ public class GithubFetcherService {
     return endDate;
   }
 
-  private Optional<String> extractGithubRepoSubString(String remoteUrl) {
+  /**
+   * Extracts {@code owner/name} from a GitHub clone URL.
+   *
+   * @param remoteUrl an https, ssh or scp-like clone URL
+   * @return {@code owner/name}, or an empty optional if the URL does not denote a GitHub repository
+   */
+  /* package */ static Optional<String> extractGithubRepoSubString(final String remoteUrl) {
     if (!remoteUrl.contains("github.com")) {
       LOGGER.info(
           "Skipping GitHub collaboration data fetch, not a GitHub repository: {}", remoteUrl);
       return Optional.empty();
     }
-    final String[] parts = remoteUrl.split("github.com[:/]");
-    if (parts.length < 2) {
+    final Matcher matcher = GITHUB_REPOSITORY_PATTERN.matcher(remoteUrl.trim());
+    if (!matcher.find()) {
       LOGGER.warn("Could not extract repo name from GitHub URL: {}", remoteUrl);
       return Optional.empty();
     }
-    return Optional.of(parts[1].replace(".git", ""));
+    return Optional.of(matcher.group(1) + "/" + matcher.group(2));
   }
 
   void preInitializeRemoteState(
@@ -254,7 +287,8 @@ public class GithubFetcherService {
       final String repoOwnerName,
       final String resourceType,
       final Date startDate,
-      final Date endDate) {
+      final Date endDate,
+      final FetchStatistics statistics) {
     final String[] splits = repoOwnerName.split("/");
     final GithubPager pager =
         new GithubPager(
@@ -297,7 +331,8 @@ public class GithubFetcherService {
       long t2 = System.nanoTime();
       exporter.persistTrackableResourceEventBatch(events);
       long tpersist = System.nanoTime() - t2;
-      logProgress(resourceType, pager, currentDate, start, end, events.size(), tmap, tpersist);
+      logProgress(
+          resourceType, pager, currentDate, start, end, events.size(), tmap, tpersist, statistics);
     }
     if (pager.isFailed()) {
       LOGGER.error(
@@ -316,7 +351,8 @@ public class GithubFetcherService {
       final Instant endTime,
       final int batchSize,
       long tmap,
-      long tpersist) {
+      long tpersist,
+      final FetchStatistics statistics) {
     final double windowMs = Math.max(1, Duration.between(startTime, endTime).toMillis());
     final double estimatePercent =
         Math.clamp(100 * Duration.between(currentTime, endTime).toMillis() / windowMs, 0, 100);
@@ -328,10 +364,7 @@ public class GithubFetcherService {
         pager.getSeen(),
         batchSize,
         pager.getLastRateLimit());
-    tmapTotal += tmap;
-    tpersistTotal += tpersist;
-    tqueryTotal += pager.getLastQueryNanos();
-    numUpdates += 1;
+    statistics.add(pager.getLastQueryNanos(), tmap, tpersist);
 
     LOGGER.debug(
         "tQuery: {}ms, tMap: {}ms, tPersist: {}",

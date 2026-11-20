@@ -189,8 +189,16 @@ public class JsonExporter implements DataExporter {
   public void persistTrackableResourceEvent(final TrackableResourceEvent trackableResourceEvent) {
     try {
       final String json = unescapeHtml(JsonFormat.printer().print(trackableResourceEvent));
+      // Several events refer to the same resource, so the annotation id makes the name unique.
       final String fileName =
-          "TrackableResourceEvent" + trackableResourceEvent.getResourceId() + JSON_FILE_EXTENSION;
+          sanitizeFileName(
+                  "TrackableResourceEvent_"
+                      + trackableResourceEvent.getResourceType()
+                      + "_"
+                      + trackableResourceEvent.getResourceId()
+                      + "_"
+                      + trackableResourceEvent.getAnnotationId())
+              + JSON_FILE_EXTENSION;
       Files.write(Paths.get(storageDirectory, fileName), json.getBytes());
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -205,6 +213,11 @@ public class JsonExporter implements DataExporter {
   @Override
   public boolean isInvalidCommitHash(final String hash) {
     return false;
+  }
+
+  /** Replaces characters that are not safe in file names on all platforms. */
+  /* package */ static String sanitizeFileName(final String fileName) {
+    return fileName.replaceAll("[^A-Za-z0-9._-]", "_");
   }
 
   /**
