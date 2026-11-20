@@ -7,6 +7,9 @@ import net.explorviz.code.analysis.antlr.generated.c.CParserBaseListener;
 import net.explorviz.code.analysis.handler.CFileDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -166,6 +169,16 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
 
   @Override
   public void enterEnumerator(final CParser.EnumeratorContext ctx) {
+    // Enumerators of an anonymous enum belong to no enum type; they must not be added to the
+    // enclosing struct.
+    ParserRuleContext enumSpecifier = ctx.getParent();
+    while (enumSpecifier != null && !(enumSpecifier instanceof CParser.EnumSpecifierContext)) {
+      enumSpecifier = enumSpecifier.getParent();
+    }
+    if (enumSpecifier == null
+        || ((CParser.EnumSpecifierContext) enumSpecifier).Identifier() == null) {
+      return;
+    }
     if (ctx.enumerationConstant() != null && ctx.enumerationConstant().Identifier() != null) {
       final var classData = fileDataHandler.getCurrentClassData();
       if (classData != null) {
@@ -189,7 +202,9 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
 
     String returnType = "void";
     if (ctx.declarationSpecifiers() != null) {
-      returnType = extractTypeFromDeclarationSpecifiers(ctx.declarationSpecifiers());
+      returnType =
+          extractTypeFromDeclarationSpecifiers(ctx.declarationSpecifiers())
+              + pointerSuffix(ctx.declarator());
     }
 
     final int functionLoc = calculateLoc(ctx);
@@ -246,17 +261,125 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
       if (memberDecl.declarator() != null) {
         final String fieldName = extractDeclaratorName(memberDecl.declarator());
         if (fieldName != null && !fieldName.contains("(")) {
-          classData.addField(fieldName, fieldType, new ArrayList<>());
+          classData.addField(
+              fieldName, fieldType + pointerSuffix(memberDecl.declarator()), new ArrayList<>());
         }
       }
     }
   }
 
+  /** Counts declared variables, ignoring typedefs and function prototypes. */
   @Override
   public void enterDeclaration(final CParser.DeclarationContext ctx) {
-    if (ctx.initDeclaratorList() != null) {
-      variableCount += ctx.initDeclaratorList().initDeclarator().size();
+    if (ctx.initDeclaratorList() == null || isTypedef(ctx.declarationSpecifiers())) {
+      return;
     }
+    for (final CParser.InitDeclaratorContext initDecl : ctx.initDeclaratorList().initDeclarator()) {
+      if (initDecl.declarator() != null && !isFunctionDeclarator(initDecl.declarator())) {
+        variableCount++;
+      }
+    }
+  }
+
+  private static boolean isTypedef(final CParser.DeclarationSpecifiersContext ctx) {
+    if (ctx == null) {
+      return false;
+    }
+    for (final CParser.DeclarationSpecifierContext declSpec : ctx.declarationSpecifier()) {
+      if (declSpec.storageClassSpecifier() != null
+          && "typedef".equals(declSpec.storageClassSpecifier().getText())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Whether a declarator declares a function (as opposed to e.g. a pointer to a function): the
+   * identifier is directly followed by a parameter list.
+   */
+  private static boolean isFunctionDeclarator(final CParser.DeclaratorContext ctx) {
+    final CParser.DirectDeclaratorContext direct = ctx.directDeclarator();
+    if (direct == null || direct.Identifier() == null || direct.getChildCount() < 2) {
+      return false;
+    }
+    // The child after the identifier (and its optional attributes) must be '('
+    for (int i = 1; i < direct.getChildCount(); i++) {
+      final ParseTree child = direct.getChild(i);
+      if (child instanceof CParser.AttributeSpecifierSequenceContext) {
+        continue;
+      }
+      return child instanceof TerminalNode && "(".equals(child.getText());
+    }
+    return false;
+  }
+
+  /** Returns "*" per pointer level of a declarator, e.g. "**" for {@code **argv}. */
+  private static String pointerSuffix(final CParser.DeclaratorContext ctx) {
+    if (ctx == null) {
+      return "";
+    }
+    final StringBuilder suffix = new StringBuilder();
+    for (final CParser.PointerContext pointer : ctx.pointer()) {
+      appendPointerStars(suffix, pointer);
+    }
+    return suffix.toString();
+  }
+
+  private static void appendPointerStars(
+      final StringBuilder suffix, final CParser.PointerContext pointer) {
+    if (pointer == null) {
+      return;
+    }
+    for (int i = 0; i < pointer.getChildCount(); i++) {
+      if ("*".equals(pointer.getChild(i).getText())) {
+        suffix.append('*');
+      }
+    }
+  }
+
+  /** Returns the pointer suffix of a parameter's declarator or abstract declarator. */
+  private static String parameterPointerSuffix(final CParser.ParameterDeclarationContext param) {
+    if (param.declarator() != null) {
+      return pointerSuffix(param.declarator());
+    }
+    if (param.abstractDeclarator() != null) {
+      final StringBuilder suffix = new StringBuilder();
+      appendPointerStars(suffix, param.abstractDeclarator().pointer());
+      return suffix.toString();
+    }
+    return "";
+  }
+
+  /**
+   * Returns the parameter declarations of a parameter list. An empty list {@code ()} and {@code
+   * (void)} declare no parameters.
+   */
+  private static List<CParser.ParameterDeclarationContext> getParameterDeclarations(
+      final CParser.ParameterTypeListContext params) {
+    final List<CParser.ParameterDeclarationContext> result = new ArrayList<>();
+    if (params == null || params.parameterList() == null) {
+      return result;
+    }
+    for (final CParser.ParameterDeclarationContext param :
+        params.parameterList().parameterDeclaration()) {
+      if (param.declarationSpecifiers() == null
+          && param.declarator() == null
+          && param.abstractDeclarator() == null) {
+        continue;
+      }
+      result.add(param);
+    }
+    if (result.size() == 1) {
+      final CParser.ParameterDeclarationContext only = result.get(0);
+      if (only.declarator() == null
+          && only.abstractDeclarator() == null
+          && only.declarationSpecifiers() != null
+          && "void".equals(only.declarationSpecifiers().getText())) {
+        result.clear();
+      }
+    }
+    return result;
   }
 
   private String buildFqn(final String name) {
@@ -308,7 +431,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
     final StringBuilder typeBuilder = new StringBuilder();
     for (final CParser.DeclarationSpecifierContext declSpec : ctx.declarationSpecifier()) {
       if (declSpec.typeSpecifier() != null) {
-        appendTypeText(typeBuilder, declSpec.typeSpecifier().getText());
+        appendTypeText(typeBuilder, typeSpecifierText(declSpec.typeSpecifier()));
       } else {
         appendStorageOrQualifier(typeBuilder, declSpec.getText());
       }
@@ -327,12 +450,60 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
     final StringBuilder typeBuilder = new StringBuilder();
     for (final CParser.TypeSpecifierQualifierContext specQual : ctx.typeSpecifierQualifier()) {
       if (specQual.typeSpecifier() != null) {
-        appendTypeText(typeBuilder, specQual.typeSpecifier().getText());
+        appendTypeText(typeBuilder, typeSpecifierText(specQual.typeSpecifier()));
       }
     }
 
     final String result = typeBuilder.toString().trim();
     return result.isEmpty() ? "unknown" : result;
+  }
+
+  /**
+   * Returns the text of a type specifier with spaces between words, e.g. {@code struct Node}. A
+   * struct, union or enum definition is reduced to its keyword and tag.
+   */
+  private static String typeSpecifierText(final CParser.TypeSpecifierContext ctx) {
+    final CParser.StructOrUnionSpecifierContext struct = ctx.structOrUnionSpecifier();
+    if (struct != null && struct.structOrUnion() != null) {
+      return struct.Identifier() != null
+          ? struct.structOrUnion().getText() + " " + struct.Identifier().getText()
+          : struct.structOrUnion().getText();
+    }
+    final CParser.EnumSpecifierContext enumSpec = ctx.enumSpecifier();
+    if (enumSpec != null) {
+      return enumSpec.Identifier() != null ? "enum " + enumSpec.Identifier().getText() : "enum";
+    }
+    return joinTokens(ctx);
+  }
+
+  /** Joins the tokens of a subtree, separating adjacent words by a space. */
+  private static String joinTokens(final ParseTree tree) {
+    final StringBuilder result = new StringBuilder();
+    appendTokens(result, tree);
+    return result.toString();
+  }
+
+  private static void appendTokens(final StringBuilder result, final ParseTree tree) {
+    if (tree instanceof TerminalNode) {
+      final String text = tree.getText();
+      if (text.isEmpty() || "<EOF>".equals(text)) {
+        return;
+      }
+      if (result.length() > 0
+          && isWordChar(result.charAt(result.length() - 1))
+          && isWordChar(text.charAt(0))) {
+        result.append(' ');
+      }
+      result.append(text);
+      return;
+    }
+    for (int i = 0; i < tree.getChildCount(); i++) {
+      appendTokens(result, tree.getChild(i));
+    }
+  }
+
+  private static boolean isWordChar(final char c) {
+    return Character.isLetterOrDigit(c) || c == '_';
   }
 
   private void appendTypeText(final StringBuilder typeBuilder, final String text) {
@@ -359,18 +530,19 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
 
   private List<String> extractParameterTypes(final CParser.DeclaratorContext ctx) {
     final List<String> paramTypes = new ArrayList<>();
-    final CParser.ParameterTypeListContext params = findParameterTypeList(ctx);
-    if (params != null && params.parameterList() != null) {
-      for (final CParser.ParameterDeclarationContext param :
-          params.parameterList().parameterDeclaration()) {
-        String type = "unknown";
-        if (param.declarationSpecifiers() != null) {
-          type = extractTypeFromDeclarationSpecifiers(param.declarationSpecifiers());
-        }
-        paramTypes.add(type);
-      }
+    for (final CParser.ParameterDeclarationContext param :
+        getParameterDeclarations(findParameterTypeList(ctx))) {
+      paramTypes.add(extractParameterType(param));
     }
     return paramTypes;
+  }
+
+  private String extractParameterType(final CParser.ParameterDeclarationContext param) {
+    if (param.declarationSpecifiers() == null) {
+      return "unknown";
+    }
+    return extractTypeFromDeclarationSpecifiers(param.declarationSpecifiers())
+        + parameterPointerSuffix(param);
   }
 
   private CParser.ParameterTypeListContext findParameterTypeList(
@@ -394,17 +566,9 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
 
   private void addFunctionParameters(
       final MethodDataHandler methodData, final CParser.DeclaratorContext ctx) {
-    final CParser.ParameterTypeListContext params = findParameterTypeList(ctx);
-    if (params == null || params.parameterList() == null) {
-      return;
-    }
-
     for (final CParser.ParameterDeclarationContext param :
-        params.parameterList().parameterDeclaration()) {
-      String paramType =
-          param.declarationSpecifiers() != null
-              ? extractTypeFromDeclarationSpecifiers(param.declarationSpecifiers())
-              : "unknown";
+        getParameterDeclarations(findParameterTypeList(ctx))) {
+      final String paramType = extractParameterType(param);
       String paramName = "";
       if (param.declarator() != null) {
         paramName = extractDeclaratorName(param.declarator());

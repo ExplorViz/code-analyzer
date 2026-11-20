@@ -2,6 +2,7 @@ package net.explorviz.code.analysis.handler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -12,38 +13,59 @@ import net.explorviz.code.proto.Language;
 public class CFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 
+  /** Keys (into {@link #classDataMap}) of the types currently being visited. */
   private final Stack<String> classStack;
+
+  /** Types by unique key; the key is the FQN, or FQN#n for a repeated FQN. */
   private final Map<String, ClassDataHandler> classDataMap;
+
+  /** The FQN of each type key in {@link #classDataMap}. */
+  private final Map<String, String> classFqns;
+
   private final List<MethodDataHandler> globalFunctionHandlers;
   private final List<String> rootClasses;
 
   public CFileDataHandler(final String fileName) {
     super(fileName);
     this.classStack = new Stack<>();
-    this.classDataMap = new HashMap<>();
+    this.classDataMap = new LinkedHashMap<>();
+    this.classFqns = new HashMap<>();
     this.globalFunctionHandlers = new ArrayList<>();
     this.rootClasses = new ArrayList<>();
   }
 
+  /**
+   * Enters a type definition. A type whose FQN is already registered in this file (e.g. variants in
+   * {@code #if}/{@code #else} branches) is kept as a separate type under a unique key.
+   */
   public void enterClass(final String name, final String fqn) {
-    ClassDataHandler handler = this.classDataMap.get(fqn);
-    if (handler == null) {
-      handler = new ClassDataHandler();
-      handler.setName(name);
-      this.classDataMap.put(fqn, handler);
+    final ClassDataHandler handler = new ClassDataHandler();
+    handler.setName(name);
+    final String key = uniqueClassKey(fqn);
+    this.classDataMap.put(key, handler);
+    this.classFqns.put(key, fqn);
 
-      if (this.classStack.isEmpty()) {
-        this.rootClasses.add(fqn);
-      } else {
-        final String parentClassFqn = this.classStack.peek();
-        final ClassDataHandler parent = this.classDataMap.get(parentClassFqn);
-        if (parent != null) {
-          parent.addInnerClass(fqn, handler);
-        }
+    if (this.classStack.isEmpty()) {
+      this.rootClasses.add(key);
+    } else {
+      final ClassDataHandler parent = this.classDataMap.get(this.classStack.peek());
+      if (parent != null) {
+        parent.addInnerClass(key, handler);
       }
     }
 
-    this.classStack.push(fqn);
+    this.classStack.push(key);
+  }
+
+  private String uniqueClassKey(final String fqn) {
+    if (!this.classDataMap.containsKey(fqn)) {
+      return fqn;
+    }
+    int suffix = 2;
+    while (this.classDataMap.containsKey(fqn + "#" + suffix)) {
+      suffix++;
+    }
+    return fqn + "#" + suffix;
   }
 
   public void leaveClass() {
@@ -52,13 +74,13 @@ public class CFileDataHandler extends AbstractFileDataHandler
     }
   }
 
+  /** Returns the FQN of the type currently being visited, or null outside of types. */
   public String getCurrentClassFqnOrNull() {
-    return classStack.isEmpty() ? null : classStack.peek();
+    return classStack.isEmpty() ? null : classFqns.get(classStack.peek());
   }
 
   public ClassDataHandler getCurrentClassData() {
-    final String fqn = getCurrentClassFqnOrNull();
-    return fqn != null ? classDataMap.get(fqn) : null;
+    return classStack.isEmpty() ? null : classDataMap.get(classStack.peek());
   }
 
   @Override

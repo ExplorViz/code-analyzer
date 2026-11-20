@@ -2,6 +2,7 @@ package net.explorviz.code.analysis.handler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -12,9 +13,17 @@ import net.explorviz.code.proto.Language;
 public class CppFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 
+  /** Keys (into {@link #classDataMap}) of the classes currently being visited. */
   private final Stack<String> classStack;
+
   private final Stack<String> namespaceStack;
+
+  /** Classes by unique key; the key is the FQN, or FQN#n for a repeated FQN. */
   private final Map<String, ClassDataHandler> classDataMap;
+
+  /** The FQN of each class key in {@link #classDataMap}. */
+  private final Map<String, String> classFqns;
+
   private final List<MethodDataHandler> globalFunctionHandlers;
   private final List<String> rootClasses;
   private final boolean isCppFile;
@@ -23,7 +32,8 @@ public class CppFileDataHandler extends AbstractFileDataHandler
     super(fileName);
     this.classStack = new Stack<>();
     this.namespaceStack = new Stack<>();
-    this.classDataMap = new HashMap<>();
+    this.classDataMap = new LinkedHashMap<>();
+    this.classFqns = new HashMap<>();
     this.globalFunctionHandlers = new ArrayList<>();
     this.rootClasses = new ArrayList<>();
     this.isCppFile =
@@ -34,8 +44,15 @@ public class CppFileDataHandler extends AbstractFileDataHandler
             || fileName.endsWith(".hxx");
   }
 
+  /**
+   * Enters a namespace. The first top-level namespace of the file becomes its package name; nested
+   * and later namespaces do not override it.
+   */
   public void enterNamespace(final String name) {
     namespaceStack.push(name);
+    if (namespaceStack.size() == 1 && builder.getPackageName().isEmpty()) {
+      setPackageName(name);
+    }
   }
 
   public void leaveNamespace() {
@@ -52,22 +69,38 @@ public class CppFileDataHandler extends AbstractFileDataHandler
     return String.join("::", namespaceStack);
   }
 
+  /**
+   * Enters a class. A class whose FQN is already registered in this file (e.g. variants in {@code
+   * #if}/{@code #else} branches) is kept as a separate class under a unique key.
+   */
   public void enterClass(final String name, final String fqn) {
     final ClassDataHandler handler = new ClassDataHandler();
     handler.setName(name);
-    this.classDataMap.put(fqn, handler);
+    final String key = uniqueClassKey(fqn);
+    this.classDataMap.put(key, handler);
+    this.classFqns.put(key, fqn);
 
     if (this.classStack.isEmpty()) {
-      this.rootClasses.add(fqn);
+      this.rootClasses.add(key);
     } else {
-      final String parentClassFqn = this.classStack.peek();
-      final ClassDataHandler parent = this.classDataMap.get(parentClassFqn);
+      final ClassDataHandler parent = this.classDataMap.get(this.classStack.peek());
       if (parent != null) {
-        parent.addInnerClass(fqn, handler);
+        parent.addInnerClass(key, handler);
       }
     }
 
-    this.classStack.push(fqn);
+    this.classStack.push(key);
+  }
+
+  private String uniqueClassKey(final String fqn) {
+    if (!this.classDataMap.containsKey(fqn)) {
+      return fqn;
+    }
+    int suffix = 2;
+    while (this.classDataMap.containsKey(fqn + "#" + suffix)) {
+      suffix++;
+    }
+    return fqn + "#" + suffix;
   }
 
   public void leaveClass() {
@@ -76,13 +109,42 @@ public class CppFileDataHandler extends AbstractFileDataHandler
     }
   }
 
+  /** Returns the FQN of the class currently being visited, or null outside of classes. */
   public String getCurrentClassFqnOrNull() {
-    return classStack.isEmpty() ? null : classStack.peek();
+    return classStack.isEmpty() ? null : classFqns.get(classStack.peek());
   }
 
   public ClassDataHandler getCurrentClassData() {
-    final String fqn = getCurrentClassFqnOrNull();
-    return fqn != null ? classDataMap.get(fqn) : null;
+    return classStack.isEmpty() ? null : classDataMap.get(classStack.peek());
+  }
+
+  /**
+   * Finds a class of this file for the qualifier of an out-of-line member definition (e.g. {@code
+   * Widget} for {@code void Widget::draw()}). The qualifier is resolved relative to the current
+   * namespace first, then as a FQN, then as a suffix of a known FQN. If several classes share the
+   * FQN, the first one is returned.
+   *
+   * @param qualifier the class qualifier, '::' separated
+   * @return the class, or null if it is not defined in this file
+   */
+  public ClassDataHandler findClassData(final String qualifier) {
+    final String namespace = getCurrentNamespace();
+    if (!namespace.isEmpty()) {
+      final ClassDataHandler inNamespace = classDataMap.get(namespace + "::" + qualifier);
+      if (inNamespace != null) {
+        return inNamespace;
+      }
+    }
+    final ClassDataHandler exact = classDataMap.get(qualifier);
+    if (exact != null) {
+      return exact;
+    }
+    for (final Map.Entry<String, String> entry : classFqns.entrySet()) {
+      if (entry.getValue().endsWith("::" + qualifier)) {
+        return classDataMap.get(entry.getKey());
+      }
+    }
+    return null;
   }
 
   public boolean isInClassContext() {
@@ -125,11 +187,6 @@ public class CppFileDataHandler extends AbstractFileDataHandler
     builder.clearFunctions();
     for (final MethodDataHandler handler : globalFunctionHandlers) {
       builder.addFunctions(handler.getProtoBufObject());
-    }
-
-    // Set namespace as package name
-    if (builder.getPackageName().isEmpty() && !namespaceStack.isEmpty()) {
-      builder.setPackageName(getCurrentNamespace());
     }
 
     builder.setLanguage(Language.CPP);

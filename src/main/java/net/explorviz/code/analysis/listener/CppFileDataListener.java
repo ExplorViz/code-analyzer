@@ -97,10 +97,8 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
     }
 
     if (namespaceName != null) {
+      // The handler uses the first top-level namespace as the package name
       fileDataHandler.enterNamespace(namespaceName);
-
-      // Use the namespace as the package name
-      fileDataHandler.setPackageName(fileDataHandler.getCurrentNamespace());
 
       LOGGER.atTrace().addArgument(namespaceName).log("Namespace: {}");
     }
@@ -222,12 +220,29 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
 
   @Override
   public void enterEnumeratorDefinition(final CPP14Parser.EnumeratorDefinitionContext ctx) {
+    // Enumerators of an anonymous enum belong to no enum type; they must not be added to the
+    // enclosing class.
+    final CPP14Parser.EnumSpecifierContext enumSpecifier = findEnclosingEnumSpecifier(ctx);
+    if (enumSpecifier == null
+        || enumSpecifier.enumHead() == null
+        || enumSpecifier.enumHead().Identifier() == null) {
+      return;
+    }
     if (ctx.enumerator() != null && ctx.enumerator().Identifier() != null) {
       final var classData = fileDataHandler.getCurrentClassData();
       if (classData != null) {
         classData.addEnumConstant(ctx.enumerator().Identifier().getText());
       }
     }
+  }
+
+  private static CPP14Parser.EnumSpecifierContext findEnclosingEnumSpecifier(
+      final ParserRuleContext ctx) {
+    ParserRuleContext current = ctx.getParent();
+    while (current != null && !(current instanceof CPP14Parser.EnumSpecifierContext)) {
+      current = current.getParent();
+    }
+    return (CPP14Parser.EnumSpecifierContext) current;
   }
 
   // --- Function / Method handling ---
@@ -240,29 +255,35 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
       return;
     }
 
-    functionCount++;
-
     final String functionName = extractFunctionName(ctx.declarator());
     if (functionName == null) {
+      functionCount++;
       return;
     }
 
-    // Extract return type from declSpecifierSeq
-    String returnType = "void";
-    if (ctx.declSpecifierSeq() != null) {
-      returnType = extractTypeFromDeclSpecifierSeq(ctx.declSpecifierSeq());
+    String returnType = extractReturnType(ctx.declSpecifierSeq(), ctx.declarator());
+    String qualifiedName = extractQualifiedFunctionName(ctx.declarator());
+
+    // The grammar parses an out-of-line constructor or destructor definition such as
+    // "Widget::Widget(int) {}" as the type "Widget" followed by the declarator "::Widget(int)".
+    if (qualifiedName != null && qualifiedName.startsWith("::")) {
+      final String typeName = extractLastTypeSpecifier(ctx.declSpecifierSeq());
+      if (typeName != null) {
+        final String simpleTypeName = getSimpleName(stripTemplateArguments(typeName));
+        if (functionName.equals(simpleTypeName) || functionName.equals("~" + simpleTypeName)) {
+          qualifiedName = typeName + qualifiedName;
+          returnType = "void";
+        }
+      }
     }
 
     // Extract parameters
     final List<String> paramTypes = extractParameterTypes(ctx.declarator());
-
-    // Calculate LOC
-    final int functionLoc = calculateLoc(ctx);
+    final String methodKey = buildMethodKey(functionName, paramTypes, ctx.declarator());
 
     if (fileDataHandler.isInClassContext()) {
+      functionCount++;
       // Method inside a class
-      final String methodFqn = functionName + "#" + paramTypes.hashCode();
-
       final var classData = fileDataHandler.getCurrentClassData();
       if (classData != null) {
         // Check if it is a constructor (name matches class name)
@@ -272,65 +293,130 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
 
         final MethodDataHandler methodData;
         if (functionName.equals(currentClassName)) {
-          methodData = classData.addConstructor(functionName, methodFqn);
+          methodData = classData.addConstructor(functionName, methodKey);
+        } else if (functionName.startsWith("~")) {
+          methodData = classData.addMethod(functionName, methodKey, "void");
         } else {
-          // Check if it is a destructor
-          if (functionName.startsWith("~")) {
-            methodData = classData.addMethod(functionName, methodFqn, "void");
-          } else {
-            methodData = classData.addMethod(functionName, methodFqn, returnType);
-          }
+          methodData = classData.addMethod(functionName, methodKey, returnType);
         }
-
-        // Add modifiers
-        addFunctionModifiers(methodData, ctx);
-
-        // Add parameters
-        addFunctionParameters(methodData, ctx.declarator());
-
-        // Set line numbers
-        if (ctx.start != null && ctx.stop != null) {
-          methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
-        }
-
-        methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodData.addMetric(LINE_COUNT, String.valueOf(functionLoc));
+        fillFunctionDefinition(methodData, ctx);
 
         LOGGER.atTrace().addArgument(functionName).log("Class method: {}");
       }
-    } else {
-      // Global function (or namespace-level function)
-      // Check for qualified names (e.g., ClassName::method)
-      final String qualifiedName = extractQualifiedFunctionName(ctx.declarator());
-      if (qualifiedName != null && qualifiedName.contains("::")) {
-        // This is a method definition outside the class body (e.g., void Foo::bar())
-        // Treat it as a global function for now since the class context is not
-        // available
-        final var methodHandler = fileDataHandler.addGlobalFunction(qualifiedName, returnType);
+      return;
+    }
 
-        if (ctx.start != null && ctx.stop != null) {
-          methodHandler.setLines(ctx.start.getLine(), ctx.stop.getLine());
+    // Global function (or namespace-level function)
+    // Check for qualified names (e.g., ClassName::method)
+    if (qualifiedName != null && qualifiedName.contains("::")) {
+      // This is a method definition outside the class body (e.g., void Foo::bar()). If the class
+      // is defined in this file, the definition replaces the matching declaration.
+      final String qualifier =
+          stripTemplateArguments(qualifiedName.substring(0, qualifiedName.lastIndexOf("::")));
+      final var classData = fileDataHandler.findClassData(qualifier);
+      if (classData != null) {
+        final MethodDataHandler declaration = classData.getMethod(methodKey);
+        if (declaration == null) {
+          functionCount++;
         }
-        methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodHandler.addMetric(LINE_COUNT, String.valueOf(functionLoc));
-
-        addFunctionParameters(methodHandler, ctx.declarator());
+        final MethodDataHandler methodData;
+        if (functionName.equals(getSimpleName(qualifier))) {
+          methodData = classData.putConstructor(functionName, methodKey);
+        } else if (functionName.startsWith("~")) {
+          methodData = classData.putMethod(functionName, methodKey, "void");
+        } else {
+          methodData = classData.putMethod(functionName, methodKey, returnType);
+        }
+        if (declaration != null) {
+          // Keep modifiers that only the declaration carries (e.g. virtual, static)
+          for (final String modifier : declaration.getProtoBufObject().getModifiersList()) {
+            methodData.addModifier(modifier);
+          }
+        }
+        fillFunctionDefinition(methodData, ctx);
 
         LOGGER.atTrace().addArgument(qualifiedName).log("Out-of-class method definition: {}");
-      } else {
-        final var methodHandler = fileDataHandler.addGlobalFunction(functionName, returnType);
+        return;
+      }
 
-        if (ctx.start != null && ctx.stop != null) {
-          methodHandler.setLines(ctx.start.getLine(), ctx.stop.getLine());
-        }
-        methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-        methodHandler.addMetric(LINE_COUNT, String.valueOf(functionLoc));
+      // The class is not part of this file, keep the definition as a global function
+      functionCount++;
+      final var methodHandler = fileDataHandler.addGlobalFunction(qualifiedName, returnType);
+      fillFunctionDefinition(methodHandler, ctx);
 
-        addFunctionParameters(methodHandler, ctx.declarator());
+      LOGGER.atTrace().addArgument(qualifiedName).log("Out-of-class method definition: {}");
+    } else {
+      functionCount++;
+      final var methodHandler = fileDataHandler.addGlobalFunction(functionName, returnType);
+      if (ctx.start != null && ctx.stop != null) {
+        methodHandler.setLines(ctx.start.getLine(), ctx.stop.getLine());
+      }
+      methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+      methodHandler.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
 
-        LOGGER.atTrace().addArgument(functionName).log("Global function: {}");
+      addFunctionParameters(methodHandler, ctx.declarator());
+
+      LOGGER.atTrace().addArgument(functionName).log("Global function: {}");
+    }
+  }
+
+  /** Adds modifiers, parameters, lines and size metrics of a function definition. */
+  private void fillFunctionDefinition(
+      final MethodDataHandler methodData, final CPP14Parser.FunctionDefinitionContext ctx) {
+    addFunctionModifiers(methodData, ctx);
+    addFunctionParameters(methodData, ctx.declarator());
+    if (ctx.start != null && ctx.stop != null) {
+      methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
+    }
+    methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+    methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+  }
+
+  /**
+   * Builds the key of a method within its class from its name, parameter types and qualifiers, so
+   * that overloads get distinct keys and a declaration and its out-of-line definition share one.
+   */
+  private String buildMethodKey(
+      final String name, final List<String> paramTypes, final CPP14Parser.DeclaratorContext decl) {
+    final StringBuilder key = new StringBuilder(name).append('#').append(paramTypes.hashCode());
+    final CPP14Parser.ParametersAndQualifiersContext params = findParametersAndQualifiers(decl);
+    if (params != null) {
+      if (params.cvQualifierSeq() != null) {
+        key.append('#').append(params.cvQualifierSeq().getText());
+      }
+      if (params.refQualifier() != null) {
+        key.append('#').append(params.refQualifier().getText());
       }
     }
+    return key.toString();
+  }
+
+  /** Returns the text of the last declSpecifier if it is a type specifier, otherwise null. */
+  private static String extractLastTypeSpecifier(final CPP14Parser.DeclSpecifierSeqContext ctx) {
+    if (ctx == null || ctx.declSpecifier().isEmpty()) {
+      return null;
+    }
+    final CPP14Parser.DeclSpecifierContext last =
+        ctx.declSpecifier().get(ctx.declSpecifier().size() - 1);
+    if (last.typeSpecifier() == null || last.typeSpecifier().trailingTypeSpecifier() == null) {
+      return null;
+    }
+    return last.typeSpecifier().trailingTypeSpecifier().getText();
+  }
+
+  private static String stripTemplateArguments(final String name) {
+    final StringBuilder result = new StringBuilder();
+    int depth = 0;
+    for (final char c : name.toCharArray()) {
+      if (c == '<') {
+        depth++;
+      } else if (c == '>') {
+        depth = Math.max(0, depth - 1);
+      } else if (depth == 0) {
+        result.append(c);
+      }
+    }
+    return result.toString();
   }
 
   // --- Member field handling ---
@@ -339,9 +425,6 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
   public void enterMemberDeclaration(final CPP14Parser.MemberDeclarationContext ctx) {
     // Function definitions with bodies are handled by enterFunctionDefinition
     if (ctx.functionDefinition() != null) {
-      return;
-    }
-    if (ctx.declSpecifierSeq() == null) {
       return;
     }
     if (ctx.memberDeclaratorList() == null) {
@@ -353,7 +436,9 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
       return;
     }
 
-    final String declaredType = extractTypeFromDeclSpecifierSeq(ctx.declSpecifierSeq());
+    final String currentClassFqn = fileDataHandler.getCurrentClassFqnOrNull();
+    final String currentClassName = currentClassFqn != null ? getSimpleName(currentClassFqn) : null;
+    final boolean isTypedef = hasTypedef(ctx.declSpecifierSeq());
 
     for (final CPP14Parser.MemberDeclaratorContext memberDecl :
         ctx.memberDeclaratorList().memberDeclarator()) {
@@ -366,21 +451,34 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
         continue;
       }
 
-      // Declarators with parameter lists are method declarations (incl. pure virtual).
-      if (findParametersAndQualifiers(memberDecl.declarator()) != null) {
+      // Declarators with parameter lists are method declarations (incl. constructors,
+      // destructors and pure virtual methods). Declarations without declSpecifierSeq are
+      // constructors, destructors or conversion functions.
+      if (!isTypedef && isFunctionDeclarator(memberDecl.declarator())) {
         functionCount++;
-        final String methodFqn = fileDataHandler.getCurrentClassFqnOrNull() + "::" + name;
-        final MethodDataHandler methodData = classData.addMethod(name, methodFqn, declaredType);
-        final List<String> modifiers = new ArrayList<>();
-        if (ctx.declSpecifierSeq().getText().contains("virtual")) {
-          modifiers.add("virtual");
+        final List<String> paramTypes = extractParameterTypes(memberDecl.declarator());
+        final String methodKey = buildMethodKey(name, paramTypes, memberDecl.declarator());
+        final MethodDataHandler methodData;
+        if (name.equals(currentClassName)) {
+          methodData = classData.addConstructor(name, methodKey);
+        } else if (name.startsWith("~")) {
+          methodData = classData.addMethod(name, methodKey, "void");
+        } else {
+          methodData =
+              classData.addMethod(
+                  name,
+                  methodKey,
+                  extractReturnType(ctx.declSpecifierSeq(), memberDecl.declarator()));
         }
-        if (memberDecl.pureSpecifier() != null
-            || (memberDecl.getText() != null && memberDecl.getText().contains("=0"))) {
-          modifiers.add("pure");
+        addDeclSpecifierModifiers(methodData, ctx.declSpecifierSeq());
+        if (memberDecl.virtualSpecifierSeq() != null) {
+          for (final CPP14Parser.VirtualSpecifierContext virtSpec :
+              memberDecl.virtualSpecifierSeq().virtualSpecifier()) {
+            methodData.addModifier(virtSpec.getText());
+          }
         }
-        for (final String modifier : modifiers) {
-          methodData.addModifier(modifier);
+        if (isPureSpecified(memberDecl)) {
+          methodData.addModifier("pure");
         }
         addFunctionParameters(methodData, memberDecl.declarator());
         if (ctx.start != null && ctx.stop != null) {
@@ -391,9 +489,42 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
         continue;
       }
 
-      final List<String> modifiers = new ArrayList<>();
-      classData.addField(name, declaredType, modifiers);
+      if (ctx.declSpecifierSeq() == null || isTypedef) {
+        continue;
+      }
+      final String fieldType =
+          extractTypeFromDeclSpecifierSeq(ctx.declSpecifierSeq())
+              + extractPointerSuffix(memberDecl.declarator());
+      classData.addField(name, fieldType, new ArrayList<>());
     }
+  }
+
+  /**
+   * Whether a member declarator is pure virtual ({@code = 0}). The grammar only produces a
+   * pureSpecifier if its predicate accepts the declarator shape (e.g. not for pointer return
+   * types), otherwise {@code = 0} is parsed as an initializer of the function declarator.
+   */
+  private static boolean isPureSpecified(final CPP14Parser.MemberDeclaratorContext memberDecl) {
+    if (memberDecl.pureSpecifier() != null) {
+      return true;
+    }
+    final CPP14Parser.BraceOrEqualInitializerContext init = memberDecl.braceOrEqualInitializer();
+    return init != null
+        && init.Assign() != null
+        && init.initializerClause() != null
+        && "0".equals(init.initializerClause().getText());
+  }
+
+  private static boolean hasTypedef(final CPP14Parser.DeclSpecifierSeqContext ctx) {
+    if (ctx == null) {
+      return false;
+    }
+    for (final CPP14Parser.DeclSpecifierContext declSpec : ctx.declSpecifier()) {
+      if (declSpec.Typedef() != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // --- Access specifier handling ---
@@ -492,23 +623,36 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
       if (ctx.unqualifiedId().Identifier() != null) {
         return ctx.unqualifiedId().Identifier().getText();
       }
-      // Handle destructor names (~ClassName)
-      if (ctx.unqualifiedId().Tilde() != null) {
-        return "~" + ctx.unqualifiedId().className().getText();
-      }
-      // Handle operator overloading
-      if (ctx.unqualifiedId().operatorFunctionId() != null) {
-        return ctx.unqualifiedId().operatorFunctionId().getText();
-      }
+      return extractUnqualifiedIdName(ctx.unqualifiedId());
     }
     if (ctx.qualifiedId() != null && ctx.qualifiedId().unqualifiedId() != null) {
-      if (ctx.qualifiedId().unqualifiedId().Identifier() != null) {
-        return ctx.qualifiedId().unqualifiedId().Identifier().getText();
+      return extractUnqualifiedIdName(ctx.qualifiedId().unqualifiedId());
+    }
+    return null;
+  }
+
+  private String extractUnqualifiedIdName(final CPP14Parser.UnqualifiedIdContext ctx) {
+    if (ctx.Identifier() != null) {
+      return ctx.Identifier().getText();
+    }
+    // Handle destructor names (~ClassName, ~decltype(x))
+    if (ctx.Tilde() != null) {
+      if (ctx.className() != null) {
+        return "~" + ctx.className().getText();
       }
-      // Handle destructor
-      if (ctx.qualifiedId().unqualifiedId().Tilde() != null) {
-        return "~" + ctx.qualifiedId().unqualifiedId().className().getText();
+      if (ctx.decltypeSpecifier() != null) {
+        return "~" + ctx.decltypeSpecifier().getText();
       }
+      return null;
+    }
+    // Handle operator overloading
+    if (ctx.operatorFunctionId() != null) {
+      return ctx.operatorFunctionId().getText();
+    }
+    // Handle conversion functions (operator bool)
+    if (ctx.conversionFunctionId() != null
+        && ctx.conversionFunctionId().conversionTypeId() != null) {
+      return "operator " + ctx.conversionFunctionId().conversionTypeId().getText();
     }
     return null;
   }
@@ -518,17 +662,33 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
    * definitions).
    */
   private String extractQualifiedFunctionName(final CPP14Parser.DeclaratorContext ctx) {
-    if (ctx.pointerDeclarator() != null && ctx.pointerDeclarator().noPointerDeclarator() != null) {
-      final CPP14Parser.NoPointerDeclaratorContext noPtr =
-          ctx.pointerDeclarator().noPointerDeclarator();
-      if (noPtr.declaratorId() != null && noPtr.declaratorId().idExpression() != null) {
-        return noPtr.declaratorId().idExpression().getText();
-      }
-      if (noPtr.noPointerDeclarator() != null) {
-        return extractQualifiedFromNoPointer(noPtr.noPointerDeclarator());
-      }
+    final CPP14Parser.NoPointerDeclaratorContext noPtr = getNoPointerDeclarator(ctx);
+    return noPtr != null ? extractQualifiedFromNoPointer(noPtr) : null;
+  }
+
+  /** Returns the noPointerDeclarator of both declarator alternatives. */
+  private static CPP14Parser.NoPointerDeclaratorContext getNoPointerDeclarator(
+      final CPP14Parser.DeclaratorContext ctx) {
+    if (ctx.pointerDeclarator() != null) {
+      return ctx.pointerDeclarator().noPointerDeclarator();
     }
-    return null;
+    return ctx.noPointerDeclarator();
+  }
+
+  /**
+   * Whether a declarator declares a function (as opposed to e.g. a pointer to a function or a
+   * variable): the declarator id is directly followed by a parameter list.
+   */
+  private static boolean isFunctionDeclarator(final CPP14Parser.DeclaratorContext ctx) {
+    if (ctx.parametersAndQualifiers() != null) {
+      // noPointerDeclarator parametersAndQualifiers trailingReturnType
+      return ctx.noPointerDeclarator() != null && ctx.noPointerDeclarator().declaratorId() != null;
+    }
+    final CPP14Parser.NoPointerDeclaratorContext noPtr = getNoPointerDeclarator(ctx);
+    return noPtr != null
+        && noPtr.parametersAndQualifiers() != null
+        && noPtr.noPointerDeclarator() != null
+        && noPtr.noPointerDeclarator().declaratorId() != null;
   }
 
   private String extractQualifiedFromNoPointer(final CPP14Parser.NoPointerDeclaratorContext ctx) {
@@ -557,6 +717,41 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
       return extractNameFromNoPointerDeclarator(ctx.noPointerDeclarator());
     }
     return null;
+  }
+
+  /**
+   * Extract the return type of a function: the trailing return type if present, otherwise the
+   * declSpecifierSeq type plus the pointer operators of the declarator.
+   */
+  private String extractReturnType(
+      final CPP14Parser.DeclSpecifierSeqContext declSpecifierSeq,
+      final CPP14Parser.DeclaratorContext declarator) {
+    if (declarator.trailingReturnType() != null) {
+      final CPP14Parser.TrailingReturnTypeContext trailing = declarator.trailingReturnType();
+      final StringBuilder typeBuilder = new StringBuilder();
+      if (trailing.trailingTypeSpecifierSeq() != null) {
+        for (final CPP14Parser.TrailingTypeSpecifierContext spec :
+            trailing.trailingTypeSpecifierSeq().trailingTypeSpecifier()) {
+          if (spec.cvQualifier() != null) {
+            continue;
+          }
+          if (typeBuilder.length() > 0) {
+            typeBuilder.append(' ');
+          }
+          typeBuilder.append(spec.getText());
+        }
+      }
+      if (typeBuilder.length() > 0) {
+        if (trailing.abstractDeclarator() != null) {
+          typeBuilder.append(extractAbstractPointerSuffix(trailing.abstractDeclarator()));
+        }
+        return typeBuilder.toString();
+      }
+    }
+    if (declSpecifierSeq == null) {
+      return "void";
+    }
+    return extractTypeFromDeclSpecifierSeq(declSpecifierSeq) + extractPointerSuffix(declarator);
   }
 
   /**
@@ -653,6 +848,10 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
   /** Find the parametersAndQualifiers context within a declarator. */
   private CPP14Parser.ParametersAndQualifiersContext findParametersAndQualifiers(
       final CPP14Parser.DeclaratorContext ctx) {
+    if (ctx.parametersAndQualifiers() != null) {
+      // noPointerDeclarator parametersAndQualifiers trailingReturnType
+      return ctx.parametersAndQualifiers();
+    }
     if (ctx.pointerDeclarator() != null) {
       return findParamsInNoPointerDeclarator(ctx.pointerDeclarator().noPointerDeclarator());
     }
@@ -679,22 +878,28 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
   /** Add function modifiers (virtual, static, inline, etc.) to the method handler. */
   private void addFunctionModifiers(
       final MethodDataHandler methodData, final CPP14Parser.FunctionDefinitionContext ctx) {
-    if (ctx.declSpecifierSeq() != null) {
-      for (final CPP14Parser.DeclSpecifierContext declSpec :
-          ctx.declSpecifierSeq().declSpecifier()) {
-        if (declSpec.functionSpecifier() != null) {
-          methodData.addModifier(declSpec.functionSpecifier().getText());
-        } else if (declSpec.storageClassSpecifier() != null) {
-          methodData.addModifier(declSpec.storageClassSpecifier().getText());
-        }
-      }
-    }
+    addDeclSpecifierModifiers(methodData, ctx.declSpecifierSeq());
 
     // Check for virtual specifiers (override, final)
     if (ctx.virtualSpecifierSeq() != null) {
       for (final CPP14Parser.VirtualSpecifierContext virtSpec :
           ctx.virtualSpecifierSeq().virtualSpecifier()) {
         methodData.addModifier(virtSpec.getText());
+      }
+    }
+  }
+
+  /** Add function and storage class specifiers (virtual, explicit, static, ...) as modifiers. */
+  private void addDeclSpecifierModifiers(
+      final MethodDataHandler methodData, final CPP14Parser.DeclSpecifierSeqContext ctx) {
+    if (ctx == null) {
+      return;
+    }
+    for (final CPP14Parser.DeclSpecifierContext declSpec : ctx.declSpecifier()) {
+      if (declSpec.functionSpecifier() != null) {
+        methodData.addModifier(declSpec.functionSpecifier().getText());
+      } else if (declSpec.storageClassSpecifier() != null) {
+        methodData.addModifier(declSpec.storageClassSpecifier().getText());
       }
     }
   }
@@ -786,27 +991,48 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
   }
 
   /**
-   * Check if a parameter declaration contains pointer operators (e.g. int *p) and return the
-   * pointer suffix ("*", "&", "&&") if so.
+   * Return the pointer suffix ("*", "&", "&&", ...) of a parameter declaration (e.g. int *p, or the
+   * unnamed int*).
    */
   private String extractPointerSuffix(final CPP14Parser.ParameterDeclarationContext param) {
-    if (param.declarator() != null && param.declarator().pointerDeclarator() != null) {
-      final var ptrDecl = param.declarator().pointerDeclarator();
-      if (ptrDecl.pointerOperator() != null && !ptrDecl.pointerOperator().isEmpty()) {
-        final StringBuilder suffix = new StringBuilder();
-        for (final CPP14Parser.PointerOperatorContext ptrOp : ptrDecl.pointerOperator()) {
-          if (ptrOp.Star() != null) {
-            suffix.append("*");
-          } else if (ptrOp.AndAnd() != null) {
-            suffix.append("&&");
-          } else if (ptrOp.And() != null) {
-            suffix.append("&");
-          }
-        }
-        return suffix.toString();
-      }
+    if (param.declarator() != null) {
+      return extractPointerSuffix(param.declarator());
+    }
+    if (param.abstractDeclarator() != null) {
+      return extractAbstractPointerSuffix(param.abstractDeclarator());
     }
     return "";
+  }
+
+  /** Return the pointer suffix ("*", "&", "&&", ...) of a declarator's pointer operators. */
+  private String extractPointerSuffix(final CPP14Parser.DeclaratorContext declarator) {
+    if (declarator == null || declarator.pointerDeclarator() == null) {
+      return "";
+    }
+    return pointerOperatorsToString(declarator.pointerDeclarator().pointerOperator());
+  }
+
+  /** Return the pointer suffix of an abstract declarator (e.g. the "*" of an unnamed int*). */
+  private String extractAbstractPointerSuffix(final CPP14Parser.AbstractDeclaratorContext ctx) {
+    if (ctx.pointerAbstractDeclarator() == null) {
+      return "";
+    }
+    return pointerOperatorsToString(ctx.pointerAbstractDeclarator().pointerOperator());
+  }
+
+  private static String pointerOperatorsToString(
+      final List<CPP14Parser.PointerOperatorContext> pointerOperators) {
+    final StringBuilder suffix = new StringBuilder();
+    for (final CPP14Parser.PointerOperatorContext ptrOp : pointerOperators) {
+      if (ptrOp.Star() != null) {
+        suffix.append('*');
+      } else if (ptrOp.AndAnd() != null) {
+        suffix.append("&&");
+      } else if (ptrOp.And() != null) {
+        suffix.append('&');
+      }
+    }
+    return suffix.toString();
   }
 
   /** Check if a declarator contains array brackets (LeftBracket / RightBracket). */
@@ -831,14 +1057,21 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
     return false;
   }
 
-  /** Get comment lines of code by counting tokens on the hidden channel. */
+  /** Counts declared variables, ignoring typedefs and function declarations. */
   @Override
   public void enterSimpleDeclaration(final CPP14Parser.SimpleDeclarationContext ctx) {
-    if (ctx.initDeclaratorList() != null) {
-      variableCount += ctx.initDeclaratorList().initDeclarator().size();
+    if (ctx.initDeclaratorList() == null || hasTypedef(ctx.declSpecifierSeq())) {
+      return;
+    }
+    for (final CPP14Parser.InitDeclaratorContext initDecl :
+        ctx.initDeclaratorList().initDeclarator()) {
+      if (initDecl.declarator() != null && !isFunctionDeclarator(initDecl.declarator())) {
+        variableCount++;
+      }
     }
   }
 
+  /** Get comment lines of code by counting tokens on the hidden channel. */
   private int getCloc(final ParserRuleContext ctx) {
     if (ctx == null || tokens == null) {
       return 0;

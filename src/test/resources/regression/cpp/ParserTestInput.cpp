@@ -154,3 +154,36 @@ std::string moduleHelper(const std::string &path, MarkerInterface *ignored) {
 bool nestedEnumIsAlpha(NestedEnum value) {
     return value == NESTED_ALPHA;
 }
+
+/** Header-style declarations without bodies. */
+class Widget {
+public:
+    Widget();
+    explicit Widget(int size);
+    ~Widget();
+    virtual void draw();
+    void draw(int times);
+    virtual void render() const = 0;
+    void resize(int n = 0);
+    char* name();
+    auto size() const -> int;
+    enum { kMax = 10 };
+
+private:
+    const char* label;
+};
+
+Widget::Widget(int size) : label(0) {
+    (void)size;
+}
+
+void Widget::draw(int times) {
+    for (int i = 0; i < times; i++) {}
+}
+
+int helperPrototype();
+typedef int WidgetId;
+
+auto compute(int a, int b) -> int {
+    return a + b;
+}

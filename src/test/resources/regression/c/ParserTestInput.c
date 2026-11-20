@@ -128,3 +128,17 @@ int module_helper(int value) {
 int top_level_enum_is_one(int value) {
     return value == 0;
 }
+
+struct Node {
+    struct Node *next;
+    char *name;
+    enum { NODE_RED, NODE_BLACK } color;
+};
+
+int add(int a, int b);
+void reset(void);
+typedef struct { int x; int y; } Point;
+
+char *node_name(struct Node *node) {
+    return node->name;
+}

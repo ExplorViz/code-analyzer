@@ -318,6 +318,114 @@
       "sloc": 67.0,
       "lineCount": 79.0
     }
+  }, {
+    "name": "Widget",
+    "type": "CLASS",
+    "fields": [{
+      "name": "label",
+      "type": "char*"
+    }],
+    "functions": [{
+      "name": "Widget",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 161,
+      "endLine": 161
+    }, {
+      "name": "Widget",
+      "isConstructor": true,
+      "modifiers": ["explicit"],
+      "parameters": [{
+        "name": "size",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 176,
+      "endLine": 178
+    }, {
+      "name": "~Widget",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 163,
+      "endLine": 163
+    }, {
+      "name": "draw",
+      "returnType": "void",
+      "modifiers": ["virtual"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 164,
+      "endLine": 164
+    }, {
+      "name": "draw",
+      "returnType": "void",
+      "parameters": [{
+        "name": "times",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 180,
+      "endLine": 182
+    }, {
+      "name": "render",
+      "returnType": "void",
+      "modifiers": ["virtual", "pure"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 166,
+      "endLine": 166
+    }, {
+      "name": "resize",
+      "returnType": "void",
+      "parameters": [{
+        "name": "n",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 167,
+      "endLine": 167
+    }, {
+      "name": "name",
+      "returnType": "char*",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 168,
+      "endLine": 168
+    }, {
+      "name": "size",
+      "returnType": "int",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 169,
+      "endLine": 169
+    }],
+    "metrics": {
+      "sloc": 15.0,
+      "lineCount": 16.0
+    }
   }],
   "functions": [{
     "name": "packagePrivateStaticMethod",
@@ -358,13 +466,29 @@
     },
     "startLine": 154,
     "endLine": 156
+  }, {
+    "name": "compute",
+    "returnType": "int",
+    "parameters": [{
+      "name": "a",
+      "type": "int"
+    }, {
+      "name": "b",
+      "type": "int"
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 187,
+    "endLine": 189
   }],
   "metrics": {
-    "sloc": 107.0,
-    "cloc": 16.0,
-    "functionCount": 22.0,
-    "variableCount": 10.0,
+    "sloc": 133.0,
+    "cloc": 17.0,
+    "functionCount": 32.0,
+    "variableCount": 9.0,
     "importCount": 7.0,
-    "classCount": 7.0
+    "classCount": 8.0
   }
 }
