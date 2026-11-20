@@ -31,5 +31,5 @@ jobs:
           platforms: "linux/amd64,linux/arm64/v8"
           docker-username: ${{ secrets.DOCKER_USERNAME }}
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
-          image-name: ${{ vars.DOCKER_JVM_IMAGE_NAME }}
+          image-name: ${{ vars.DOCKER_IMAGE_NAME }}
           image-tag: ${{ github.event_name == 'workflow_dispatch' && inputs.image_tag || github.ref_name }}

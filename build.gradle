@@ -36,7 +36,8 @@ dependencies {
     implementation 'org.antlr:antlr4-runtime:4.13.2'
 
     // Git
-    implementation 'org.eclipse.jgit:org.eclipse.jgit:7.3.0.202506031305-r'
+    // Quarkus extension for JGit, provides the native image configuration for JGit
+    implementation 'io.quarkiverse.jgit:quarkus-jgit:3.7.0'
 
     // otel
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp-logs:1.22.0-alpha'
