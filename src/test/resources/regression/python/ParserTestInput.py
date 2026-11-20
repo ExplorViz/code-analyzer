@@ -13,7 +13,19 @@ from __future__ import annotations
 import math
 import os.path as osp
 from collections import defaultdict
-from typing import Any, Callable, List, Optional, overload
+from typing import Any, Callable, List, Optional, overload, TYPE_CHECKING
+import json, re as regex
+from os.path import *
+from . import sibling
+from ..pkg.sub import (first_name, second_name as renamed,)
+
+try:
+    import ujson
+except ImportError:
+    ujson = None
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 BLOCK_NOTE = """
 Multi-line
@@ -121,7 +133,14 @@ class ParserTestInput(AbstractBase, MarkerMixin):
                 # local class method
                 pass
 
+        def nested_helper(value: int) -> int:
+            def deeper(inner: int) -> int:
+                return inner + 1
+
+            return deeper(value)
+
         LocalHelper().help()
+        nested_helper(i)
         return f > 0.0 and d > 0.0 and c != "\0"
 
     def abstract_hook(self) -> int:
@@ -172,10 +191,23 @@ def module_helper(path: str, callback: Callable[[str], None]) -> str:
 
 
 def noop_factory() -> MarkerMixin:
+    import functools
+
     class Noop(MarkerMixin):
         def mark(self) -> None:
-            pass
+            def local_in_local_class_method() -> None:
+                pass
 
+            local_in_local_class_method()
+
+    @functools.lru_cache
+    def cached_local() -> int:
+        return 1
+
+    async def async_local() -> None:
+        pass
+
+    cached_local()
     return Noop()
 
 

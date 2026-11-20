@@ -179,4 +179,93 @@ public class PythonFileDataListenerTest {
         List.of("inner_second:15-16"), lines(second.getInnerClasses(0).getFunctionsList()));
     assertEquals(4.0, fileData.getMetricsOrThrow(CommonFileDataListener.CLASS_COUNT));
   }
+
+  @Test
+  public void testNestedFunctionsAreNotMethodsOrGlobalFunctions() {
+    final FileData fileData =
+        parse(
+            """
+            class A:
+                def m(self):
+                    def helper():
+                        def deeper():
+                            pass
+                        return deeper()
+                    return helper()
+
+                def n(self):
+                    pass
+
+            def outer():
+                async def inner():
+                    pass
+
+                class Local:
+                    def method(self):
+                        def local_helper():
+                            pass
+
+                        local_helper()
+
+                return Local
+            """);
+
+    final ClassData classA = fileData.getClasses(0);
+    assertEquals(List.of("m:2-7", "n:9-10"), lines(classA.getFunctionsList()));
+    assertEquals(List.of("outer:12-23"), lines(fileData.getFunctionsList()));
+    final ClassData local = fileData.getClasses(1);
+    assertEquals("Local", local.getName());
+    assertEquals(List.of("method:17-21"), lines(local.getFunctionsList()));
+    // m, n, outer and Local.method; nested functions are not counted
+    assertEquals(4.0, fileData.getMetricsOrThrow(CommonFileDataListener.FUNCTION_COUNT));
+    assertEquals(6.0, classA.getFunctions(0).getMetricsOrThrow(CommonFileDataListener.LINE_COUNT));
+  }
+
+  @Test
+  public void testAllImportNamesAreRecorded() {
+    final FileData fileData =
+        parse(
+            """
+            import a, b.c
+            import d as e
+            from x import y, z as w
+            from x.sub import (p,
+                               q,)
+            from star import *
+            from . import sibling
+            from ..pkg import cousin
+            from .mod import thing
+
+            try:
+                import fast
+            except ImportError:
+                fast = None
+
+            if TYPE_CHECKING:
+                from typing import Iterable
+
+            def f():
+                import local
+            """);
+
+    final List<String> expected =
+        List.of(
+            "a",
+            "b.c",
+            "d",
+            "x.y",
+            "x.z",
+            "x.sub.p",
+            "x.sub.q",
+            "star.*",
+            ".sibling",
+            "..pkg.cousin",
+            ".mod.thing",
+            "fast",
+            "typing.Iterable",
+            "local");
+    assertEquals(expected, fileData.getImportNamesList());
+    assertEquals(
+        (double) expected.size(), fileData.getMetricsOrThrow(CommonFileDataListener.IMPORT_COUNT));
+  }
 }

@@ -1,5 +1,7 @@
 package net.explorviz.code.analysis.listener;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import net.explorviz.code.analysis.antlr.generated.python.PythonLexer;
 import net.explorviz.code.analysis.antlr.generated.python.PythonParser;
 import net.explorviz.code.analysis.antlr.generated.python.PythonParserBaseListener;
@@ -20,6 +22,12 @@ public class PythonFileDataListener extends PythonParserBaseListener
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+
+  /**
+   * Enclosing definitions, innermost first: {@code true} for a function, {@code false} for a class.
+   * A function whose innermost enclosing definition is a function is a local (nested) function.
+   */
+  private final Deque<Boolean> scopes = new ArrayDeque<>();
 
   public PythonFileDataListener(
       final PythonFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
@@ -50,18 +58,61 @@ public class PythonFileDataListener extends PythonParserBaseListener
     addImportAndClassCountMetrics(fileDataHandler);
   }
 
+  /** {@code import a.b, c as d} records {@code a.b} and {@code c}; aliases are dropped. */
   @Override
   public void enterImport_stmt(final PythonParser.Import_stmtContext ctx) {
-    // Extract import statements
-    if (ctx.getText() != null) {
-      final String importText = ctx.getText();
-      fileDataHandler.addImport(importText);
-      LOGGER.atTrace().addArgument(importText).log("Import: {}");
+    if (ctx.dotted_as_names() == null) {
+      return;
     }
+    for (final PythonParser.Dotted_as_nameContext name : ctx.dotted_as_names().dotted_as_name()) {
+      if (name.dotted_name() != null) {
+        addImport(name.dotted_name().getText());
+      }
+    }
+  }
+
+  /**
+   * {@code from x.y import a, b as c} records {@code x.y.a} and {@code x.y.b}, {@code from x import
+   * *} records {@code x.*}. Relative imports keep their leading dots: {@code from . import a}
+   * records {@code .a}, {@code from ..pkg import a} records {@code ..pkg.a}.
+   */
+  @Override
+  public void enterFrom_stmt(final PythonParser.From_stmtContext ctx) {
+    final StringBuilder module = new StringBuilder();
+    for (final var dots : ctx.DOT()) {
+      module.append(dots.getText());
+    }
+    for (final var ellipsis : ctx.ELLIPSIS()) {
+      module.append(ellipsis.getText());
+    }
+    final boolean relativeOnly = ctx.dotted_name() == null;
+    if (!relativeOnly) {
+      module.append(ctx.dotted_name().getText()).append('.');
+    }
+    final String prefix = module.toString();
+
+    if (ctx.STAR() != null) {
+      addImport(prefix + "*");
+      return;
+    }
+    if (ctx.import_as_names() == null) {
+      return;
+    }
+    for (final PythonParser.Import_as_nameContext name : ctx.import_as_names().import_as_name()) {
+      if (!name.name().isEmpty()) {
+        addImport(prefix + name.name(0).getText());
+      }
+    }
+  }
+
+  private void addImport(final String importName) {
+    fileDataHandler.addImport(importName);
+    LOGGER.atTrace().addArgument(importName).log("Import: {}");
   }
 
   @Override
   public void enterClassdef(final PythonParser.ClassdefContext ctx) {
+    scopes.push(Boolean.FALSE);
     // Extract class name
     if (ctx.name() != null) {
       final String className = ctx.name().getText();
@@ -103,13 +154,20 @@ public class PythonFileDataListener extends PythonParserBaseListener
 
   @Override
   public void exitClassdef(final PythonParser.ClassdefContext ctx) {
-    // Leave class
-    fileDataHandler.leaveClass();
+    scopes.pop();
+    if (ctx.name() != null) {
+      fileDataHandler.leaveClass();
+    }
   }
 
   @Override
   public void enterFuncdef(final PythonParser.FuncdefContext ctx) {
-    if (ctx.name() == null) {
+    final boolean nested = Boolean.TRUE.equals(scopes.peek());
+    scopes.push(Boolean.TRUE);
+    // A function defined inside another function is a local helper of that function: it is
+    // neither a method nor a global function, and its lines already belong to the enclosing one.
+    // Like Go function literals it is not emitted and not counted.
+    if (nested || ctx.name() == null) {
       return;
     }
 
@@ -159,6 +217,11 @@ public class PythonFileDataListener extends PythonParserBaseListener
 
       LOGGER.atTrace().addArgument(functionName).log("Global function: {}");
     }
+  }
+
+  @Override
+  public void exitFuncdef(final PythonParser.FuncdefContext ctx) {
+    scopes.pop();
   }
 
   /**

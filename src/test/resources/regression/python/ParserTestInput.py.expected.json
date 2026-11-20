@@ -2,7 +2,7 @@
   "fileHash": "regression-hash",
   "filePath": "ParserTestInput.py",
   "language": "PYTHON",
-  "importNames": ["importmath", "importos.pathasosp"],
+  "importNames": ["__future__.annotations", "math", "os.path", "collections.defaultdict", "typing.Any", "typing.Callable", "typing.List", "typing.Optional", "typing.overload", "typing.TYPE_CHECKING", "json", "re", "os.path.*", ".sibling", "..pkg.sub.first_name", "..pkg.sub.second_name", "ujson", "collections.abc.Iterable", "functools"],
   "classes": [{
     "name": "AbstractBase",
     "functions": [{
@@ -12,8 +12,8 @@
         "sloc": 2.0,
         "lineCount": 3.0
       },
-      "startLine": 27,
-      "endLine": 29
+      "startLine": 39,
+      "endLine": 41
     }, {
       "name": "get_base_value",
       "returnType": "None",
@@ -21,8 +21,8 @@
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 31,
-      "endLine": 33
+      "startLine": 43,
+      "endLine": 45
     }, {
       "name": "abstract_hook",
       "returnType": "None",
@@ -30,8 +30,8 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 35,
-      "endLine": 36
+      "startLine": 47,
+      "endLine": 48
     }],
     "metrics": {
       "sloc": 9.0,
@@ -46,8 +46,8 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 42,
-      "endLine": 43
+      "startLine": 54,
+      "endLine": 55
     }, {
       "name": "default_mark",
       "returnType": "None",
@@ -55,8 +55,8 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 45,
-      "endLine": 46
+      "startLine": 57,
+      "endLine": 58
     }],
     "metrics": {
       "sloc": 6.0,
@@ -74,8 +74,8 @@
           "sloc": 2.0,
           "lineCount": 3.0
         },
-        "startLine": 120,
-        "endLine": 122
+        "startLine": 132,
+        "endLine": 134
       }],
       "metrics": {
         "sloc": 3.0,
@@ -90,8 +90,8 @@
           "sloc": 2.0,
           "lineCount": 2.0
         },
-        "startLine": 133,
-        "endLine": 134
+        "startLine": 152,
+        "endLine": 153
       }, {
         "name": "get_nested_field",
         "returnType": "None",
@@ -99,8 +99,8 @@
           "sloc": 2.0,
           "lineCount": 2.0
         },
-        "startLine": 136,
-        "endLine": 137
+        "startLine": 155,
+        "endLine": 156
       }],
       "metrics": {
         "sloc": 6.0,
@@ -115,8 +115,8 @@
           "sloc": 2.0,
           "lineCount": 3.0
         },
-        "startLine": 142,
-        "endLine": 144
+        "startLine": 161,
+        "endLine": 163
       }],
       "metrics": {
         "sloc": 4.0,
@@ -131,8 +131,8 @@
           "sloc": 2.0,
           "lineCount": 2.0
         },
-        "startLine": 154,
-        "endLine": 155
+        "startLine": 173,
+        "endLine": 174
       }],
       "metrics": {
         "sloc": 8.0,
@@ -146,8 +146,8 @@
         "sloc": 5.0,
         "lineCount": 5.0
       },
-      "startLine": 59,
-      "endLine": 63
+      "startLine": 71,
+      "endLine": 75
     }, {
       "name": "run",
       "returnType": "None",
@@ -155,8 +155,8 @@
         "sloc": 2.0,
         "lineCount": 3.0
       },
-      "startLine": 65,
-      "endLine": 67
+      "startLine": 77,
+      "endLine": 79
     }, {
       "name": "call",
       "returnType": "None",
@@ -164,8 +164,8 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 69,
-      "endLine": 70
+      "startLine": 81,
+      "endLine": 82
     }, {
       "name": "generic_method",
       "returnType": "None",
@@ -173,17 +173,17 @@
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 72,
-      "endLine": 74
+      "startLine": 84,
+      "endLine": 86
     }, {
       "name": "do_work",
       "returnType": "None",
       "metrics": {
-        "sloc": 44.0,
-        "lineCount": 50.0
+        "sloc": 49.0,
+        "lineCount": 57.0
       },
-      "startLine": 76,
-      "endLine": 125
+      "startLine": 88,
+      "endLine": 144
     }, {
       "name": "abstract_hook",
       "returnType": "None",
@@ -191,12 +191,12 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 127,
-      "endLine": 128
+      "startLine": 146,
+      "endLine": 147
     }],
     "metrics": {
-      "sloc": 79.0,
-      "lineCount": 107.0
+      "sloc": 84.0,
+      "lineCount": 114.0
     }
   }, {
     "name": "Noop",
@@ -205,15 +205,15 @@
       "name": "mark",
       "returnType": "None",
       "metrics": {
-        "sloc": 2.0,
-        "lineCount": 2.0
+        "sloc": 4.0,
+        "lineCount": 5.0
       },
-      "startLine": 176,
-      "endLine": 177
+      "startLine": 197,
+      "endLine": 201
     }],
     "metrics": {
-      "sloc": 3.0,
-      "lineCount": 3.0
+      "sloc": 5.0,
+      "lineCount": 6.0
     }
   }, {
     "name": "PropertyHolder",
@@ -224,8 +224,8 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 186,
-      "endLine": 187
+      "startLine": 218,
+      "endLine": 219
     }, {
       "name": "value",
       "returnType": "None",
@@ -233,8 +233,8 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 190,
-      "endLine": 191
+      "startLine": 222,
+      "endLine": 223
     }, {
       "name": "convert",
       "returnType": "None",
@@ -242,8 +242,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 194,
-      "endLine": 194
+      "startLine": 226,
+      "endLine": 226
     }, {
       "name": "convert",
       "returnType": "None",
@@ -251,8 +251,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 197,
-      "endLine": 197
+      "startLine": 229,
+      "endLine": 229
     }, {
       "name": "convert",
       "returnType": "None",
@@ -260,8 +260,8 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 199,
-      "endLine": 200
+      "startLine": 231,
+      "endLine": 232
     }, {
       "name": "trailing_comment",
       "returnType": "None",
@@ -269,8 +269,8 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 202,
-      "endLine": 203
+      "startLine": 234,
+      "endLine": 235
     }, {
       "name": "last",
       "returnType": "None",
@@ -278,8 +278,8 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 206,
-      "endLine": 207
+      "startLine": 238,
+      "endLine": 239
     }],
     "metrics": {
       "sloc": 18.0,
@@ -294,8 +294,8 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 226,
-      "endLine": 227
+      "startLine": 258,
+      "endLine": 259
     }],
     "metrics": {
       "sloc": 3.0,
@@ -310,8 +310,8 @@
         "sloc": 2.0,
         "lineCount": 2.0
       },
-      "startLine": 230,
-      "endLine": 231
+      "startLine": 262,
+      "endLine": 263
     }],
     "metrics": {
       "sloc": 3.0,
@@ -326,8 +326,8 @@
       "sloc": 3.0,
       "lineCount": 3.0
     },
-    "startLine": 158,
-    "endLine": 160
+    "startLine": 177,
+    "endLine": 179
   }, {
     "name": "package_private_static_method",
     "returnType": "None",
@@ -335,8 +335,8 @@
       "sloc": 2.0,
       "lineCount": 3.0
     },
-    "startLine": 163,
-    "endLine": 165
+    "startLine": 182,
+    "endLine": 184
   }, {
     "name": "module_helper",
     "returnType": "None",
@@ -344,17 +344,17 @@
       "sloc": 4.0,
       "lineCount": 4.0
     },
-    "startLine": 168,
-    "endLine": 171
+    "startLine": 187,
+    "endLine": 190
   }, {
     "name": "noop_factory",
     "returnType": "None",
     "metrics": {
-      "sloc": 5.0,
-      "lineCount": 6.0
+      "sloc": 14.0,
+      "lineCount": 19.0
     },
-    "startLine": 174,
-    "endLine": 179
+    "startLine": 193,
+    "endLine": 211
   }, {
     "name": "one_liner",
     "returnType": "None",
@@ -362,8 +362,8 @@
       "sloc": 1.0,
       "lineCount": 1.0
     },
-    "startLine": 210,
-    "endLine": 210
+    "startLine": 242,
+    "endLine": 242
   }, {
     "name": "trailing_comment_function",
     "returnType": "None",
@@ -371,8 +371,8 @@
       "sloc": 2.0,
       "lineCount": 2.0
     },
-    "startLine": 214,
-    "endLine": 215
+    "startLine": 246,
+    "endLine": 247
   }, {
     "name": "multi_line_string_function",
     "returnType": "None",
@@ -380,15 +380,15 @@
       "sloc": 2.0,
       "lineCount": 3.0
     },
-    "startLine": 219,
-    "endLine": 221
+    "startLine": 251,
+    "endLine": 253
   }],
   "metrics": {
-    "sloc": 147.0,
+    "sloc": 171.0,
     "cloc": 11.0,
     "functionCount": 33.0,
-    "variableCount": 12.0,
-    "importCount": 2.0,
+    "variableCount": 13.0,
+    "importCount": 19.0,
     "classCount": 11.0
   }
 }
