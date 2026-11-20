@@ -46,22 +46,34 @@ public class KotlinFileDataHandler extends AbstractFileDataHandler
     return String.join(".", packageStack);
   }
 
+  /**
+   * Registers a class and makes it the current class. Types with the same FQN, e.g. local classes
+   * with the same name in different functions, are stored under the unique key {@code fqn#n} so
+   * that neither declaration is lost. The key is used for the class stack, so members and nested
+   * classes are attached to the right declaration; the emitted class name stays {@code name}.
+   */
   public void enterClass(final String name, final String fqn) {
     final ClassDataHandler handler = new ClassDataHandler();
     handler.setName(name);
-    this.classDataMap.put(fqn, handler);
+
+    String key = fqn;
+    int suffix = 2;
+    while (this.classDataMap.containsKey(key)) {
+      key = fqn + "#" + suffix;
+      suffix++;
+    }
+    this.classDataMap.put(key, handler);
 
     if (this.classStack.isEmpty()) {
-      this.rootClasses.add(fqn);
+      this.rootClasses.add(key);
     } else {
-      final String parentClassFqn = this.classStack.peek();
-      final ClassDataHandler parent = this.classDataMap.get(parentClassFqn);
+      final ClassDataHandler parent = this.classDataMap.get(this.classStack.peek());
       if (parent != null) {
-        parent.addInnerClass(fqn, handler);
+        parent.addInnerClass(key, handler);
       }
     }
 
-    this.classStack.push(fqn);
+    this.classStack.push(key);
   }
 
   public void leaveClass() {

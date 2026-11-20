@@ -325,13 +325,191 @@
       "sloc": 3.0,
       "lineCount": 3.0
     }
+  }, {
+    "name": "PropertyScopes",
+    "type": "CLASS",
+    "fields": [{
+      "name": "lazyValue",
+      "type": "Int"
+    }, {
+      "name": "counter",
+      "type": "Int"
+    }, {
+      "name": "lastChar",
+      "type": "Char"
+    }, {
+      "name": "task",
+      "type": "unknown"
+    }],
+    "functions": [{
+      "name": "PropertyScopes",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "seed",
+        "type": "Int"
+      }, {
+        "name": "extra",
+        "type": "Int"
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 221,
+      "endLine": 224
+    }, {
+      "name": "increment",
+      "returnType": "Unit",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 226,
+      "endLine": 229
+    }],
+    "metrics": {
+      "sloc": 32.0,
+      "lineCount": 38.0
+    }
+  }, {
+    "name": "RunnableTask",
+    "type": "CLASS",
+    "implementedInterfaces": ["Runnable"],
+    "fields": [{
+      "name": "state",
+      "type": "Int"
+    }],
+    "functions": [{
+      "name": "run",
+      "returnType": "Unit",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 240,
+      "endLine": 243
+    }],
+    "metrics": {
+      "sloc": 7.0,
+      "lineCount": 8.0
+    }
+  }, {
+    "name": "InterfaceFirst",
+    "type": "CLASS",
+    "implementedInterfaces": ["CallableMarker"],
+    "superclasses": ["AbstractBase.kt::AbstractBase"],
+    "fields": [{
+      "name": "label",
+      "type": "String"
+    }],
+    "functions": [{
+      "name": "call",
+      "returnType": "String",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 249,
+      "endLine": 249
+    }, {
+      "name": "abstractHook",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 251,
+      "endLine": 251
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 7.0
+    }
+  }, {
+    "name": "SingletonBase",
+    "type": "CLASS",
+    "implementedInterfaces": ["Serializable"],
+    "superclasses": ["AbstractBase.kt::AbstractBase"],
+    "functions": [{
+      "name": "abstractHook",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 255,
+      "endLine": 255
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "DelegatingSingleton",
+    "type": "CLASS",
+    "implementedInterfaces": ["CallableMarker"],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
+  }, {
+    "name": "LocalType",
+    "type": "CLASS",
+    "fields": [{
+      "name": "first",
+      "type": "Int"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
+  }, {
+    "name": "LocalType",
+    "type": "CLASS",
+    "fields": [{
+      "name": "second",
+      "type": "String"
+    }],
+    "functions": [{
+      "name": "describe",
+      "returnType": "String",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 268,
+      "endLine": 268
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }],
+  "functions": [{
+    "name": "firstLocalScope",
+    "returnType": "Int",
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    },
+    "startLine": 261,
+    "endLine": 264
+  }, {
+    "name": "secondLocalScope",
+    "returnType": "String",
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 6.0
+    },
+    "startLine": 266,
+    "endLine": 271
   }],
   "metrics": {
-    "sloc": 122.0,
-    "cloc": 33.0,
-    "functionCount": 17.0,
-    "variableCount": 12.0,
+    "sloc": 180.0,
+    "cloc": 43.0,
+    "functionCount": 26.0,
+    "variableCount": 28.0,
     "importCount": 8.0,
-    "classCount": 11.0
+    "classCount": 18.0
   }
 }

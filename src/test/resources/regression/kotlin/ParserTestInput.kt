@@ -185,3 +185,87 @@ data class PointData(val x: Int, val y: Int)
 object ModuleHelper {
     fun moduleHelper(path: String): String = path
 }
+
+/**
+ * Only direct class-body properties are fields; locals in initializers, constructors, accessors
+ * and lambdas are not. Extension properties are typed by their declared type, not the receiver.
+ */
+class PropertyScopes(seed: Int) {
+    val lazyValue: Int by lazy {
+        val lazyLocal = seed * 2
+        lazyLocal
+    }
+
+    var counter: Int = 0
+        get() {
+            val getterLocal = field
+            return getterLocal
+        }
+        set(value) {
+            val setterLocal = value
+            field = setterLocal
+        }
+
+    val String.lastChar: Char
+        get() = this[length - 1]
+
+    private val task = object : Runnable {
+        val anonymousState = 1
+    }
+
+    init {
+        val initLocal = seed
+        counter = initLocal
+    }
+
+    constructor(seed: Int, extra: Int) : this(seed + extra) {
+        val constructorLocal = extra
+        counter = constructorLocal
+    }
+
+    fun increment() {
+        val incrementLocal = counter
+        counter = incrementLocal + 1
+    }
+}
+
+/**
+ * A bare supertype is an interface; only a constructor call names the superclass. The grammar
+ * parses these bodies as a trailing lambda of the last supertype, which must not change the
+ * result.
+ */
+class RunnableTask : Runnable {
+    val state: Int = 1
+
+    override fun run() {
+        val runLocal = state
+        println(runLocal)
+    }
+}
+
+class InterfaceFirst : CallableMarker, AbstractBase(1) {
+    val label: String = "first"
+
+    override fun call(): String = label
+
+    override fun abstractHook(): Int = 1
+}
+
+object SingletonBase : AbstractBase(2), Serializable {
+    override fun abstractHook(): Int = 2
+}
+
+object DelegatingSingleton : CallableMarker by InterfaceFirst()
+
+/** Local classes with the same name in different functions are both kept. */
+fun firstLocalScope(): Int {
+    class LocalType(val first: Int)
+    return LocalType(1).first
+}
+
+fun secondLocalScope(): String {
+    class LocalType(val second: String) {
+        fun describe(): String = second
+    }
+    return LocalType("2").describe()
+}

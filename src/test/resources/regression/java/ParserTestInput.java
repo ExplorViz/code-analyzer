@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 /**
@@ -42,6 +43,16 @@ public strictfp class ParserTestInput extends AbstractBase
 
   private Map<String, List<Integer>> nestedGenericField;
 
+  private List<String[]> arrayElementList;
+
+  private Map<String, byte[]> bytesByName;
+
+  protected Optional<byte[]> optionalBytes;
+
+  private String[][] stringMatrix;
+
+  private List<String>[] listArray;
+
   /**
    * No-arg constructor.
    */
@@ -70,6 +81,14 @@ public strictfp class ParserTestInput extends AbstractBase
 
   public final <T extends Number & Comparable<T>> T genericMethod(final T value) {
     return value;
+  }
+
+  public static <T> List<T> of(final T element) {
+    return List.of(element);
+  }
+
+  protected <T> ParserTestInput(final T seed, final long marker) {
+    this();
   }
 
   private static native void nativeMethod();
@@ -144,7 +163,12 @@ public strictfp class ParserTestInput extends AbstractBase
 
   @Override
   public int abstractHook() {
-    return getBaseValue();
+    class LocalHelper {
+      int helpOther() {
+        return 1;
+      }
+    }
+    return getBaseValue() + new LocalHelper().helpOther();
   }
 
   /** Public static nested class. */
@@ -179,6 +203,12 @@ public strictfp class ParserTestInput extends AbstractBase
     }
 
     void abstractInterfaceMethod();
+
+    <T> T convert(Object source);
+
+    static <T> T identity(final T value) {
+      return value;
+    }
   }
 
   /** Nested enum with constants and a method. */

@@ -8,6 +8,7 @@ import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.KotlinFileDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,6 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
-  private int functionDepth = 0;
 
   public KotlinFileDataListener(
       final KotlinFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
@@ -124,22 +124,84 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
       return;
     }
 
-    final boolean isInterface = ctx.INTERFACE() != null;
     final List<KotlinParser.DelegationSpecifierContext> specifiers =
         ctx.delegationSpecifiers().delegationSpecifier();
 
-    for (int i = 0; i < specifiers.size(); i++) {
-      final String typeName = extractDelegationType(specifiers.get(i));
+    if (ctx.INTERFACE() != null) {
+      for (final KotlinParser.DelegationSpecifierContext specifier : specifiers) {
+        final String typeName = extractDelegationType(specifier);
+        if (typeName != null) {
+          classData.addImplementedInterface(typeName);
+        }
+      }
+      return;
+    }
+
+    // A class without a primary constructor names its superclass without a constructor call and
+    // initializes it via super(...) in a secondary constructor. Kotlin cannot tell a bare class
+    // from an interface without type resolution, so this only applies to the first bare type.
+    final boolean bareSuperclass =
+        ctx.primaryConstructor() == null
+            && specifiers.stream().noneMatch(KotlinFileDataListener::isConstructorCall)
+            && delegatesToSuper(ctx.classBody());
+    addDelegationRelations(classData, specifiers, bareSuperclass);
+  }
+
+  private void addDelegationRelations(
+      final ClassDataHandler classData,
+      final List<KotlinParser.DelegationSpecifierContext> specifiers,
+      final boolean firstBareTypeIsSuperclass) {
+    boolean superclassFound = false;
+    for (final KotlinParser.DelegationSpecifierContext specifier : specifiers) {
+      final String typeName = extractDelegationType(specifier);
       if (typeName == null) {
         continue;
       }
 
-      if (isInterface || i > 0) {
-        classData.addImplementedInterface(typeName);
-      } else {
+      // Only a supertype with a constructor call (Base()) is a superclass; a bare type or a
+      // delegation (Iface by impl) is an interface.
+      final boolean isSuperclass =
+          !superclassFound
+              && (isConstructorCall(specifier)
+                  || firstBareTypeIsSuperclass && !isExplicitDelegation(specifier));
+      if (isSuperclass) {
+        superclassFound = true;
         addFormattedSuperClass(classData, typeName);
+      } else {
+        classData.addImplementedInterface(typeName);
       }
     }
+  }
+
+  /**
+   * Whether the supertype is a constructor call {@code Base(...)}. The grammar may parse a class
+   * body following a bare supertype as a trailing lambda, i.e. {@code Iface { ... }} as a
+   * constructor invocation without arguments; that is no constructor call.
+   */
+  private static boolean isConstructorCall(final KotlinParser.DelegationSpecifierContext spec) {
+    return spec.constructorInvocation() != null
+        && spec.constructorInvocation().callSuffix() != null
+        && spec.constructorInvocation().callSuffix().valueArguments() != null;
+  }
+
+  private static boolean isExplicitDelegation(final KotlinParser.DelegationSpecifierContext spec) {
+    return spec.explicitDelegation() != null;
+  }
+
+  private boolean delegatesToSuper(final KotlinParser.ClassBodyContext classBody) {
+    if (classBody == null) {
+      return false;
+    }
+    for (final KotlinParser.ClassMemberDeclarationContext member :
+        classBody.classMemberDeclaration()) {
+      final KotlinParser.SecondaryConstructorContext constructor = member.secondaryConstructor();
+      if (constructor != null
+          && constructor.constructorDelegationCall() != null
+          && constructor.constructorDelegationCall().SUPER() != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private String extractDelegationType(final KotlinParser.DelegationSpecifierContext specifier) {
@@ -149,6 +211,10 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
     if (specifier.constructorInvocation() != null
         && specifier.constructorInvocation().userType() != null) {
       return specifier.constructorInvocation().userType().getText();
+    }
+    if (specifier.explicitDelegation() != null
+        && specifier.explicitDelegation().userType() != null) {
+      return specifier.explicitDelegation().userType().getText();
     }
     return null;
   }
@@ -193,24 +259,8 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
 
   private void addObjectDelegationRelations(
       final ClassDataHandler classData, final KotlinParser.ObjectDeclarationContext ctx) {
-    if (ctx.delegationSpecifiers() == null) {
-      return;
-    }
-
-    final List<KotlinParser.DelegationSpecifierContext> specifiers =
-        ctx.delegationSpecifiers().delegationSpecifier();
-
-    for (int i = 0; i < specifiers.size(); i++) {
-      final String typeName = extractDelegationType(specifiers.get(i));
-      if (typeName == null) {
-        continue;
-      }
-
-      if (i == 0) {
-        addFormattedSuperClass(classData, typeName);
-      } else {
-        classData.addImplementedInterface(typeName);
-      }
+    if (ctx.delegationSpecifiers() != null) {
+      addDelegationRelations(classData, ctx.delegationSpecifiers().delegationSpecifier(), false);
     }
   }
 
@@ -276,8 +326,9 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
   }
 
   private void addPropertyField(final KotlinParser.PropertyDeclarationContext ctx) {
-    // Local variables inside functions also parse as propertyDeclaration — skip those.
-    if (functionDepth > 0) {
+    // Local variables (in functions, init blocks, constructors, accessors, lambdas) also parse as
+    // propertyDeclaration; only direct members of the current class body are fields.
+    if (!isClassMember(ctx)) {
       return;
     }
 
@@ -286,14 +337,73 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
       return;
     }
 
-    final String fieldType =
-        ctx.type() != null
-            ? ctx.type().getText()
-            : ctx.variableDeclaration().type() != null
-                ? ctx.variableDeclaration().type().getText()
-                : "unknown";
+    // ctx.type() is the receiver of an extension property (val String.last: Char), not its type.
+    final String fieldType;
+    if (ctx.variableDeclaration().type() != null) {
+      fieldType = ctx.variableDeclaration().type().getText();
+    } else if (ctx.getter() != null && ctx.getter().type() != null) {
+      fieldType = ctx.getter().type().getText();
+    } else {
+      fieldType = "unknown";
+    }
     classData.addField(
         ctx.variableDeclaration().simpleIdentifier().getText(), fieldType, new ArrayList<>());
+  }
+
+  /**
+   * Whether the declaration is a direct member of the body of a class, object or companion object
+   * (and not, e.g., of an anonymous object expression, which has no class of its own).
+   */
+  private boolean isClassMember(final ParserRuleContext ctx) {
+    if (ctx.getParent() instanceof KotlinParser.DeclarationContext declaration) {
+      return isInClassBodyLambda(declaration);
+    }
+    if (!(ctx.getParent() instanceof KotlinParser.ClassMemberDeclarationContext member)) {
+      return false;
+    }
+    final ParserRuleContext body = member.getParent();
+    if (body instanceof KotlinParser.EnumClassBodyContext) {
+      return true;
+    }
+    return body instanceof KotlinParser.ClassBodyContext
+        && (body.getParent() instanceof KotlinParser.ClassDeclarationContext
+            || body.getParent() instanceof KotlinParser.ObjectDeclarationContext
+            || body.getParent() instanceof KotlinParser.CompanionObjectContext);
+  }
+
+  /**
+   * Whether the declaration is a top-level statement of a class body that the grammar parsed as a
+   * trailing lambda of the last supertype ({@code class A : Iface { ... }} as {@code Iface {...}}).
+   * Only a class, object or companion object without a regular class body qualifies.
+   */
+  private static boolean isInClassBodyLambda(final KotlinParser.DeclarationContext declaration) {
+    if (!(declaration.getParent() instanceof KotlinParser.StatementContext statement)
+        || !(statement.getParent() instanceof KotlinParser.StatementsContext statements)
+        || !(statements.getParent() instanceof KotlinParser.FunctionLiteralContext literal)
+        || !(literal.getParent() instanceof KotlinParser.AnnotatedLambdaContext lambda)
+        || !(lambda.getParent() instanceof KotlinParser.CallSuffixContext callSuffix)
+        || !(callSuffix.getParent() instanceof KotlinParser.ConstructorInvocationContext invocation)
+        || !(invocation.getParent() instanceof KotlinParser.DelegationSpecifierContext specifier)
+        || !(specifier.getParent()
+            instanceof KotlinParser.DelegationSpecifiersContext specifiers)) {
+      return false;
+    }
+    final List<KotlinParser.DelegationSpecifierContext> all = specifiers.delegationSpecifier();
+    final List<KotlinParser.AnnotatedLambdaContext> lambdas = callSuffix.annotatedLambda();
+    if (all.get(all.size() - 1) != specifier || lambdas.get(lambdas.size() - 1) != lambda) {
+      return false;
+    }
+    final ParserRuleContext owner = specifiers.getParent();
+    if (owner instanceof KotlinParser.ClassDeclarationContext classDecl) {
+      return classDecl.classBody() == null && classDecl.enumClassBody() == null;
+    }
+    if (owner instanceof KotlinParser.ObjectDeclarationContext objectDecl) {
+      return objectDecl.classBody() == null;
+    }
+    if (owner instanceof KotlinParser.CompanionObjectContext companion) {
+      return companion.classBody() == null;
+    }
+    return false;
   }
 
   @Override
@@ -315,7 +425,6 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
 
   @Override
   public void enterFunctionDeclaration(final KotlinParser.FunctionDeclarationContext ctx) {
-    functionDepth++;
     functionCount++;
 
     final String functionName = extractFunctionName(ctx);
@@ -334,13 +443,6 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
-  }
-
-  @Override
-  public void exitFunctionDeclaration(final KotlinParser.FunctionDeclarationContext ctx) {
-    if (functionDepth > 0) {
-      functionDepth--;
-    }
   }
 
   @Override

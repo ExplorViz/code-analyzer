@@ -414,13 +414,40 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   @Override
   public void enterInterfaceMethodDeclaration(
       final JavaParser.InterfaceMethodDeclarationContext ctx) {
-    if (ctx.interfaceCommonBodyDeclaration() == null || !fileDataHandler.isInClassContext()) {
-      return;
-    }
+    enterInterfaceMethod(ctx, ctx.interfaceMethodModifier(), ctx.interfaceCommonBodyDeclaration());
+  }
 
-    final JavaParser.InterfaceCommonBodyDeclarationContext body =
-        ctx.interfaceCommonBodyDeclaration();
-    if (body.identifier() == null || body.formalParameters() == null) {
+  @Override
+  public void exitInterfaceMethodDeclaration(
+      final JavaParser.InterfaceMethodDeclarationContext ctx) {
+    exitInterfaceMethod(ctx.interfaceCommonBodyDeclaration());
+  }
+
+  @Override
+  public void enterGenericInterfaceMethodDeclaration(
+      final JavaParser.GenericInterfaceMethodDeclarationContext ctx) {
+    enterInterfaceMethod(ctx, ctx.interfaceMethodModifier(), ctx.interfaceCommonBodyDeclaration());
+  }
+
+  @Override
+  public void exitGenericInterfaceMethodDeclaration(
+      final JavaParser.GenericInterfaceMethodDeclarationContext ctx) {
+    exitInterfaceMethod(ctx.interfaceCommonBodyDeclaration());
+  }
+
+  private boolean isValidInterfaceMethod(
+      final JavaParser.InterfaceCommonBodyDeclarationContext body) {
+    return body != null
+        && body.identifier() != null
+        && body.formalParameters() != null
+        && fileDataHandler.isInClassContext();
+  }
+
+  private void enterInterfaceMethod(
+      final ParserRuleContext ctx,
+      final List<JavaParser.InterfaceMethodModifierContext> interfaceMethodModifiers,
+      final JavaParser.InterfaceCommonBodyDeclarationContext body) {
+    if (!isValidInterfaceMethod(body)) {
       return;
     }
 
@@ -441,8 +468,15 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     final MethodDataHandler methodData =
         fileDataHandler.getCurrentClassData().addMethod(methodName, methodFqn, returnType);
 
-    for (final String modifier : extractInterfaceMethodModifiers(ctx)) {
+    // Leading modifiers are usually consumed by the enclosing interfaceBodyDeclaration.
+    for (final String modifier : extractMemberModifiers(ctx)) {
       methodData.addModifier(modifier);
+    }
+    for (final JavaParser.InterfaceMethodModifierContext modCtx : interfaceMethodModifiers) {
+      final String modText = modCtx.getText();
+      if (!modText.startsWith("@")) {
+        methodData.addModifier(modText);
+      }
     }
 
     addParameters(methodData, body.formalParameters());
@@ -455,10 +489,10 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     methodData.addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
   }
 
-  @Override
-  public void exitInterfaceMethodDeclaration(
-      final JavaParser.InterfaceMethodDeclarationContext ctx) {
-    fileDataHandler.leaveMethod();
+  private void exitInterfaceMethod(final JavaParser.InterfaceCommonBodyDeclarationContext body) {
+    if (isValidInterfaceMethod(body)) {
+      fileDataHandler.leaveMethod();
+    }
   }
 
   @Override
@@ -550,7 +584,13 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   private List<? extends ParserRuleContext> getMemberModifiers(final ParserRuleContext ctx) {
     ParseTree parent = ctx.getParent();
-    if (parent instanceof JavaParser.MemberDeclarationContext) {
+    // <T> methods and constructors are wrapped in a generic declaration.
+    if (parent instanceof JavaParser.GenericMethodDeclarationContext
+        || parent instanceof JavaParser.GenericConstructorDeclarationContext) {
+      parent = parent.getParent();
+    }
+    if (parent instanceof JavaParser.MemberDeclarationContext
+        || parent instanceof JavaParser.InterfaceMemberDeclarationContext) {
       parent = parent.getParent();
     }
     if (parent instanceof JavaParser.ClassBodyDeclarationContext classBodyDeclarationContext) {
@@ -586,20 +626,6 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
         fileDataHandler.getCurrentClassData().addModifier(modText);
       }
     }
-  }
-
-  private List<String> extractInterfaceMethodModifiers(
-      final JavaParser.InterfaceMethodDeclarationContext ctx) {
-    final List<String> modifiers = new ArrayList<>();
-    if (ctx.interfaceMethodModifier() != null) {
-      for (final JavaParser.InterfaceMethodModifierContext modCtx : ctx.interfaceMethodModifier()) {
-        final String modText = modCtx.getText();
-        if (!modText.startsWith("@")) {
-          modifiers.add(modText);
-        }
-      }
-    }
-    return modifiers;
   }
 
   private List<String> extractParameterTypes(final JavaParser.FormalParametersContext ctx) {
@@ -664,7 +690,9 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   private String resolveTypeName(final String typeName) {
     final List<String> imports = fileDataHandler.getImportNames();
 
-    String baseType = typeName.replaceAll("\\[\\]", "");
+    // Only trailing brackets make the whole type an array; brackets inside type arguments (e.g.
+    // List<String[]>) belong to the generics part.
+    String baseType = typeName.replaceAll("(\\[\\])+$", "");
     final String arraySuffix = typeName.substring(baseType.length());
 
     final int genericStart = baseType.indexOf('<');
