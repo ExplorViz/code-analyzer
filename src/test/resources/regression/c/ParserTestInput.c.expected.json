@@ -78,6 +78,42 @@
       "sloc": 5.0,
       "lineCount": 5.0
     }
+  }, {
+    "name": "Shape",
+    "type": "STRUCT",
+    "fields": [{
+      "name": "kind",
+      "type": "int"
+    }, {
+      "name": "pos",
+      "type": "struct <anonymous>"
+    }, {
+      "name": "i",
+      "type": "int"
+    }, {
+      "name": "f",
+      "type": "float"
+    }],
+    "innerClasses": [{
+      "name": "<anonymous>",
+      "type": "ANONYMOUS_CLASS",
+      "modifiers": ["struct"],
+      "fields": [{
+        "name": "x",
+        "type": "int"
+      }, {
+        "name": "y",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      }
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
   }],
   "functions": [{
     "name": "nested_enum_is_alpha",
@@ -254,15 +290,15 @@
       "sloc": 3.0,
       "lineCount": 3.0
     },
-    "startLine": 142,
-    "endLine": 144
+    "startLine": 149,
+    "endLine": 151
   }],
   "metrics": {
-    "sloc": 107.0,
-    "cloc": 12.0,
+    "sloc": 112.0,
+    "cloc": 13.0,
     "functionCount": 13.0,
     "variableCount": 2.0,
     "importCount": 4.0,
-    "classCount": 6.0
+    "classCount": 8.0
   }
 }

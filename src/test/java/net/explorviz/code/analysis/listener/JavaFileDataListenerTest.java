@@ -120,4 +120,67 @@ public class JavaFileDataListenerTest {
     assertEquals("Local", inner.get(1).getName());
     assertEquals(2, inner.get(1).getFunctionsCount());
   }
+
+  @Test
+  void methodTypeParametersStayUnqualified() {
+    final FileData file =
+        parse(
+            """
+            package p;
+            import java.util.List;
+            class A {
+              <T> T id(T value) { return value; }
+              <T extends Comparable<T>> List<T> sort(List<T> in, T[] arr) { return in; }
+              <T> A(T seed) { }
+              T notGeneric() { return null; }
+            }
+            """);
+
+    final Map<String, FunctionData> functions = functionsByName(file.getClasses(0));
+    assertEquals("T", functions.get("id").getReturnType());
+    assertEquals("T", functions.get("id").getParameters(0).getType());
+    assertEquals("java.util.List<T>", functions.get("sort").getReturnType());
+    assertEquals("java.util.List<T>", functions.get("sort").getParameters(0).getType());
+    assertEquals("T[]", functions.get("sort").getParameters(1).getType());
+    assertEquals("T", functions.get("A").getParameters(0).getType());
+    // Outside the generic method's scope, T is an ordinary type of package p.
+    assertEquals("p.T", functions.get("notGeneric").getReturnType());
+  }
+
+  @Test
+  void classTypeParametersStayUnqualifiedInFieldsAndInnerClasses() {
+    final FileData file =
+        parse(
+            """
+            package p;
+            import java.util.List;
+            interface I<E> { E first(List<E> all); }
+            record R<A>(A value) { }
+            class Box<T> {
+              T value;
+              List<T> values;
+              class Inner { T get() { return value; } }
+              static class Nested { T get() { return null; } }
+            }
+            """);
+
+    final Map<String, ClassData> classes =
+        file.getClassesList().stream()
+            .collect(Collectors.toMap(ClassData::getName, Function.identity()));
+    final FunctionData first = functionsByName(classes.get("I")).get("first");
+    assertEquals("E", first.getReturnType());
+    assertEquals("java.util.List<E>", first.getParameters(0).getType());
+    assertEquals("A", classes.get("R").getFields(0).getType());
+
+    final ClassData box = classes.get("Box");
+    assertEquals(
+        List.of("T", "java.util.List<T>"),
+        box.getFieldsList().stream().map(FieldData::getType).toList());
+    final Map<String, ClassData> inner =
+        box.getInnerClassesList().stream()
+            .collect(Collectors.toMap(ClassData::getName, Function.identity()));
+    assertEquals("T", functionsByName(inner.get("Inner")).get("get").getReturnType());
+    // Static nested classes cannot see the enclosing class's type variables.
+    assertEquals("p.T", functionsByName(inner.get("Nested")).get("get").getReturnType());
+  }
 }

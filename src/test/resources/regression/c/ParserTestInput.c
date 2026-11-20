@@ -139,6 +139,13 @@ int add(int a, int b);
 void reset(void);
 typedef struct { int x; int y; } Point;
 
+/* Named anonymous member types own their fields; unnamed (C11) members belong to Shape. */
+struct Shape {
+    int kind;
+    struct { int x; int y; } pos;
+    union { int i; float f; };
+};
+
 char *node_name(struct Node *node) {
     return node->name;
 }

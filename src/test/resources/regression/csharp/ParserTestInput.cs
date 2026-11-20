@@ -173,6 +173,20 @@ namespace ExplorViz.Code.Analysis.Fixtures
         public static void Log(params object[] args) { }
 
         public static void Log(string format, params object[] args) { }
+
+        // Parameter modifiers: ref/out/in and extension method receivers.
+        public static int Twice(this int value) { return value * 2; }
+
+        public static void Swap(ref int a, ref int b) { (a, b) = (b, a); }
+
+        public static bool TryParse(string text, out int result) { return int.TryParse(text, out result); }
+
+        public static int Sum(in int a, in int b) { return a + b; }
+
+        // Overloads that differ only in a ref modifier.
+        public static void Bump(int x) { }
+
+        public static void Bump(ref int x) { x++; }
     }
 
     // Same name, different arity: both declarations must be kept.

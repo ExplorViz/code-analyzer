@@ -7,6 +7,7 @@ import java.util.List;
 import net.explorviz.code.analysis.handler.CFileDataHandler;
 import net.explorviz.code.analysis.parser.AntlrCParserService;
 import net.explorviz.code.proto.ClassData;
+import net.explorviz.code.proto.ClassType;
 import net.explorviz.code.proto.FieldData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.FunctionData;
@@ -139,5 +140,40 @@ public class CFileDataListenerTest {
     assertEquals("fast", fileData.getClasses(0).getFields(0).getName());
     assertEquals("Buffer", fileData.getClasses(1).getName());
     assertEquals("slow", fileData.getClasses(1).getFields(0).getName());
+  }
+
+  @Test
+  void anonymousMemberTypesOwnTheirFields() {
+    final FileData fileData =
+        parse(
+            """
+            struct S {
+                int a;
+                struct { int x; int y; } pos;
+                union { int i; float f; };
+                struct { struct { int z; } deep; } outer;
+            };
+            """);
+
+    assertEquals(1, fileData.getClassesCount());
+    final ClassData s = fileData.getClasses(0);
+    // Members of the unnamed union are accessed as s.i / s.f, so they belong to S.
+    assertEquals(
+        List.of("a", "pos", "i", "f", "outer"),
+        s.getFieldsList().stream().map(FieldData::getName).toList());
+    assertEquals("struct <anonymous>", s.getFields(1).getType());
+    assertEquals("struct <anonymous>", s.getFields(4).getType());
+
+    assertEquals(2, s.getInnerClassesCount());
+    final ClassData pos = s.getInnerClasses(0);
+    assertEquals("<anonymous>", pos.getName());
+    assertEquals(ClassType.ANONYMOUS_CLASS, pos.getType());
+    assertEquals(List.of("struct"), pos.getModifiersList());
+    assertEquals(List.of("x", "y"), pos.getFieldsList().stream().map(FieldData::getName).toList());
+
+    final ClassData outer = s.getInnerClasses(1);
+    assertEquals(List.of("deep"), outer.getFieldsList().stream().map(FieldData::getName).toList());
+    assertEquals(1, outer.getInnerClassesCount());
+    assertEquals("z", outer.getInnerClasses(0).getFields(0).getName());
   }
 }

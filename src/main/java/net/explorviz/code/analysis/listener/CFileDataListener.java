@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 public class CFileDataListener extends CParserBaseListener implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CFileDataListener.class);
+  private static final String ANONYMOUS_TYPE_NAME = "<anonymous>";
+  private static final String ANONYMOUS_TYPE_SUFFIX = " " + ANONYMOUS_TYPE_NAME;
 
   private final CFileDataHandler fileDataHandler;
   private final CommonTokenStream tokens;
@@ -107,8 +109,31 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
     }
   }
 
+  /**
+   * Models anonymous structs and unions nested in a type.
+   *
+   * <ul>
+   *   <li>A named member of anonymous type ({@code struct S { struct { int x; } pos; };}) is a
+   *       field {@code pos} of {@code S} with type {@code struct <anonymous>} (or {@code union
+   *       <anonymous>}). The anonymous type is an inner anonymous class {@code <anonymous>} of
+   *       {@code S} that owns its members ({@code x}), just like a named nested struct.
+   *   <li>An unnamed anonymous member ({@code struct S { union { int i; float f; }; };}, C11) has
+   *       no field. Its members are accessed as members of the enclosing type ({@code s.i}), so
+   *       they stay fields of {@code S}.
+   * </ul>
+   */
   @Override
   public void enterStructOrUnionSpecifier(final CParser.StructOrUnionSpecifierContext ctx) {
+    if (isAnonymousMemberType(ctx)) {
+      fileDataHandler.enterClass(ANONYMOUS_TYPE_NAME, buildFqn(ANONYMOUS_TYPE_NAME));
+      final var classData = fileDataHandler.getCurrentClassData();
+      classData.setIsAnonymousClass();
+      classData.addModifier(ctx.structOrUnion().getText());
+      classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      return;
+    }
+
     if (ctx.structOrUnion() == null || ctx.Identifier() == null) {
       return;
     }
@@ -132,9 +157,30 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
 
   @Override
   public void exitStructOrUnionSpecifier(final CParser.StructOrUnionSpecifierContext ctx) {
-    if (ctx.Identifier() != null && ctx.LeftBrace() != null) {
+    if ((ctx.Identifier() != null && ctx.LeftBrace() != null) || isAnonymousMemberType(ctx)) {
       fileDataHandler.leaveClass();
     }
+  }
+
+  /**
+   * Whether a struct/union specifier defines an anonymous type of a named member of an enclosing
+   * type, e.g. {@code struct { int x; } pos;} inside a struct.
+   */
+  private boolean isAnonymousMemberType(final CParser.StructOrUnionSpecifierContext ctx) {
+    if (ctx.structOrUnion() == null
+        || ctx.Identifier() != null
+        || ctx.LeftBrace() == null
+        || !fileDataHandler.isInClassContext()) {
+      return false;
+    }
+    ParserRuleContext parent = ctx.getParent();
+    while (parent instanceof CParser.TypeSpecifierContext
+        || parent instanceof CParser.TypeSpecifierQualifierContext
+        || parent instanceof CParser.SpecifierQualifierListContext) {
+      parent = parent.getParent();
+    }
+    return parent instanceof CParser.MemberDeclarationContext member
+        && member.memberDeclaratorList() != null;
   }
 
   @Override
@@ -465,9 +511,10 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
   private static String typeSpecifierText(final CParser.TypeSpecifierContext ctx) {
     final CParser.StructOrUnionSpecifierContext struct = ctx.structOrUnionSpecifier();
     if (struct != null && struct.structOrUnion() != null) {
-      return struct.Identifier() != null
-          ? struct.structOrUnion().getText() + " " + struct.Identifier().getText()
-          : struct.structOrUnion().getText();
+      if (struct.Identifier() != null) {
+        return struct.structOrUnion().getText() + " " + struct.Identifier().getText();
+      }
+      return struct.structOrUnion().getText() + ANONYMOUS_TYPE_SUFFIX;
     }
     final CParser.EnumSpecifierContext enumSpec = ctx.enumSpecifier();
     if (enumSpec != null) {

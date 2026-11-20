@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 public class CppFileDataListener extends CPP14ParserBaseListener implements CommonFileDataListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CppFileDataListener.class);
+  private static final String ANONYMOUS_TYPE_NAME = "<anonymous>";
 
   private final CppFileDataHandler fileDataHandler;
   private final CommonTokenStream tokens;
@@ -136,8 +137,11 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
     }
 
     if (className == null) {
-      // Anonymous class/struct - skip
-      LOGGER.atTrace().log("Anonymous class/struct detected, skipping");
+      if (isAnonymousMemberType(ctx)) {
+        enterAnonymousClass(ctx);
+      } else {
+        LOGGER.atTrace().log("Anonymous class/struct detected, skipping");
+      }
       return;
     }
 
@@ -178,11 +182,62 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
 
   @Override
   public void exitClassSpecifier(final CPP14Parser.ClassSpecifierContext ctx) {
-    if (ctx.classHead() != null
-        && ctx.classHead().classHeadName() != null
-        && ctx.classHead().classHeadName().className() != null) {
+    final boolean named =
+        ctx.classHead() != null
+            && ctx.classHead().classHeadName() != null
+            && ctx.classHead().classHeadName().className() != null;
+    if (named || isAnonymousMemberType(ctx)) {
       fileDataHandler.leaveClass();
     }
+  }
+
+  /**
+   * Whether an anonymous class specifier is modeled as an anonymous inner class.
+   *
+   * <ul>
+   *   <li>A named member of anonymous type ({@code class W { struct { int x; } inner; };}) is a
+   *       field {@code inner} of {@code W} with type {@code struct <anonymous>}. The anonymous type
+   *       is an inner anonymous class {@code <anonymous>} of {@code W} that owns its members
+   *       ({@code x}), just like a named nested struct. The same applies to anonymous types of
+   *       local variables in member function bodies.
+   *   <li>An unnamed anonymous member ({@code union { int i; float f; };}, anonymous union) has no
+   *       field. Its members are accessed as members of the enclosing class ({@code w.i}), so they
+   *       stay fields of the enclosing class.
+   * </ul>
+   *
+   * <p>Anonymous types outside of classes (e.g. {@code typedef struct { ... } P;}) are skipped.
+   */
+  private boolean isAnonymousMemberType(final CPP14Parser.ClassSpecifierContext ctx) {
+    if (ctx.classHead() == null
+        || ctx.classHead().classHeadName() != null
+        || !fileDataHandler.isInClassContext()) {
+      return false;
+    }
+    ParserRuleContext parent = ctx.getParent();
+    while (parent instanceof CPP14Parser.TypeSpecifierContext
+        || parent instanceof CPP14Parser.DeclSpecifierContext
+        || parent instanceof CPP14Parser.DeclSpecifierSeqContext) {
+      parent = parent.getParent();
+    }
+    return !(parent instanceof CPP14Parser.MemberDeclarationContext member
+        && member.memberDeclaratorList() == null);
+  }
+
+  private void enterAnonymousClass(final CPP14Parser.ClassSpecifierContext ctx) {
+    fileDataHandler.enterClass(ANONYMOUS_TYPE_NAME, buildFqn(ANONYMOUS_TYPE_NAME));
+    final var classData = fileDataHandler.getCurrentClassData();
+    classData.setIsAnonymousClass();
+    classData.addModifier(classKeyText(ctx.classHead()));
+    classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+    classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    if (ctx.classHead().baseClause() != null) {
+      extractBaseClasses(ctx.classHead().baseClause());
+    }
+  }
+
+  /** Returns "class", "struct" or "union". */
+  private static String classKeyText(final CPP14Parser.ClassHeadContext classHead) {
+    return classHead.classKey() != null ? classHead.classKey().getText() : "union";
   }
 
   // --- Enum handling ---
@@ -808,7 +863,12 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
   private String extractActualType(final CPP14Parser.TypeSpecifierContext typeSpec) {
     // typeSpecifier -> trailingTypeSpecifier | classSpecifier | enumSpecifier
     if (typeSpec.classSpecifier() != null) {
-      return typeSpec.classSpecifier().getText();
+      // A class definition used as a type, e.g. "struct { int x; } pos;": its name, not its body.
+      final CPP14Parser.ClassHeadContext classHead = typeSpec.classSpecifier().classHead();
+      if (classHead.classHeadName() != null) {
+        return classHead.classHeadName().getText();
+      }
+      return classKeyText(classHead) + " " + ANONYMOUS_TYPE_NAME;
     }
     if (typeSpec.enumSpecifier() != null) {
       return typeSpec.enumSpecifier().getText();

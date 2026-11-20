@@ -187,3 +187,9 @@ typedef int WidgetId;
 auto compute(int a, int b) -> int {
     return a + b;
 }
+
+/** Named anonymous member types own their fields; anonymous union members belong to Wrapper. */
+class Wrapper {
+    struct { int x; int y; } inner;
+    union { int i; float f; };
+};

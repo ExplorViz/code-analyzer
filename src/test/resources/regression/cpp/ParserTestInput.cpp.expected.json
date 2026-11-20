@@ -426,6 +426,39 @@
       "sloc": 15.0,
       "lineCount": 16.0
     }
+  }, {
+    "name": "Wrapper",
+    "type": "CLASS",
+    "fields": [{
+      "name": "inner",
+      "type": "struct <anonymous>"
+    }, {
+      "name": "i",
+      "type": "int"
+    }, {
+      "name": "f",
+      "type": "float"
+    }],
+    "innerClasses": [{
+      "name": "<anonymous>",
+      "type": "ANONYMOUS_CLASS",
+      "modifiers": ["struct"],
+      "fields": [{
+        "name": "x",
+        "type": "int"
+      }, {
+        "name": "y",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      }
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    }
   }],
   "functions": [{
     "name": "packagePrivateStaticMethod",
@@ -484,11 +517,11 @@
     "endLine": 189
   }],
   "metrics": {
-    "sloc": 133.0,
-    "cloc": 17.0,
+    "sloc": 137.0,
+    "cloc": 18.0,
     "functionCount": 32.0,
     "variableCount": 9.0,
     "importCount": 7.0,
-    "classCount": 8.0
+    "classCount": 10.0
   }
 }

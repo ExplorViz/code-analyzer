@@ -348,10 +348,104 @@
       },
       "startLine": 175,
       "endLine": 175
+    }, {
+      "name": "Twice",
+      "returnType": "int",
+      "parameters": [{
+        "name": "value",
+        "type": "int",
+        "modifiers": ["this"]
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 178,
+      "endLine": 178
+    }, {
+      "name": "Swap",
+      "returnType": "void",
+      "parameters": [{
+        "name": "a",
+        "type": "int",
+        "modifiers": ["ref"]
+      }, {
+        "name": "b",
+        "type": "int",
+        "modifiers": ["ref"]
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 180,
+      "endLine": 180
+    }, {
+      "name": "TryParse",
+      "returnType": "bool",
+      "parameters": [{
+        "name": "text",
+        "type": "string"
+      }, {
+        "name": "result",
+        "type": "int",
+        "modifiers": ["out"]
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 182,
+      "endLine": 182
+    }, {
+      "name": "Sum",
+      "returnType": "int",
+      "parameters": [{
+        "name": "a",
+        "type": "int",
+        "modifiers": ["in"]
+      }, {
+        "name": "b",
+        "type": "int",
+        "modifiers": ["in"]
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 184,
+      "endLine": 184
+    }, {
+      "name": "Bump",
+      "returnType": "void",
+      "parameters": [{
+        "name": "x",
+        "type": "int"
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 187,
+      "endLine": 187
+    }, {
+      "name": "Bump",
+      "returnType": "void",
+      "parameters": [{
+        "name": "x",
+        "type": "int",
+        "modifiers": ["ref"]
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 189,
+      "endLine": 189
     }],
     "metrics": {
-      "sloc": 7.0,
-      "lineCount": 11.0
+      "sloc": 13.0,
+      "lineCount": 25.0
     }
   }, {
     "name": "Result",
@@ -367,8 +461,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 183,
-      "endLine": 183
+      "startLine": 197,
+      "endLine": 197
     }],
     "metrics": {
       "sloc": 5.0,
@@ -388,8 +482,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 190,
-      "endLine": 190
+      "startLine": 204,
+      "endLine": 204
     }],
     "metrics": {
       "sloc": 5.0,
@@ -397,9 +491,9 @@
     }
   }],
   "metrics": {
-    "sloc": 136.0,
-    "cloc": 18.0,
-    "functionCount": 22.0,
+    "sloc": 142.0,
+    "cloc": 20.0,
+    "functionCount": 28.0,
     "variableCount": 10.0,
     "importCount": 3.0,
     "classCount": 12.0

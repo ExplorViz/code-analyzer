@@ -9,6 +9,8 @@ import java.util.List;
 import net.explorviz.code.analysis.handler.CppFileDataHandler;
 import net.explorviz.code.analysis.parser.AntlrCppParserService;
 import net.explorviz.code.proto.ClassData;
+import net.explorviz.code.proto.ClassType;
+import net.explorviz.code.proto.FieldData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.FunctionData;
 import net.explorviz.code.proto.ParameterData;
@@ -295,5 +297,37 @@ public class CppFileDataListenerTest {
     assertEquals("slow", second.getFields(0).getName());
     assertEquals("b", second.getFunctions(0).getName());
     assertEquals(0, second.getInnerClassesCount());
+  }
+
+  @Test
+  void anonymousMemberTypesOwnTheirFields() {
+    final FileData fileData =
+        parse(
+            """
+            class W {
+                struct { int x; } inner;
+                union { int i; float f; };
+                struct Named { int n; } named;
+                int last;
+            };
+            """);
+
+    assertEquals(1, fileData.getClassesCount());
+    final ClassData w = findClass(fileData, "W");
+    // Members of the anonymous union are accessed as w.i / w.f, so they belong to W.
+    assertEquals(
+        List.of("inner", "i", "f", "named", "last"),
+        w.getFieldsList().stream().map(FieldData::getName).toList());
+    assertEquals("struct <anonymous>", w.getFields(0).getType());
+    assertEquals("Named", w.getFields(3).getType());
+
+    assertEquals(2, w.getInnerClassesCount());
+    final ClassData inner = w.getInnerClasses(0);
+    assertEquals("<anonymous>", inner.getName());
+    assertEquals(ClassType.ANONYMOUS_CLASS, inner.getType());
+    assertEquals(List.of("struct"), inner.getModifiersList());
+    assertEquals(List.of("x"), inner.getFieldsList().stream().map(FieldData::getName).toList());
+    assertEquals("Named", w.getInnerClasses(1).getName());
+    assertEquals("n", w.getInnerClasses(1).getFields(0).getName());
   }
 }

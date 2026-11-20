@@ -285,3 +285,37 @@ record PointRecord(int x, int y) {
     return x + y;
   }
 }
+
+/**
+ * Package-private generic class: type variables stay unqualified.
+ */
+class GenericBox<T extends Comparable<T>> {
+  private T value;
+  private List<T> history;
+  private T[] snapshot;
+
+  GenericBox(final T value) {
+    this.value = value;
+  }
+
+  public T get() {
+    return value;
+  }
+
+  public <R> R map(final java.util.function.Function<T, R> mapper) {
+    return mapper.apply(value);
+  }
+
+  /** Inner class sees the type variable of the enclosing class. */
+  class Cursor {
+    T current() {
+      return value;
+    }
+  }
+}
+
+/**
+ * Package-private generic record.
+ */
+record Pair<A, B>(A first, B second) {
+}

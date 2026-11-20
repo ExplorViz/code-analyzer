@@ -109,4 +109,53 @@ public class CSharpFileDataListenerTest {
     assertEquals("A", parse("namespace A { }").getPackageName());
     assertFalse(parse("class C { }").hasPackageName());
   }
+
+  @Test
+  public void keepsRefOutInAndThisParameterModifiers() {
+    final FileData fileData =
+        parse(
+            """
+            static class Ext
+            {
+                static int Twice(this int value) { return value * 2; }
+                static void Swap(ref int a, ref int b) { }
+                static bool TryParse(string text, out int result) { result = 0; return true; }
+                static int Sum(in int a, int b) { return a + b; }
+                static void Fill(this ref int target) { }
+            }
+            """);
+
+    final List<FunctionData> functions = fileData.getClasses(0).getFunctionsList();
+    assertEquals(5, functions.size());
+    assertEquals(List.of("this"), functions.get(0).getParameters(0).getModifiersList());
+    assertEquals("int", functions.get(0).getParameters(0).getType());
+    assertEquals(List.of("ref"), functions.get(1).getParameters(0).getModifiersList());
+    assertEquals(List.of("ref"), functions.get(1).getParameters(1).getModifiersList());
+    assertEquals(List.of(), functions.get(2).getParameters(0).getModifiersList());
+    assertEquals(List.of("out"), functions.get(2).getParameters(1).getModifiersList());
+    assertEquals(List.of("in"), functions.get(3).getParameters(0).getModifiersList());
+    assertEquals(List.of(), functions.get(3).getParameters(1).getModifiersList());
+    assertEquals(List.of("this", "ref"), functions.get(4).getParameters(0).getModifiersList());
+  }
+
+  @Test
+  public void keepsOverloadsThatDifferOnlyInRefModifier() {
+    final FileData fileData =
+        parse(
+            """
+            class C
+            {
+                void M(int x) { }
+                void M(ref int x) { }
+                C(int x) { }
+                C(out int x) { x = 0; }
+            }
+            """);
+
+    final List<FunctionData> functions = fileData.getClasses(0).getFunctionsList();
+    assertEquals(4, functions.size());
+    final List<List<String>> modifiers =
+        functions.stream().map(f -> List.copyOf(f.getParameters(0).getModifiersList())).toList();
+    assertEquals(List.of(List.of(), List.of("ref"), List.of(), List.of("out")), modifiers);
+  }
 }

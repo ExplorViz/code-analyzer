@@ -1,8 +1,13 @@
 package net.explorviz.code.analysis.listener;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import net.explorviz.code.analysis.antlr.generated.java.JavaParser;
 import net.explorviz.code.analysis.antlr.generated.java.JavaParserBaseListener;
@@ -27,6 +32,15 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   private final org.antlr.v4.runtime.CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+
+  /**
+   * Scopes of declared type variables (innermost first). Type variables are never qualified by
+   * {@link #resolveTypeName(String)}. A scope marked as static boundary hides the type variables of
+   * all enclosing scopes (static nested types do not see the type parameters of outer types).
+   */
+  private final Deque<TypeParameterScope> typeParameterScopes = new ArrayDeque<>();
+
+  private record TypeParameterScope(Set<String> names, boolean staticBoundary) {}
 
   public JavaFileDataListener(
       final JavaFileDataHandler fileDataHandler,
@@ -89,6 +103,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void enterClassDeclaration(final JavaParser.ClassDeclarationContext ctx) {
+    pushTypeParameterScope(ctx.typeParameters(), isStaticTypeDeclaration(ctx));
     final String className = ctx.identifier().getText();
     final String fqn = buildFqn(className);
 
@@ -132,10 +147,12 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   @Override
   public void exitClassDeclaration(final JavaParser.ClassDeclarationContext ctx) {
     fileDataHandler.leaveClass();
+    typeParameterScopes.pop();
   }
 
   @Override
   public void enterInterfaceDeclaration(final JavaParser.InterfaceDeclarationContext ctx) {
+    pushTypeParameterScope(ctx.typeParameters(), true);
     final String interfaceName = ctx.identifier().getText();
     final String fqn = buildFqn(interfaceName);
 
@@ -158,10 +175,12 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   @Override
   public void exitInterfaceDeclaration(final JavaParser.InterfaceDeclarationContext ctx) {
     fileDataHandler.leaveClass();
+    typeParameterScopes.pop();
   }
 
   @Override
   public void enterEnumDeclaration(final JavaParser.EnumDeclarationContext ctx) {
+    pushTypeParameterScope(null, true);
     final String enumName = ctx.identifier().getText();
     final String fqn = buildFqn(enumName);
 
@@ -176,6 +195,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   @Override
   public void exitEnumDeclaration(final JavaParser.EnumDeclarationContext ctx) {
     fileDataHandler.leaveClass();
+    typeParameterScopes.pop();
   }
 
   @Override
@@ -183,6 +203,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     if (ctx.identifier() == null) {
       return;
     }
+    pushTypeParameterScope(ctx.typeParameters(), true);
 
     final String recordName = ctx.identifier().getText();
     final String fqn = buildFqn(recordName);
@@ -221,7 +242,11 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void exitRecordDeclaration(final JavaParser.RecordDeclarationContext ctx) {
+    if (ctx.identifier() == null) {
+      return;
+    }
     fileDataHandler.leaveClass();
+    typeParameterScopes.pop();
   }
 
   @Override
@@ -412,6 +437,28 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   }
 
   @Override
+  public void enterGenericMethodDeclaration(final JavaParser.GenericMethodDeclarationContext ctx) {
+    pushTypeParameterScope(ctx.typeParameters(), false);
+  }
+
+  @Override
+  public void exitGenericMethodDeclaration(final JavaParser.GenericMethodDeclarationContext ctx) {
+    typeParameterScopes.pop();
+  }
+
+  @Override
+  public void enterGenericConstructorDeclaration(
+      final JavaParser.GenericConstructorDeclarationContext ctx) {
+    pushTypeParameterScope(ctx.typeParameters(), false);
+  }
+
+  @Override
+  public void exitGenericConstructorDeclaration(
+      final JavaParser.GenericConstructorDeclarationContext ctx) {
+    typeParameterScopes.pop();
+  }
+
+  @Override
   public void enterInterfaceMethodDeclaration(
       final JavaParser.InterfaceMethodDeclarationContext ctx) {
     enterInterfaceMethod(ctx, ctx.interfaceMethodModifier(), ctx.interfaceCommonBodyDeclaration());
@@ -426,6 +473,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   @Override
   public void enterGenericInterfaceMethodDeclaration(
       final JavaParser.GenericInterfaceMethodDeclarationContext ctx) {
+    pushTypeParameterScope(ctx.typeParameters(), false);
     enterInterfaceMethod(ctx, ctx.interfaceMethodModifier(), ctx.interfaceCommonBodyDeclaration());
   }
 
@@ -433,6 +481,48 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   public void exitGenericInterfaceMethodDeclaration(
       final JavaParser.GenericInterfaceMethodDeclarationContext ctx) {
     exitInterfaceMethod(ctx.interfaceCommonBodyDeclaration());
+    typeParameterScopes.pop();
+  }
+
+  private void pushTypeParameterScope(
+      final JavaParser.TypeParametersContext ctx, final boolean staticBoundary) {
+    final Set<String> names = new HashSet<>();
+    if (ctx != null) {
+      for (final JavaParser.TypeParameterContext param : ctx.typeParameter()) {
+        if (param.identifier() != null) {
+          names.add(param.identifier().getText());
+        }
+      }
+    }
+    typeParameterScopes.push(new TypeParameterScope(names, staticBoundary));
+  }
+
+  /**
+   * Whether a class declaration does not see the type parameters of enclosing declarations: it is
+   * declared {@code static} or it is a member of an interface or annotation type (implicitly
+   * static). Inner (non-static), local and anonymous classes see them.
+   */
+  private boolean isStaticTypeDeclaration(final ParserRuleContext ctx) {
+    final ParseTree parent = ctx.getParent();
+    if (parent instanceof JavaParser.InterfaceMemberDeclarationContext
+        || parent instanceof JavaParser.AnnotationTypeElementRestContext) {
+      return true;
+    }
+    return hasModifier(getTypeModifiers(ctx), "static");
+  }
+
+  private boolean isTypeParameter(final String name) {
+    final Iterator<TypeParameterScope> it = typeParameterScopes.iterator();
+    while (it.hasNext()) {
+      final TypeParameterScope scope = it.next();
+      if (scope.names().contains(name)) {
+        return true;
+      }
+      if (scope.staticBoundary()) {
+        return false;
+      }
+    }
+    return false;
   }
 
   private boolean isValidInterfaceMethod(
@@ -702,7 +792,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
       baseType = baseType.substring(0, genericStart);
     }
 
-    if (isPrimitiveType(baseType)) {
+    if (isPrimitiveType(baseType) || isTypeParameter(baseType)) {
       return typeName;
     }
 

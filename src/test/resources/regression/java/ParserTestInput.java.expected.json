@@ -177,7 +177,7 @@
         "endLine": 205
       }, {
         "name": "convert",
-        "returnType": "net.explorviz.code.analysis.fixtures.T",
+        "returnType": "T",
         "parameters": [{
           "name": "source",
           "type": "java.lang.Object"
@@ -190,11 +190,11 @@
         "endLine": 207
       }, {
         "name": "identity",
-        "returnType": "net.explorviz.code.analysis.fixtures.T",
+        "returnType": "T",
         "modifiers": ["static"],
         "parameters": [{
           "name": "value",
-          "type": "net.explorviz.code.analysis.fixtures.T",
+          "type": "T",
           "modifiers": ["final"]
         }],
         "metrics": {
@@ -298,11 +298,11 @@
       "endLine": 80
     }, {
       "name": "genericMethod",
-      "returnType": "net.explorviz.code.analysis.fixtures.T",
+      "returnType": "T",
       "modifiers": ["public", "final"],
       "parameters": [{
         "name": "value",
-        "type": "net.explorviz.code.analysis.fixtures.T",
+        "type": "T",
         "modifiers": ["final"]
       }],
       "metrics": {
@@ -317,7 +317,7 @@
       "modifiers": ["public", "static"],
       "parameters": [{
         "name": "element",
-        "type": "net.explorviz.code.analysis.fixtures.T",
+        "type": "T",
         "modifiers": ["final"]
       }],
       "metrics": {
@@ -332,7 +332,7 @@
       "modifiers": ["protected"],
       "parameters": [{
         "name": "seed",
-        "type": "net.explorviz.code.analysis.fixtures.T",
+        "type": "T",
         "modifiers": ["final"]
       }, {
         "name": "marker",
@@ -549,13 +549,108 @@
       "sloc": 10.0,
       "lineCount": 11.0
     }
+  }, {
+    "name": "GenericBox",
+    "type": "CLASS",
+    "fields": [{
+      "name": "value",
+      "type": "T",
+      "modifiers": ["private"]
+    }, {
+      "name": "history",
+      "type": "java.util.List<T>",
+      "modifiers": ["private"]
+    }, {
+      "name": "snapshot",
+      "type": "T[]",
+      "modifiers": ["private"]
+    }],
+    "innerClasses": [{
+      "name": "Cursor",
+      "type": "CLASS",
+      "functions": [{
+        "name": "current",
+        "returnType": "T",
+        "metrics": {
+          "sloc": 3.0,
+          "lineCount": 3.0
+        },
+        "startLine": 311,
+        "endLine": 313
+      }],
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      }
+    }],
+    "functions": [{
+      "name": "GenericBox",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "value",
+        "type": "T",
+        "modifiers": ["final"]
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 297,
+      "endLine": 299
+    }, {
+      "name": "get",
+      "returnType": "T",
+      "modifiers": ["public"],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 301,
+      "endLine": 303
+    }, {
+      "name": "map",
+      "returnType": "R",
+      "modifiers": ["public"],
+      "parameters": [{
+        "name": "mapper",
+        "type": "java.util.function.Function<T,R>",
+        "modifiers": ["final"]
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 305,
+      "endLine": 307
+    }],
+    "metrics": {
+      "sloc": 19.0,
+      "lineCount": 24.0
+    }
+  }, {
+    "name": "Pair",
+    "type": "CLASS",
+    "modifiers": ["record"],
+    "fields": [{
+      "name": "first",
+      "type": "A",
+      "modifiers": ["private", "final"]
+    }, {
+      "name": "second",
+      "type": "B",
+      "modifiers": ["private", "final"]
+    }],
+    "metrics": {
+      "sloc": 2.0,
+      "lineCount": 2.0
+    }
   }],
   "metrics": {
-    "sloc": 191.0,
-    "cloc": 41.0,
-    "functionCount": 32.0,
-    "variableCount": 15.0,
+    "sloc": 212.0,
+    "cloc": 48.0,
+    "functionCount": 36.0,
+    "variableCount": 20.0,
     "importCount": 10.0,
-    "classCount": 12.0
+    "classCount": 15.0
   }
 }

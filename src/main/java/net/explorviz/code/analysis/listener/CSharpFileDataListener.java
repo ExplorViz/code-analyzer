@@ -13,6 +13,8 @@ import net.explorviz.code.analysis.handler.MethodDataHandler;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -405,7 +407,11 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
     return extractParameterTypes(declarator.parameter_list());
   }
 
-  /** Returns the parameter types, including a trailing {@code params} array, e.g. "object[]". */
+  /**
+   * Returns the parameter types used in overload keys, prefixed by their parameter modifiers (e.g.
+   * "ref int", so that {@code M(int)} and {@code M(ref int)} get different keys), including a
+   * trailing {@code params} array, e.g. "params object[]".
+   */
   private List<String> extractParameterTypes(
       final CSharpParser.Parameter_listContext parameterList) {
     final List<String> paramTypes = new ArrayList<>();
@@ -417,7 +423,9 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
       for (final CSharpParser.Fixed_parameterContext param :
           parameterList.fixed_parameters().fixed_parameter()) {
         if (param.type_() != null) {
-          paramTypes.add(param.type_().getText());
+          final List<String> modifiers = extractParameterModifiers(param);
+          final String prefix = modifiers.isEmpty() ? "" : String.join(" ", modifiers) + " ";
+          paramTypes.add(prefix + param.type_().getText());
         }
       }
     }
@@ -442,7 +450,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
         if (param.identifier() != null) {
           paramName = param.identifier().getText();
         }
-        methodData.addParameter(paramName, paramType, new ArrayList<>());
+        methodData.addParameter(paramName, paramType, extractParameterModifiers(param));
       }
     }
 
@@ -454,6 +462,28 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
           paramArray.identifier() != null ? paramArray.identifier().getText() : "";
       methodData.addParameter(paramName, paramType, List.of("params"));
     }
+  }
+
+  /**
+   * Returns the modifiers of a fixed parameter in source order: {@code ref}, {@code out}, {@code
+   * in} and {@code this} (extension method receiver), e.g. ["this", "ref"] for {@code this ref int
+   * x}.
+   */
+  private List<String> extractParameterModifiers(final CSharpParser.Fixed_parameterContext param) {
+    final List<String> modifiers = new ArrayList<>();
+    final CSharpParser.Parameter_modifierContext modifierCtx = param.parameter_modifier();
+    if (modifierCtx == null) {
+      return modifiers;
+    }
+    for (int i = 0; i < modifierCtx.getChildCount(); i++) {
+      final ParseTree child = modifierCtx.getChild(i);
+      if (child instanceof CSharpParser.Parameter_mode_modifierContext modeModifier) {
+        modifiers.add(modeModifier.getText());
+      } else if (child instanceof TerminalNode terminal) {
+        modifiers.add(terminal.getText());
+      }
+    }
+    return modifiers;
   }
 
   /**
