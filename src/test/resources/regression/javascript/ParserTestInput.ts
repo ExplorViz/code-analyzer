@@ -203,3 +203,45 @@ namespace Utils {
     return 1;
   }
 }
+
+/** Callback arrows stay anonymous; bound arrows are named after their binding. */
+export const double = (x: number): number => x * 2;
+
+export const triple = x => x * 3;
+
+export const tripleAsync = async x => x * 3;
+
+export function processItems(items: number[], cb = (): void => {}): number {
+  items.forEach(item => {
+    cb();
+  });
+  return items.length;
+}
+
+/** Interface declaration merging: both declarations are reported separately. */
+export interface Mergeable {
+  first(): number;
+}
+
+export interface Mergeable {
+  second(): number;
+}
+
+/** Two local classes with the same name must both be reported with their own members. */
+export function firstFactory(): object {
+  class LocalThing {
+    first(): number {
+      return 1;
+    }
+  }
+  return new LocalThing();
+}
+
+export function secondFactory(): object {
+  class LocalThing {
+    second(): number {
+      return 2;
+    }
+  }
+  return new LocalThing();
+}

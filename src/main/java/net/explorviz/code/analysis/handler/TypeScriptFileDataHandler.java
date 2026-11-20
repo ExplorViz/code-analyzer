@@ -12,8 +12,11 @@ import net.explorviz.code.proto.Language;
 public class TypeScriptFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 
+  /** Keys into {@link #classDataMap} of the enclosing types, innermost on top. */
   private final Stack<String> classStack;
+
   private final Map<String, ClassDataHandler> classDataMap;
+  private final Map<String, String> classKeyToFqn;
   private final Stack<String> namespaceStack;
 
   private final List<MethodDataHandler> globalFunctionHandlers;
@@ -27,6 +30,7 @@ public class TypeScriptFileDataHandler extends AbstractFileDataHandler
     super(fileName);
     this.classStack = new Stack<>();
     this.classDataMap = new HashMap<>();
+    this.classKeyToFqn = new HashMap<>();
     this.namespaceStack = new Stack<>();
     this.globalFunctionHandlers = new ArrayList<>();
     this.rootClasses = new ArrayList<>();
@@ -101,25 +105,35 @@ public class TypeScriptFileDataHandler extends AbstractFileDataHandler
         + net.explorviz.code.analysis.types.Verification.parameterHash(parameterTypes);
   }
 
+  /**
+   * Registers a type and makes it the current class. If a type with the same FQN was already
+   * registered in this file (e.g. an interface and a type alias of the same name, or two same-named
+   * classes in different blocks), the new type is stored under a unique key {@code fqn#n} so that
+   * neither type is lost. The emitted class name is not affected.
+   */
   public void enterClass(final String name, final String fqn) {
-    ClassDataHandler handler = this.classDataMap.get(fqn);
-    if (handler == null) {
-      handler = new ClassDataHandler();
-      handler.setName(name);
-      this.classDataMap.put(fqn, handler);
+    String key = fqn;
+    int suffix = 1;
+    while (this.classDataMap.containsKey(key)) {
+      suffix++;
+      key = fqn + "#" + suffix;
+    }
 
-      if (this.classStack.isEmpty()) {
-        this.rootClasses.add(fqn);
-      } else {
-        final String parentClassFqn = this.classStack.peek();
-        final ClassDataHandler parent = this.classDataMap.get(parentClassFqn);
-        if (parent != null) {
-          parent.addInnerClass(fqn, handler);
-        }
+    final ClassDataHandler handler = new ClassDataHandler();
+    handler.setName(name);
+    this.classDataMap.put(key, handler);
+    this.classKeyToFqn.put(key, fqn);
+
+    if (this.classStack.isEmpty()) {
+      this.rootClasses.add(key);
+    } else {
+      final ClassDataHandler parent = this.classDataMap.get(this.classStack.peek());
+      if (parent != null) {
+        parent.addInnerClass(key, handler);
       }
     }
 
-    this.classStack.push(fqn);
+    this.classStack.push(key);
     this.inClassContext = true;
   }
 
@@ -130,13 +144,13 @@ public class TypeScriptFileDataHandler extends AbstractFileDataHandler
     this.inClassContext = !classStack.isEmpty();
   }
 
+  /** Returns the FQN of the innermost enclosing type (without a duplicate suffix), or null. */
   public String getCurrentClassFqnOrNull() {
-    return classStack.isEmpty() ? null : classStack.peek();
+    return classStack.isEmpty() ? null : classKeyToFqn.get(classStack.peek());
   }
 
   public ClassDataHandler getCurrentClassData() {
-    final String fqn = getCurrentClassFqnOrNull();
-    return fqn != null ? classDataMap.get(fqn) : null;
+    return classStack.isEmpty() ? null : classDataMap.get(classStack.peek());
   }
 
   public boolean isInClassContext() {

@@ -135,3 +135,38 @@ export function packagePrivateStaticMethod() {
 export function moduleHelper(path) {
   return basename(path);
 }
+
+/** JSX text may contain quotes; expression containers may contain comments. */
+export function QuoteText() {
+  return (
+    <p className='quote'>
+      Don't panic, it's "fine"
+      {/* don't break */}
+      {
+        // won't break either
+        'it\'s'
+      }
+    </p>
+  );
+}
+
+// TODO: <name> must stay a comment
+const usage = "Usage: <file>";
+const tagPattern = /<div>/;
+const template = `<b>${usage}</b>`;
+
+/** Callback arrows stay anonymous; bound arrows are named after their binding. */
+export const double = x => x * 2;
+
+export const doubleAsync = async x => x * 2;
+
+export function processItems(items, cb = () => {}) {
+  items.forEach(item => {
+    cb(item);
+  });
+  return items.map(item => <li key={item}>{item}</li>);
+}
+
+export function afterAllJsx() {
+  return tagPattern.test(template);
+}

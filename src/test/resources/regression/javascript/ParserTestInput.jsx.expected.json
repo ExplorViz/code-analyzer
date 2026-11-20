@@ -167,11 +167,11 @@
       "type": "any"
     }],
     "metrics": {
-      "sloc": 8.0,
-      "lineCount": 9.0
+      "sloc": 12.0,
+      "lineCount": 13.0
     },
     "startLine": 110,
-    "endLine": 118
+    "endLine": 122
   }, {
     "name": "TinyBadge",
     "returnType": "void",
@@ -179,8 +179,8 @@
       "sloc": 3.0,
       "lineCount": 3.0
     },
-    "startLine": 121,
-    "endLine": 123
+    "startLine": 125,
+    "endLine": 127
   }, {
     "name": "packagePrivateStaticMethod",
     "returnType": "void",
@@ -188,8 +188,8 @@
       "sloc": 2.0,
       "lineCount": 3.0
     },
-    "startLine": 126,
-    "endLine": 128
+    "startLine": 130,
+    "endLine": 132
   }, {
     "name": "moduleHelper",
     "returnType": "void",
@@ -201,14 +201,75 @@
       "sloc": 3.0,
       "lineCount": 3.0
     },
-    "startLine": 131,
-    "endLine": 133
+    "startLine": 135,
+    "endLine": 137
+  }, {
+    "name": "QuoteText",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 12.0,
+      "lineCount": 12.0
+    },
+    "startLine": 140,
+    "endLine": 151
+  }, {
+    "name": "double",
+    "returnType": "void",
+    "parameters": [{
+      "name": "x",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 159,
+    "endLine": 159
+  }, {
+    "name": "doubleAsync",
+    "returnType": "void",
+    "modifiers": ["async"],
+    "parameters": [{
+      "name": "x",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 161,
+    "endLine": 161
+  }, {
+    "name": "processItems",
+    "returnType": "void",
+    "parameters": [{
+      "name": "items",
+      "type": "any"
+    }, {
+      "name": "cb",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 6.0
+    },
+    "startLine": 163,
+    "endLine": 168
+  }, {
+    "name": "afterAllJsx",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 170,
+    "endLine": 172
   }],
   "metrics": {
-    "sloc": 81.0,
-    "cloc": 30.0,
-    "functionCount": 15.0,
-    "variableCount": 7.0,
+    "sloc": 111.0,
+    "cloc": 33.0,
+    "functionCount": 20.0,
+    "variableCount": 13.0,
     "importCount": 2.0,
     "classCount": 3.0
   }

@@ -189,3 +189,34 @@ export function moduleHelper(path, _ignored) {
 export function nestedEnumIsAlpha(value) {
   return value === NestedEnum.Alpha;
 }
+
+/** Callback arrows stay anonymous; bound arrows are named after their binding. */
+export const double = x => x * 2;
+
+export const doubleAsync = async x => x * 2;
+
+export function processItems(items, cb = () => {}) {
+  items.forEach(item => {
+    cb(item);
+  });
+  return items.length;
+}
+
+/** Two local classes with the same name must both be reported. */
+export function firstFactory() {
+  class LocalThing {
+    first() {
+      return 1;
+    }
+  }
+  return new LocalThing();
+}
+
+export function secondFactory() {
+  class LocalThing {
+    second() {
+      return 2;
+    }
+  }
+  return new LocalThing();
+}

@@ -264,6 +264,54 @@
       "sloc": 9.0,
       "lineCount": 11.0
     }
+  }, {
+    "name": "Mergeable",
+    "type": "INTERFACE",
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "Mergeable",
+    "type": "INTERFACE",
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "LocalThing",
+    "type": "CLASS",
+    "functions": [{
+      "name": "first",
+      "returnType": "number",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 233,
+      "endLine": 235
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "LocalThing",
+    "type": "CLASS",
+    "functions": [{
+      "name": "second",
+      "returnType": "number",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 242,
+      "endLine": 244
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
   }],
   "functions": [{
     "name": "packagePrivateStaticMethod",
@@ -312,13 +360,87 @@
     },
     "startLine": 202,
     "endLine": 204
+  }, {
+    "name": "double",
+    "returnType": "number",
+    "parameters": [{
+      "name": "x",
+      "type": "number"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 208,
+    "endLine": 208
+  }, {
+    "name": "triple",
+    "returnType": "void",
+    "parameters": [{
+      "name": "x",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 210,
+    "endLine": 210
+  }, {
+    "name": "tripleAsync",
+    "returnType": "void",
+    "modifiers": ["async"],
+    "parameters": [{
+      "name": "x",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 212,
+    "endLine": 212
+  }, {
+    "name": "processItems",
+    "returnType": "number",
+    "parameters": [{
+      "name": "items",
+      "type": "number[]"
+    }, {
+      "name": "cb",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 6.0
+    },
+    "startLine": 214,
+    "endLine": 219
+  }, {
+    "name": "firstFactory",
+    "returnType": "object",
+    "metrics": {
+      "sloc": 8.0,
+      "lineCount": 8.0
+    },
+    "startLine": 231,
+    "endLine": 238
+  }, {
+    "name": "secondFactory",
+    "returnType": "object",
+    "metrics": {
+      "sloc": 8.0,
+      "lineCount": 8.0
+    },
+    "startLine": 240,
+    "endLine": 247
   }],
   "metrics": {
-    "sloc": 148.0,
-    "cloc": 21.0,
-    "functionCount": 18.0,
-    "variableCount": 17.0,
+    "sloc": 179.0,
+    "cloc": 24.0,
+    "functionCount": 26.0,
+    "variableCount": 20.0,
     "importCount": 3.0,
-    "classCount": 7.0
+    "classCount": 11.0
   }
 }

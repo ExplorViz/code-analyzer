@@ -146,3 +146,52 @@ export function packagePrivateStaticMethod(): void {
 export function moduleHelper(path: string): string {
   return basename(path);
 }
+
+/** JSX text may contain quotes; expression containers may contain comments. */
+export function QuoteText(): React.ReactElement {
+  return (
+    <p className='quote'>
+      Don't panic, it's "fine"
+      {/* don't break */}
+      {
+        // won't break either
+        `template ${'it\'s'}`
+      }
+    </p>
+  );
+}
+
+// TODO: <name> must stay a comment
+const usage = "Usage: <file>";
+const tagPattern = /<div>/;
+
+/** Generic arrow functions are not JSX. */
+export const identity = <T,>(value: T): T => value;
+
+export interface MapperHolder {
+  map: <T>(value: T) => T;
+}
+
+export class GenericStore<S> {
+  handle = <K extends keyof S>(key: K): K => {
+    return key;
+  };
+
+  render(): React.ReactElement {
+    return <span title="it's">{usage}</span>;
+  }
+}
+
+/** Callback arrows stay anonymous. */
+export function processItems(items: number[], cb = () => {}): React.ReactElement[] {
+  items.forEach(item => {
+    cb();
+  });
+  return items.map(item => <li key={item}>{item}</li>);
+}
+
+export const double = (x: number) => x * 2;
+
+export function afterAllJsx(): boolean {
+  return tagPattern.test(usage);
+}

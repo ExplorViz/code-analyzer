@@ -147,6 +147,43 @@
       "sloc": 9.0,
       "lineCount": 11.0
     }
+  }, {
+    "name": "MapperHolder",
+    "type": "INTERFACE",
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "GenericStore",
+    "type": "CLASS",
+    "functions": [{
+      "name": "handle",
+      "returnType": "K",
+      "parameters": [{
+        "name": "key",
+        "type": "K"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 176,
+      "endLine": 178
+    }, {
+      "name": "render",
+      "returnType": "React.ReactElement",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 180,
+      "endLine": 182
+    }],
+    "metrics": {
+      "sloc": 8.0,
+      "lineCount": 9.0
+    }
   }],
   "functions": [{
     "name": "ParserTestInputView",
@@ -156,11 +193,11 @@
       "type": "ParserTestInputProps"
     }],
     "metrics": {
-      "sloc": 8.0,
-      "lineCount": 9.0
+      "sloc": 12.0,
+      "lineCount": 13.0
     },
     "startLine": 126,
-    "endLine": 134
+    "endLine": 138
   }, {
     "name": "packagePrivateStaticMethod",
     "returnType": "void",
@@ -168,8 +205,8 @@
       "sloc": 2.0,
       "lineCount": 3.0
     },
-    "startLine": 137,
-    "endLine": 139
+    "startLine": 141,
+    "endLine": 143
   }, {
     "name": "moduleHelper",
     "returnType": "string",
@@ -181,15 +218,75 @@
       "sloc": 3.0,
       "lineCount": 3.0
     },
-    "startLine": 142,
-    "endLine": 144
+    "startLine": 146,
+    "endLine": 148
+  }, {
+    "name": "QuoteText",
+    "returnType": "React.ReactElement",
+    "metrics": {
+      "sloc": 12.0,
+      "lineCount": 12.0
+    },
+    "startLine": 151,
+    "endLine": 162
+  }, {
+    "name": "identity",
+    "returnType": "T",
+    "parameters": [{
+      "name": "value",
+      "type": "T"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 169,
+    "endLine": 169
+  }, {
+    "name": "processItems",
+    "returnType": "React.ReactElement[]",
+    "parameters": [{
+      "name": "items",
+      "type": "number[]"
+    }, {
+      "name": "cb",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 6.0
+    },
+    "startLine": 186,
+    "endLine": 191
+  }, {
+    "name": "double",
+    "returnType": "void",
+    "parameters": [{
+      "name": "x",
+      "type": "number"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 193,
+    "endLine": 193
+  }, {
+    "name": "afterAllJsx",
+    "returnType": "boolean",
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 195,
+    "endLine": 197
   }],
   "metrics": {
-    "sloc": 86.0,
-    "cloc": 31.0,
-    "functionCount": 11.0,
-    "variableCount": 12.0,
+    "sloc": 126.0,
+    "cloc": 35.0,
+    "functionCount": 18.0,
+    "variableCount": 18.0,
     "importCount": 2.0,
-    "classCount": 4.0
+    "classCount": 6.0
   }
 }

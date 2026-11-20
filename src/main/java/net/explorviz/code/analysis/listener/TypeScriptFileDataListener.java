@@ -570,39 +570,66 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
     return propertyMemberBase != null && propertyMemberBase.Async() != null;
   }
 
-  /** Extract the name of an arrow function from its parent context. */
+  /**
+   * Extracts the name of an arrow function from the construct it is bound to: a variable
+   * declaration ({@code const f = x => ...}), a class property ({@code f = () => ...}) or an
+   * assignment to a plain identifier ({@code f = () => ...}). Arrow functions in any other position
+   * (callbacks passed as arguments, default parameter values, object literal values, ...) are
+   * anonymous and yield {@code null}.
+   */
   private String extractArrowFunctionName(
       final TypeScriptParser.ArrowFunctionDeclarationContext ctx) {
+    ParserRuleContext child = ctx;
     ParserRuleContext parent = ctx.getParent();
-
-    int depth = 0;
-    while (parent != null && depth < 5) {
-      if (parent instanceof TypeScriptParser.VariableDeclarationContext variableDeclaration) {
-        if (variableDeclaration.identifierOrKeyWord() != null) {
-          return variableDeclaration.identifierOrKeyWord().getText();
-        }
-      }
-      if (parent
-          instanceof TypeScriptParser.PropertyDeclarationExpressionContext propertyDeclaration) {
-        if (propertyDeclaration.classElementName() != null) {
-          return propertyDeclaration.classElementName().getText();
-        }
-      }
-
-      final String text = parent.getText();
-      if (text != null && text.contains("=")) {
-        final String[] parts = text.split("=", 2);
-        String potentialName = parts[0].trim();
-        potentialName = potentialName.replaceAll("^(const|let|var)\\s+", "");
-        if (potentialName.matches("[a-zA-Z_$#][a-zA-Z0-9_$#]*")) {
-          return potentialName;
-        }
-      }
+    while (isTransparentArrowWrapper(parent)) {
+      child = parent;
       parent = parent.getParent();
-      depth++;
+    }
+
+    if (parent instanceof TypeScriptParser.VariableDeclarationContext variableDeclaration) {
+      final List<TypeScriptParser.SingleExpressionContext> expressions =
+          variableDeclaration.singleExpression();
+      if (variableDeclaration.identifierOrKeyWord() != null
+          && !expressions.isEmpty()
+          && expressions.get(expressions.size() - 1) == child) {
+        return variableDeclaration.identifierOrKeyWord().getText();
+      }
+      return null;
+    }
+
+    if (parent instanceof TypeScriptParser.InitializerContext
+        && parent.getParent()
+            instanceof TypeScriptParser.PropertyDeclarationExpressionContext propertyDeclaration
+        && propertyDeclaration.classElementName() != null) {
+      return propertyDeclaration.classElementName().getText();
+    }
+
+    if (parent instanceof TypeScriptParser.AssignmentExpressionContext assignment
+        && assignment.singleExpression().size() == 2
+        && assignment.singleExpression(1) == child
+        && assignment.singleExpression(0)
+            instanceof TypeScriptParser.IdentifierExpressionContext target) {
+      return target.getText();
     }
 
     return null;
+  }
+
+  /**
+   * Contexts that merely wrap an arrow function expression without changing what it is bound to,
+   * e.g. {@code anonymousFunction}, parentheses or explicit type parameters ({@code <T,>(x: T) =>
+   * x}).
+   */
+  private static boolean isTransparentArrowWrapper(final ParserRuleContext context) {
+    if (context instanceof TypeScriptParser.AnonymousFunctionContext
+        || context instanceof TypeScriptParser.FunctionExpressionContext
+        || context instanceof TypeScriptParser.GenericTypesContext) {
+      return true;
+    }
+    if (context instanceof TypeScriptParser.ExpressionSequenceContext sequence) {
+      return sequence.singleExpression().size() == 1;
+    }
+    return context instanceof TypeScriptParser.ParenthesizedExpressionContext;
   }
 
   /**

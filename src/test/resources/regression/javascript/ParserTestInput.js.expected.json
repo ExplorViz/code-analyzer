@@ -210,6 +210,40 @@
       "sloc": 8.0,
       "lineCount": 12.0
     }
+  }, {
+    "name": "LocalThing",
+    "type": "CLASS",
+    "functions": [{
+      "name": "first",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 208,
+      "endLine": 210
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "LocalThing",
+    "type": "CLASS",
+    "functions": [{
+      "name": "second",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 217,
+      "endLine": 219
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
   }],
   "functions": [{
     "name": "packagePrivateStaticMethod",
@@ -249,13 +283,74 @@
     },
     "startLine": 189,
     "endLine": 191
+  }, {
+    "name": "double",
+    "returnType": "void",
+    "parameters": [{
+      "name": "x",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 194,
+    "endLine": 194
+  }, {
+    "name": "doubleAsync",
+    "returnType": "void",
+    "modifiers": ["async"],
+    "parameters": [{
+      "name": "x",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 196,
+    "endLine": 196
+  }, {
+    "name": "processItems",
+    "returnType": "void",
+    "parameters": [{
+      "name": "items",
+      "type": "any"
+    }, {
+      "name": "cb",
+      "type": "any"
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 6.0
+    },
+    "startLine": 198,
+    "endLine": 203
+  }, {
+    "name": "firstFactory",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 8.0,
+      "lineCount": 8.0
+    },
+    "startLine": 206,
+    "endLine": 213
+  }, {
+    "name": "secondFactory",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 8.0,
+      "lineCount": 8.0
+    },
+    "startLine": 215,
+    "endLine": 222
   }],
   "metrics": {
-    "sloc": 117.0,
-    "cloc": 45.0,
-    "functionCount": 17.0,
-    "variableCount": 11.0,
+    "sloc": 141.0,
+    "cloc": 47.0,
+    "functionCount": 24.0,
+    "variableCount": 14.0,
     "importCount": 2.0,
-    "classCount": 3.0
+    "classCount": 5.0
   }
 }

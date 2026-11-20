@@ -1,315 +1,605 @@
 package net.explorviz.code.analysis.parser;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 /**
- * Replaces JSX elements in TSX source with {@code null} so the TypeScript grammar can parse files
- * without expensive JSX disambiguation. Suffices for structural code analysis.
+ * Replaces JSX elements in TSX/JSX source with {@code null} so the TypeScript grammar can parse
+ * files without expensive JSX disambiguation. Suffices for structural code analysis.
+ *
+ * <p>The normalizer is a small lexer-aware scanner: comments, string literals, template literals
+ * and regular expression literals are copied verbatim and never inspected for JSX. A {@code <} is
+ * only considered as a JSX start in expression position, TypeScript generic parameter lists (e.g.
+ * {@code <T,>(x: T) => x}) are not treated as JSX, and an element whose end cannot be found is left
+ * untouched. Replacements keep the line structure of the replaced element so that line numbers and
+ * SLOC of the surrounding code stay correct: a single-line element becomes {@code null}, a
+ * multi-line element becomes a parenthesised comma expression with one {@code null} per non-blank
+ * line, e.g. {@code (null\n,null\n,null)}.
  */
 public final class TsxJsxNormalizer {
 
-  private TsxJsxNormalizer() {}
+  private static final int FAILED = -1;
+
+  /** Guards the recursive descent against stack overflows on pathological input. */
+  private static final int MAX_NESTING_DEPTH = 200;
+
+  /** Characters after which a {@code <} or {@code /} starts an expression operand. */
+  private static final String EXPRESSION_START_PUNCTUATORS = "=({[,;:?&|!~+-*%^<>";
+
+  /** Keywords after which a {@code <} starts a JSX element. */
+  private static final Set<String> JSX_PRECEDING_KEYWORDS =
+      Set.of("return", "throw", "yield", "await", "default", "case");
+
+  /** Keywords after which a {@code /} starts a regular expression literal. */
+  private static final Set<String> REGEX_PRECEDING_KEYWORDS =
+      Set.of(
+          "return",
+          "throw",
+          "yield",
+          "await",
+          "default",
+          "case",
+          "typeof",
+          "instanceof",
+          "in",
+          "of",
+          "new",
+          "delete",
+          "void",
+          "do",
+          "else");
+
+  private final String source;
+  private final int length;
+  private final Map<Integer, Integer> elementEndCache = new HashMap<>();
+  private int nestingDepth;
+
+  private TsxJsxNormalizer(final String source) {
+    this.source = source;
+    this.length = source.length();
+  }
 
   public static String replaceJsxWithNull(final String source) {
-    final StringBuilder out = new StringBuilder(source.length());
-    int index = 0;
-    while (index < source.length()) {
-      final int jsxStart = findJsxStart(source, index);
-      if (jsxStart < 0) {
-        out.append(source, index, source.length());
-        break;
-      }
-      out.append(source, index, jsxStart);
-      out.append("null");
-      final int nextIndex = skipJsxElement(source, jsxStart);
-      // Guard against non-progress (e.g. unhandled `<Component<Type>` before fix).
-      index = nextIndex > jsxStart ? nextIndex : jsxStart + 1;
+    if (source == null || source.indexOf('<') < 0) {
+      return source;
     }
+    return new TsxJsxNormalizer(source).normalize();
+  }
+
+  private String normalize() {
+    final StringBuilder out = new StringBuilder(length);
+    int copyFrom = 0;
+    int index = 0;
+    int prevSignificant = -1;
+    while (index < length) {
+      final char c = source.charAt(index);
+      if (Character.isWhitespace(c)) {
+        index++;
+        continue;
+      }
+      final int skipped = skipNonCodeToken(index, prevSignificant);
+      if (skipped != FAILED) {
+        if (!isComment(index)) {
+          prevSignificant = skipped - 1;
+        }
+        index = skipped;
+        continue;
+      }
+      if (c == '<' && isJsxCandidate(index, prevSignificant)) {
+        final int end = skipJsxElement(index);
+        if (end != FAILED) {
+          out.append(source, copyFrom, index);
+          appendReplacement(out, index, end);
+          copyFrom = end;
+          index = end;
+          prevSignificant = end - 1;
+          continue;
+        }
+      }
+      if (c == '<') {
+        final int comma = trailingTypeParameterComma(index);
+        if (comma >= 0) {
+          // `<T,>` is the TSX spelling of a generic arrow; the grammar has no trailing comma.
+          out.append(source, copyFrom, comma).append(' ');
+          copyFrom = comma + 1;
+        }
+      }
+      prevSignificant = index;
+      index++;
+    }
+    out.append(source, copyFrom, length);
     return out.toString();
   }
 
-  private static int findJsxStart(final String source, final int from) {
-    for (int i = from; i < source.length(); i++) {
-      if (source.charAt(i) == '<' && isJsxStartAt(source, i)) {
+  /** Returns the index of the comma in {@code <T,>}, or -1 if {@code ltIndex} is not that form. */
+  private int trailingTypeParameterComma(final int ltIndex) {
+    if (ltIndex + 1 >= length || !Character.isJavaIdentifierStart(source.charAt(ltIndex + 1))) {
+      return -1;
+    }
+    final int comma = skipWhitespace(skipIdentifier(ltIndex + 1));
+    if (comma >= length || source.charAt(comma) != ',') {
+      return -1;
+    }
+    final int close = skipWhitespace(comma + 1);
+    return close < length && source.charAt(close) == '>' ? comma : -1;
+  }
+
+  /** Emits {@code null} for the range, keeping every line break and one token per code line. */
+  private void appendReplacement(final StringBuilder out, final int start, final int end) {
+    final int firstLineBreak = indexOfLineBreak(start, end);
+    if (firstLineBreak < 0) {
+      out.append("null");
+      return;
+    }
+    out.append("(null");
+    boolean lineHasContent = false;
+    for (int i = firstLineBreak; i < end; i++) {
+      final char c = source.charAt(i);
+      if (c == '\n' || c == '\r') {
+        out.append(c);
+        lineHasContent = false;
+      } else if (!lineHasContent && !Character.isWhitespace(c)) {
+        out.append(",null");
+        lineHasContent = true;
+      }
+    }
+    out.append(')');
+  }
+
+  private int indexOfLineBreak(final int start, final int end) {
+    for (int i = start; i < end; i++) {
+      final char c = source.charAt(i);
+      if (c == '\n' || c == '\r') {
         return i;
       }
     }
     return -1;
   }
 
-  private static boolean isJsxStartAt(final String source, final int ltIndex) {
-    int next = ltIndex + 1;
-    if (next >= source.length()) {
-      return false;
+  // ---------------------------------------------------------------------------------------------
+  // Code scanning
+  // ---------------------------------------------------------------------------------------------
+
+  /**
+   * If {@code index} starts a comment, string, template or regex literal, returns the index after
+   * it; otherwise {@link #FAILED}.
+   */
+  private int skipNonCodeToken(final int index, final int prevSignificant) {
+    final char c = source.charAt(index);
+    final char next = index + 1 < length ? source.charAt(index + 1) : '\0';
+    if (c == '/' && next == '/') {
+      return skipLineComment(index);
     }
-    final char first = source.charAt(next);
-    if (first == '/' || first == '>') {
-      return hasJsxPredecessor(source, ltIndex);
+    if (c == '/' && next == '*') {
+      return skipBlockComment(index);
     }
-    if (!Character.isJavaIdentifierStart(first)) {
-      return false;
+    if (c == '"' || c == '\'') {
+      return skipStringLiteral(index);
     }
-    return hasJsxPredecessor(source, ltIndex);
+    if (c == '`') {
+      return skipTemplate(index);
+    }
+    if (c == '/' && isRegexAllowed(prevSignificant)) {
+      return skipRegex(index);
+    }
+    return FAILED;
   }
 
-  private static boolean hasJsxPredecessor(final String source, final int ltIndex) {
-    int index = ltIndex - 1;
-    while (index >= 0 && Character.isWhitespace(source.charAt(index))) {
-      index--;
-    }
-    if (index < 0) {
-      return false;
-    }
-    final String trimmed = source.substring(0, ltIndex).trim();
-    if (trimmed.endsWith("return") || trimmed.endsWith("throw")) {
-      return true;
-    }
-    final char previous = source.charAt(index);
-    if ("=({[,;:?&|+-~!*%/>".indexOf(previous) >= 0) {
-      return true;
-    }
-    if (index > 0) {
-      final String twoChars = source.substring(index - 1, index + 1);
-      if ("=>".equals(twoChars)
-          || "&&".equals(twoChars)
-          || "||".equals(twoChars)
-          || "??".equals(twoChars)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static int skipJsxElement(final String source, final int start) {
-    int index = start + 1;
-    if (index < source.length() && source.charAt(index) == '/') {
-      return findChar(source, '>', index) + 1;
-    }
-    if (index < source.length() && source.charAt(index) == '>') {
-      return skipFragment(source, index + 1);
-    }
-    index = skipTagName(source, index);
-    index = skipTypeArguments(source, index);
-    index = skipAttributes(source, index);
-    if (index + 1 < source.length()
-        && source.charAt(index) == '/'
-        && source.charAt(index + 1) == '>') {
-      return index + 2;
-    }
-    if (index < source.length() && source.charAt(index) == '>') {
-      return skipElementBody(source, index + 1, extractTagName(source, start));
-    }
-    return index;
-  }
-
-  private static int skipFragment(final String source, final int from) {
-    int depth = 1;
-    int index = from;
-    while (index < source.length() && depth > 0) {
-      if (source.charAt(index) == '<') {
-        if (index + 1 < source.length() && source.charAt(index + 1) == '/') {
-          final int close = findChar(source, '>', index);
-          if (close < 0) {
-            return source.length();
-          }
-          index = close + 1;
-          depth--;
-        } else if (index + 1 < source.length() && source.charAt(index + 1) == '>') {
-          index += 2;
-          depth++;
-        } else {
-          index = skipJsxElement(source, index);
-        }
-      } else if (source.charAt(index) == '{') {
-        index = skipBalanced(source, index, '{', '}');
-      } else if (source.charAt(index) == '"' || source.charAt(index) == '\'') {
-        index = skipQuoted(source, index);
-      } else {
-        index++;
-      }
-    }
-    return index;
-  }
-
-  private static int skipElementBody(final String source, final int from, final String tagName) {
-    int index = from;
-    final String closeTag = "</" + tagName;
-    while (index < source.length()) {
-      if (source.charAt(index) == '<') {
-        if (index + 1 < source.length() && source.charAt(index + 1) == '/') {
-          final int closeEnd = findChar(source, '>', index);
-          if (closeEnd < 0) {
-            return source.length();
-          }
-          final String tag = source.substring(index, closeEnd + 1);
-          if (tag.startsWith(closeTag)) {
-            return closeEnd + 1;
-          }
-        }
-        index = skipJsxElement(source, index);
-      } else if (source.charAt(index) == '{') {
-        index = skipBalanced(source, index, '{', '}');
-      } else if (source.charAt(index) == '"' || source.charAt(index) == '\'') {
-        index = skipQuoted(source, index);
-      } else {
-        index++;
-      }
-    }
-    return index;
-  }
-
-  private static String extractTagName(final String source, final int start) {
-    int index = start + 1;
-    final StringBuilder name = new StringBuilder();
-    while (index < source.length()) {
-      final char c = source.charAt(index);
-      if (Character.isJavaIdentifierPart(c) || c == '.' || c == '-') {
-        name.append(c);
-        index++;
-      } else {
-        break;
-      }
-    }
-    return name.toString();
-  }
-
-  private static int skipTagName(final String source, final int from) {
-    int index = from;
-    while (index < source.length()) {
-      final char c = source.charAt(index);
-      if (Character.isJavaIdentifierPart(c) || c == '.' || c == '-') {
-        index++;
-      } else {
-        break;
-      }
-    }
-    return index;
+  private boolean isComment(final int index) {
+    return source.charAt(index) == '/'
+        && index + 1 < length
+        && (source.charAt(index + 1) == '/' || source.charAt(index + 1) == '*');
   }
 
   /**
-   * Skips TypeScript generic arguments on a JSX opening tag, e.g. {@code <DataTable<SubjectDto>}.
+   * Skips code starting right after an opening {@code {} up to and including the matching {@code
+   * }}. Strings, templates, comments, regex literals and nested JSX are handled.
+   *
+   * @return the index after the closing brace, or {@link #FAILED} if it does not exist
    */
-  private static int skipTypeArguments(final String source, int from) {
-    from = skipWhitespaceForward(source, from);
-    if (from >= source.length() || source.charAt(from) != '<') {
-      return from;
-    }
-    return skipBalanced(source, from, '<', '>');
-  }
-
-  private static int skipAttributes(final String source, int from) {
-    while (from < source.length()) {
-      final int previous = from;
-      from = skipWhitespaceForward(source, from);
-      if (from >= source.length()) {
-        return from;
-      }
-      final char c = source.charAt(from);
-      if (c == '/' || c == '>') {
-        return from;
-      }
-      if (c == '<') {
-        from = skipTypeArguments(source, from);
+  private int skipCodeBlock(final int from) {
+    int depth = 1;
+    int index = from;
+    int prevSignificant = from - 1;
+    while (index < length) {
+      final char c = source.charAt(index);
+      if (Character.isWhitespace(c)) {
+        index++;
         continue;
       }
-      if (c == '{') {
-        from = skipBalanced(source, from, '{', '}');
+      final int skipped = skipNonCodeToken(index, prevSignificant);
+      if (skipped != FAILED) {
+        if (!isComment(index)) {
+          prevSignificant = skipped - 1;
+        }
+        index = skipped;
         continue;
       }
-      from = skipTagName(source, from);
-      from = skipWhitespaceForward(source, from);
-      if (from < source.length() && source.charAt(from) == '=') {
-        from++;
-        from = skipWhitespaceForward(source, from);
-        if (from < source.length()) {
-          final char valueStart = source.charAt(from);
-          if (valueStart == '"' || valueStart == '\'') {
-            from = skipQuoted(source, from);
-          } else if (valueStart == '{') {
-            from = skipBalanced(source, from, '{', '}');
-          } else {
-            from++;
-          }
+      if (c == '<' && isJsxCandidate(index, prevSignificant)) {
+        final int end = skipJsxElement(index);
+        if (end != FAILED) {
+          prevSignificant = end - 1;
+          index = end;
+          continue;
         }
       }
-      if (from <= previous) {
-        return from + 1;
-      }
-    }
-    return from;
-  }
-
-  private static int skipWhitespaceForward(final String source, int from) {
-    while (from < source.length() && Character.isWhitespace(source.charAt(from))) {
-      from++;
-    }
-    return from;
-  }
-
-  private static int skipQuoted(final String source, final int start) {
-    final char quote = source.charAt(start);
-    int index = start + 1;
-    while (index < source.length()) {
-      final char c = source.charAt(index);
-      if (c == '\\') {
-        index += 2;
-      } else if (c == quote) {
-        return index + 1;
-      } else {
-        index++;
-      }
-    }
-    return index;
-  }
-
-  private static int skipBalanced(
-      final String source, final int start, final char open, final char close) {
-    int depth = 0;
-    int index = start;
-    while (index < source.length()) {
-      final char c = source.charAt(index);
-      if (c == '"' || c == '\'') {
-        index = skipQuoted(source, index);
-        continue;
-      }
-      if (c == '`') {
-        index = skipTemplate(source, index);
-        continue;
-      }
-      if (c == open) {
+      if (c == '{') {
         depth++;
-      } else if (c == close) {
+      } else if (c == '}') {
         depth--;
         if (depth == 0) {
           return index + 1;
         }
       }
+      prevSignificant = index;
+      index++;
+    }
+    return FAILED;
+  }
+
+  private int skipLineComment(final int start) {
+    int index = start + 2;
+    while (index < length && source.charAt(index) != '\n' && source.charAt(index) != '\r') {
       index++;
     }
     return index;
   }
 
-  private static int skipTemplate(final String source, final int start) {
+  private int skipBlockComment(final int start) {
+    final int end = source.indexOf("*/", start + 2);
+    return end < 0 ? length : end + 2;
+  }
+
+  /** Skips a JS string literal; an unescaped line break terminates it (unterminated literal). */
+  private int skipStringLiteral(final int start) {
+    final char quote = source.charAt(start);
     int index = start + 1;
-    while (index < source.length()) {
+    while (index < length) {
+      final char c = source.charAt(index);
+      if (c == '\\') {
+        index += 2;
+      } else if (c == quote) {
+        return index + 1;
+      } else if (c == '\n' || c == '\r') {
+        return index;
+      } else {
+        index++;
+      }
+    }
+    return length;
+  }
+
+  private int skipTemplate(final int start) {
+    int index = start + 1;
+    while (index < length) {
       final char c = source.charAt(index);
       if (c == '\\') {
         index += 2;
       } else if (c == '`') {
         return index + 1;
-      } else if (c == '$' && index + 1 < source.length() && source.charAt(index + 1) == '{') {
-        index = skipBalanced(source, index + 1, '{', '}');
+      } else if (c == '$' && index + 1 < length && source.charAt(index + 1) == '{') {
+        final int end = skipCodeBlock(index + 2);
+        if (end == FAILED) {
+          return length;
+        }
+        index = end;
       } else {
         index++;
+      }
+    }
+    return length;
+  }
+
+  /** Skips a regex literal, or returns {@link #FAILED} if none ends on the same line. */
+  private int skipRegex(final int start) {
+    int index = start + 1;
+    boolean inClass = false;
+    while (index < length) {
+      final char c = source.charAt(index);
+      if (c == '\n' || c == '\r') {
+        return FAILED;
+      }
+      if (c == '\\') {
+        index += 2;
+        continue;
+      }
+      if (c == '[') {
+        inClass = true;
+      } else if (c == ']') {
+        inClass = false;
+      } else if (c == '/' && !inClass) {
+        index++;
+        while (index < length && Character.isJavaIdentifierPart(source.charAt(index))) {
+          index++;
+        }
+        return index;
+      }
+      index++;
+    }
+    return FAILED;
+  }
+
+  private boolean isRegexAllowed(final int prevSignificant) {
+    if (prevSignificant < 0) {
+      return true;
+    }
+    final char previous = source.charAt(prevSignificant);
+    if (EXPRESSION_START_PUNCTUATORS.indexOf(previous) >= 0 || previous == '}') {
+      return true;
+    }
+    return REGEX_PRECEDING_KEYWORDS.contains(wordEndingAt(prevSignificant));
+  }
+
+  /** Returns the identifier ending at {@code index}, or an empty string. */
+  private String wordEndingAt(final int index) {
+    if (!Character.isJavaIdentifierPart(source.charAt(index))) {
+      return "";
+    }
+    int start = index;
+    while (start > 0 && Character.isJavaIdentifierPart(source.charAt(start - 1))) {
+      start--;
+    }
+    if (start > 0 && source.charAt(start - 1) == '.') {
+      return "";
+    }
+    return source.substring(start, index + 1);
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // JSX detection
+  // ---------------------------------------------------------------------------------------------
+
+  private boolean isJsxCandidate(final int ltIndex, final int prevSignificant) {
+    if (ltIndex + 1 >= length || prevSignificant < 0) {
+      return false;
+    }
+    final char first = source.charAt(ltIndex + 1);
+    if (first != '>' && !Character.isJavaIdentifierStart(first)) {
+      return false;
+    }
+    if (!hasJsxPredecessor(prevSignificant)) {
+      return false;
+    }
+    return first == '>' || !looksLikeTypeParameters(ltIndex);
+  }
+
+  private boolean hasJsxPredecessor(final int prevSignificant) {
+    final char previous = source.charAt(prevSignificant);
+    if (previous == '<') {
+      // `<<` is a shift operator, not JSX.
+      return false;
+    }
+    if (EXPRESSION_START_PUNCTUATORS.indexOf(previous) >= 0) {
+      return true;
+    }
+    return JSX_PRECEDING_KEYWORDS.contains(wordEndingAt(prevSignificant));
+  }
+
+  /**
+   * Detects TypeScript generic parameter lists that cannot be JSX: {@code <T,>}, {@code <T extends
+   * U>} and {@code <T = U>}.
+   */
+  private boolean looksLikeTypeParameters(final int ltIndex) {
+    int index = skipIdentifier(ltIndex + 1);
+    final int afterName = index;
+    index = skipWhitespace(index);
+    if (index >= length) {
+      return false;
+    }
+    final char c = source.charAt(index);
+    if (c == ',' || (c == '=' && (index + 1 >= length || source.charAt(index + 1) != '='))) {
+      return true;
+    }
+    if (index > afterName && source.startsWith("extends", index)) {
+      final int afterKeyword = index + "extends".length();
+      return afterKeyword < length && Character.isWhitespace(source.charAt(afterKeyword));
+    }
+    return false;
+  }
+
+  /**
+   * Skips a JSX element or fragment starting at {@code ltIndex}.
+   *
+   * @return the index after the element, or {@link #FAILED} if it is not a complete JSX element
+   */
+  private int skipJsxElement(final int ltIndex) {
+    final Integer cached = elementEndCache.get(ltIndex);
+    if (cached != null) {
+      return cached;
+    }
+    if (nestingDepth >= MAX_NESTING_DEPTH) {
+      // Not cached: the result depends on the depth at which the element is reached.
+      return FAILED;
+    }
+    nestingDepth++;
+    try {
+      final int end = scanJsxElement(ltIndex);
+      elementEndCache.put(ltIndex, end);
+      return end;
+    } finally {
+      nestingDepth--;
+    }
+  }
+
+  private int scanJsxElement(final int ltIndex) {
+    int index = ltIndex + 1;
+    if (index < length && source.charAt(index) == '>') {
+      return skipChildren(index + 1, "");
+    }
+    final int nameEnd = skipTagName(index);
+    if (nameEnd == index) {
+      return FAILED;
+    }
+    final String tagName = source.substring(index, nameEnd);
+    index = skipJsxTrivia(nameEnd);
+    if (index < length && source.charAt(index) == '<') {
+      index = skipTypeArguments(index);
+      if (index == FAILED) {
+        return FAILED;
+      }
+    }
+    while (true) {
+      index = skipJsxTrivia(index);
+      if (index >= length) {
+        return FAILED;
+      }
+      final char c = source.charAt(index);
+      if (c == '/') {
+        return index + 1 < length && source.charAt(index + 1) == '>' ? index + 2 : FAILED;
+      }
+      if (c == '>') {
+        return skipChildren(index + 1, tagName);
+      }
+      if (c == '{') {
+        index = skipCodeBlock(index + 1);
+      } else if (Character.isJavaIdentifierStart(c)) {
+        index = skipAttribute(index);
+      } else {
+        return FAILED;
+      }
+      if (index == FAILED) {
+        return FAILED;
+      }
+    }
+  }
+
+  private int skipAttribute(final int start) {
+    int index = skipTagName(start);
+    final int afterName = skipJsxTrivia(index);
+    if (afterName >= length || source.charAt(afterName) != '=') {
+      return index;
+    }
+    index = skipJsxTrivia(afterName + 1);
+    if (index >= length) {
+      return FAILED;
+    }
+    final char c = source.charAt(index);
+    if (c == '"' || c == '\'') {
+      // JSX attribute strings have no escape sequences and may span lines.
+      final int close = source.indexOf(c, index + 1);
+      return close < 0 ? FAILED : close + 1;
+    }
+    if (c == '{') {
+      return skipCodeBlock(index + 1);
+    }
+    if (c == '<') {
+      return skipJsxElement(index);
+    }
+    return FAILED;
+  }
+
+  /**
+   * Skips JSX children (text, expression containers and nested elements) up to and including the
+   * closing tag of {@code tagName} ({@code ""} for a fragment). Quotes in JSX text are plain
+   * characters.
+   */
+  private int skipChildren(final int from, final String tagName) {
+    int index = from;
+    while (index < length) {
+      final char c = source.charAt(index);
+      if (c == '<') {
+        final int afterLt = skipJsxTrivia(index + 1);
+        if (afterLt < length && source.charAt(afterLt) == '/') {
+          return skipClosingTag(afterLt + 1, tagName);
+        }
+        index = skipJsxElement(index);
+        if (index == FAILED) {
+          return FAILED;
+        }
+      } else if (c == '{') {
+        index = skipCodeBlock(index + 1);
+        if (index == FAILED) {
+          return FAILED;
+        }
+      } else {
+        index++;
+      }
+    }
+    return FAILED;
+  }
+
+  private int skipClosingTag(final int from, final String tagName) {
+    int index = skipJsxTrivia(from);
+    final int nameEnd = skipTagName(index);
+    if (!tagName.equals(source.substring(index, nameEnd))) {
+      return FAILED;
+    }
+    index = skipJsxTrivia(nameEnd);
+    return index < length && source.charAt(index) == '>' ? index + 1 : FAILED;
+  }
+
+  /** Skips TypeScript type arguments on a JSX tag, e.g. {@code <DataTable<SubjectDto>}. */
+  private int skipTypeArguments(final int start) {
+    int depth = 0;
+    int index = start;
+    while (index < length) {
+      final char c = source.charAt(index);
+      if (c == '"' || c == '\'') {
+        index = skipStringLiteral(index);
+        continue;
+      }
+      if (c == '=' && index + 1 < length && source.charAt(index + 1) == '>') {
+        index += 2;
+        continue;
+      }
+      if (c == '<') {
+        depth++;
+      } else if (c == '>') {
+        depth--;
+        if (depth == 0) {
+          return index + 1;
+        }
+      } else if (c == ';' || c == '}') {
+        return FAILED;
+      }
+      index++;
+    }
+    return FAILED;
+  }
+
+  private int skipTagName(final int from) {
+    int index = from;
+    while (index < length) {
+      final char c = source.charAt(index);
+      if (Character.isJavaIdentifierPart(c) || c == '.' || c == '-' || c == ':') {
+        index++;
+      } else {
+        break;
       }
     }
     return index;
   }
 
-  private static int findChar(final String source, final char target, final int from) {
-    for (int i = from; i < source.length(); i++) {
-      if (source.charAt(i) == target) {
-        return i;
+  private int skipIdentifier(final int from) {
+    int index = from;
+    while (index < length && Character.isJavaIdentifierPart(source.charAt(index))) {
+      index++;
+    }
+    return index;
+  }
+
+  private int skipWhitespace(final int from) {
+    int index = from;
+    while (index < length && Character.isWhitespace(source.charAt(index))) {
+      index++;
+    }
+    return index;
+  }
+
+  /** Skips whitespace and comments inside a JSX tag. */
+  private int skipJsxTrivia(final int from) {
+    int index = skipWhitespace(from);
+    while (index + 1 < length && source.charAt(index) == '/') {
+      final char next = source.charAt(index + 1);
+      if (next == '/') {
+        index = skipWhitespace(skipLineComment(index));
+      } else if (next == '*') {
+        index = skipWhitespace(skipBlockComment(index));
+      } else {
+        break;
       }
     }
-    return -1;
+    return index;
   }
 }
