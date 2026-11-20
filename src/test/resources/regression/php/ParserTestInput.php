@@ -12,6 +12,8 @@ use ExplorViz\Code\Analysis\Fixtures\Support\IOException;
 
 // Single-line comment
 
+# Shell-style comment
+
 /* Single-line block comment */
 
 /*
@@ -166,6 +168,18 @@ class ParserTestInput extends AbstractBase implements MarkerInterface
     public function defaultMark(): void
     {
         $this->mark();
+    }
+
+    /** Returns an anonymous class whose members must not be attributed to this class. */
+    public function makeMarker(): MarkerInterface
+    {
+        return new class implements MarkerInterface {
+            public $anonymousField;
+
+            public function mark(): void {}
+
+            public function defaultMark(): void {}
+        };
     }
 }
 

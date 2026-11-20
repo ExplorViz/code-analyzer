@@ -85,6 +85,29 @@ struct StaticNested {
     }
 }
 
+/// Overloads that differ only in their argument labels.
+struct LabeledOverloads {
+    var width: Int = 0
+    var height = 0
+
+    init(name: String) {
+        let trimmed = name
+        width = trimmed.count
+    }
+
+    init(id: String) {
+        height = id.count
+    }
+
+    mutating func set(width: Int) {
+        self.width = width
+    }
+
+    mutating func set(height: Int) {
+        self.height = height
+    }
+}
+
 /// Main regression type.
 class ParserTestInput: AbstractBase, MarkerInterface, CallableMarker {
     /// Field documentation comment.

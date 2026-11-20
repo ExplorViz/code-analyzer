@@ -8,6 +8,7 @@ import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.handler.SwiftFileDataHandler;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -235,35 +236,50 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
 
   @Override
   public void enterVariable_declaration(final Swift5Parser.Variable_declarationContext ctx) {
+    final boolean isField = isTypeMember(ctx);
     if (ctx.variable_name() != null && ctx.variable_name().identifier() != null) {
       variableCount++;
-      if (fileDataHandler.isInClassContext()) {
+      if (isField) {
         addPropertyField(ctx.variable_name().identifier().getText(), ctx.type_annotation());
       }
     } else if (ctx.pattern_initializer_list() != null) {
-      for (final Swift5Parser.Pattern_initializerContext patternInit :
-          ctx.pattern_initializer_list().pattern_initializer()) {
-        countPattern(patternInit.pattern());
-        if (fileDataHandler.isInClassContext()) {
-          addFieldFromPattern(patternInit.pattern(), null);
-        }
-      }
+      addPatternInitializers(ctx.pattern_initializer_list(), isField);
     }
   }
 
   @Override
   public void enterConstant_declaration(final Swift5Parser.Constant_declarationContext ctx) {
-    if (ctx.pattern_initializer_list() == null) {
-      return;
+    if (ctx.pattern_initializer_list() != null) {
+      addPatternInitializers(ctx.pattern_initializer_list(), isTypeMember(ctx));
     }
+  }
 
-    for (final Swift5Parser.Pattern_initializerContext patternInit :
-        ctx.pattern_initializer_list().pattern_initializer()) {
+  private void addPatternInitializers(
+      final Swift5Parser.Pattern_initializer_listContext list, final boolean isField) {
+    for (final Swift5Parser.Pattern_initializerContext patternInit : list.pattern_initializer()) {
       countPattern(patternInit.pattern());
-      if (fileDataHandler.isInClassContext()) {
-        addFieldFromPattern(patternInit.pattern(), null);
+      if (isField) {
+        addFieldFromPattern(patternInit.pattern());
       }
     }
+  }
+
+  /**
+   * Returns whether the declaration is a direct member of the current class, struct or enum body,
+   * i.e. a stored or computed property rather than a local variable inside a function body.
+   */
+  private boolean isTypeMember(final ParserRuleContext declaration) {
+    if (!fileDataHandler.isInClassContext()) {
+      return false;
+    }
+    ParserRuleContext parent = declaration.getParent();
+    if (parent instanceof Swift5Parser.DeclarationContext) {
+      parent = parent.getParent();
+    }
+    return parent instanceof Swift5Parser.Class_memberContext
+        || parent instanceof Swift5Parser.Struct_memberContext
+        || parent instanceof Swift5Parser.Union_style_enum_memberContext
+        || parent instanceof Swift5Parser.Raw_value_style_enum_memberContext;
   }
 
   private void countPattern(final Swift5Parser.PatternContext pattern) {
@@ -299,16 +315,15 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
     classData.addField(fieldName, fieldType, new ArrayList<>());
   }
 
-  private void addFieldFromPattern(
-      final Swift5Parser.PatternContext pattern,
-      final Swift5Parser.Type_annotationContext typeAnnotation) {
+  private void addFieldFromPattern(final Swift5Parser.PatternContext pattern) {
     if (pattern == null
         || pattern.identifier_pattern() == null
         || pattern.identifier_pattern().identifier() == null) {
       return;
     }
 
-    addPropertyField(pattern.identifier_pattern().identifier().getText(), typeAnnotation);
+    addPropertyField(
+        pattern.identifier_pattern().identifier().getText(), pattern.type_annotation());
   }
 
   @Override
@@ -344,8 +359,7 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
 
     final String className = classData.getProtoBufObject().getName();
     final MethodDataHandler methodData =
-        classData.addConstructor(
-            className, className + "#" + extractParameterTypes(ctx.parameter_clause()).hashCode());
+        classData.addConstructor(className, buildMethodKey(className, ctx.parameter_clause()));
     addParameters(methodData, ctx.parameter_clause());
 
     if (ctx.start != null && ctx.stop != null) {
@@ -385,27 +399,47 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
       final String methodName,
       final String returnType,
       final Swift5Parser.Function_declarationContext ctx) {
+    final Swift5Parser.Parameter_clauseContext parameters =
+        ctx.function_signature() != null ? ctx.function_signature().parameter_clause() : null;
+
     if (fileDataHandler.isInClassContext()) {
       final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
       if (classData == null) {
         return null;
       }
       final MethodDataHandler methodData =
-          classData.addMethod(
-              methodName,
-              methodName
-                  + "#"
-                  + extractParameterTypes(ctx.function_signature().parameter_clause()).hashCode(),
-              returnType);
-      addParameters(methodData, ctx.function_signature().parameter_clause());
+          classData.addMethod(methodName, buildMethodKey(methodName, parameters), returnType);
+      addParameters(methodData, parameters);
       return methodData;
     }
 
     final MethodDataHandler methodData = fileDataHandler.addGlobalFunction(methodName, returnType);
-    if (ctx.function_signature() != null) {
-      addParameters(methodData, ctx.function_signature().parameter_clause());
-    }
+    addParameters(methodData, parameters);
     return methodData;
+  }
+
+  /**
+   * Builds the key of a method or initializer. Swift distinguishes overloads by their argument
+   * labels as well as their parameter types, e.g. {@code init(name: String)} and {@code init(id:
+   * String)}, so the key contains the selector (e.g. {@code init(name:)}) and the types.
+   */
+  private String buildMethodKey(
+      final String name, final Swift5Parser.Parameter_clauseContext parameters) {
+    final StringBuilder key = new StringBuilder(name).append('(');
+    if (parameters != null && parameters.parameter_list() != null) {
+      for (final Swift5Parser.ParameterContext param : parameters.parameter_list().parameter()) {
+        key.append(extractArgumentLabel(param)).append(':');
+      }
+    }
+    return key.append(")#").append(extractParameterTypes(parameters).hashCode()).toString();
+  }
+
+  /** Returns the argument label, i.e. the external name or the local name if there is none. */
+  private String extractArgumentLabel(final Swift5Parser.ParameterContext param) {
+    if (param.external_parameter_name() != null) {
+      return param.external_parameter_name().getText();
+    }
+    return param.local_parameter_name() != null ? param.local_parameter_name().getText() : "";
   }
 
   private List<String> extractParameterTypes(

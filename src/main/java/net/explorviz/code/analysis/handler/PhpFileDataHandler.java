@@ -27,16 +27,35 @@ public class PhpFileDataHandler extends AbstractFileDataHandler
     this.rootClasses = new ArrayList<>();
   }
 
+  /**
+   * Enters a braced namespace ({@code namespace A { ... }}). The first namespace of the file
+   * becomes its package name and stays so after the namespace block is left.
+   */
   public void enterNamespace(final String name) {
     namespaceStack.push(name);
-    setPackageName(getCurrentNamespace());
+    recordPackageName();
   }
 
   public void leaveNamespace() {
     if (!namespaceStack.isEmpty()) {
       namespaceStack.pop();
     }
-    setPackageName(getCurrentNamespace());
+  }
+
+  /**
+   * Sets the namespace declared by an unbraced declaration ({@code namespace A;}), which applies
+   * until the next namespace declaration or the end of the file.
+   */
+  public void setNamespace(final String name) {
+    namespaceStack.clear();
+    namespaceStack.push(name);
+    recordPackageName();
+  }
+
+  private void recordPackageName() {
+    if (getPackageName().isEmpty()) {
+      setPackageName(getCurrentNamespace());
+    }
   }
 
   public String getCurrentNamespace() {
@@ -46,22 +65,47 @@ public class PhpFileDataHandler extends AbstractFileDataHandler
     return String.join(".", namespaceStack);
   }
 
+  /** Enters a named class, interface, trait or enum. */
   public void enterClass(final String name, final String fqn) {
     final ClassDataHandler handler = new ClassDataHandler();
     handler.setName(name);
-    this.classDataMap.put(fqn, handler);
+
+    // Two types with the same fqn (e.g. conditional declarations) must not replace each other.
+    final String key = uniqueKey(fqn);
+    this.classDataMap.put(key, handler);
 
     if (this.classStack.isEmpty()) {
-      this.rootClasses.add(fqn);
+      this.rootClasses.add(key);
     } else {
       final String parentClassFqn = this.classStack.peek();
       final ClassDataHandler parent = this.classDataMap.get(parentClassFqn);
       if (parent != null) {
-        parent.addInnerClass(fqn, handler);
+        parent.addInnerClass(key, handler);
       }
     }
 
-    this.classStack.push(fqn);
+    this.classStack.push(key);
+  }
+
+  /**
+   * Enters an anonymous class ({@code new class { ... }}). It becomes an inner class of the
+   * enclosing class, or a root class at file level, so that its members are not attributed to the
+   * enclosing class.
+   */
+  public void enterAnonymousClass(final String name) {
+    enterClass(name, buildFqn(name));
+    getCurrentClassData().setIsAnonymousClass();
+  }
+
+  private String uniqueKey(final String fqn) {
+    if (!classDataMap.containsKey(fqn)) {
+      return fqn;
+    }
+    int suffix = 2;
+    while (classDataMap.containsKey(fqn + "#" + suffix)) {
+      suffix++;
+    }
+    return fqn + "#" + suffix;
   }
 
   public void leaveClass() {
@@ -118,10 +162,6 @@ public class PhpFileDataHandler extends AbstractFileDataHandler
     builder.clearFunctions();
     for (final MethodDataHandler handler : globalFunctionHandlers) {
       builder.addFunctions(handler.getProtoBufObject());
-    }
-
-    if (builder.getPackageName().isEmpty() && !namespaceStack.isEmpty()) {
-      builder.setPackageName(getCurrentNamespace());
     }
 
     builder.setLanguage(Language.PHP);

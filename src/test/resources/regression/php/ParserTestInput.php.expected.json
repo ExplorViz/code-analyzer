@@ -2,6 +2,7 @@
   "fileHash": "regression-hash",
   "filePath": "ParserTestInput.php",
   "language": "PHP",
+  "packageName": "ExplorViz.Code.Analysis.Fixtures",
   "importNames": ["ExplorViz.Code.Analysis.Fixtures.Support.Closeable", "ExplorViz.Code.Analysis.Fixtures.Support.IOException"],
   "classes": [{
     "name": "AbstractBase",
@@ -21,26 +22,26 @@
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 28,
-      "endLine": 31
+      "startLine": 30,
+      "endLine": 33
     }, {
       "name": "getBaseValue",
-      "returnType": "void",
+      "returnType": "int",
       "metrics": {
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 33,
-      "endLine": 36
+      "startLine": 35,
+      "endLine": 38
     }, {
       "name": "abstractHook",
-      "returnType": "void",
+      "returnType": "int",
       "metrics": {
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 38,
-      "endLine": 38
+      "startLine": 40,
+      "endLine": 40
     }],
     "metrics": {
       "sloc": 13.0,
@@ -56,8 +57,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 44,
-      "endLine": 44
+      "startLine": 46,
+      "endLine": 46
     }, {
       "name": "defaultMark",
       "returnType": "void",
@@ -65,8 +66,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 45,
-      "endLine": 45
+      "startLine": 47,
+      "endLine": 47
     }],
     "metrics": {
       "sloc": 5.0,
@@ -83,8 +84,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 51,
-      "endLine": 51
+      "startLine": 53,
+      "endLine": 53
     }],
     "metrics": {
       "sloc": 4.0,
@@ -108,8 +109,8 @@
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 69,
-      "endLine": 72
+      "startLine": 71,
+      "endLine": 74
     }],
     "enumValues": ["ALPHA", "BETA", "GAMMA"],
     "metrics": {
@@ -138,6 +139,38 @@
       "name": "nestedGenericField",
       "type": "mixed"
     }],
+    "innerClasses": [{
+      "name": "Anonymous$7",
+      "type": "ANONYMOUS_CLASS",
+      "implementedInterfaces": ["MarkerInterface"],
+      "fields": [{
+        "name": "anonymousField",
+        "type": "mixed"
+      }],
+      "functions": [{
+        "name": "mark",
+        "returnType": "void",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 179,
+        "endLine": 179
+      }, {
+        "name": "defaultMark",
+        "returnType": "void",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 181,
+        "endLine": 181
+      }],
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 7.0
+      }
+    }],
     "functions": [{
       "name": "__construct",
       "returnType": "void",
@@ -145,11 +178,11 @@
         "sloc": 5.0,
         "lineCount": 5.0
       },
-      "startLine": 95,
-      "endLine": 99
+      "startLine": 97,
+      "endLine": 101
     }, {
       "name": "withName",
-      "returnType": "void",
+      "returnType": "self",
       "parameters": [{
         "name": "name",
         "type": "string"
@@ -161,8 +194,8 @@
         "sloc": 7.0,
         "lineCount": 7.0
       },
-      "startLine": 102,
-      "endLine": 108
+      "startLine": 104,
+      "endLine": 110
     }, {
       "name": "run",
       "returnType": "void",
@@ -170,17 +203,17 @@
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 110,
-      "endLine": 113
+      "startLine": 112,
+      "endLine": 115
     }, {
       "name": "call",
-      "returnType": "void",
+      "returnType": "string",
       "metrics": {
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 115,
-      "endLine": 118
+      "startLine": 117,
+      "endLine": 120
     }, {
       "name": "genericMethod",
       "returnType": "void",
@@ -192,11 +225,11 @@
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 121,
-      "endLine": 124
+      "startLine": 123,
+      "endLine": 126
     }, {
       "name": "doWork",
-      "returnType": "void",
+      "returnType": "bool",
       "parameters": [{
         "name": "flag",
         "type": "bool"
@@ -229,17 +262,17 @@
         "sloc": 29.0,
         "lineCount": 32.0
       },
-      "startLine": 126,
-      "endLine": 157
+      "startLine": 128,
+      "endLine": 159
     }, {
       "name": "abstractHook",
-      "returnType": "void",
+      "returnType": "int",
       "metrics": {
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 159,
-      "endLine": 162
+      "startLine": 161,
+      "endLine": 164
     }, {
       "name": "mark",
       "returnType": "void",
@@ -247,8 +280,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 164,
-      "endLine": 164
+      "startLine": 166,
+      "endLine": 166
     }, {
       "name": "defaultMark",
       "returnType": "void",
@@ -256,12 +289,21 @@
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 166,
-      "endLine": 169
+      "startLine": 168,
+      "endLine": 171
+    }, {
+      "name": "makeMarker",
+      "returnType": "MarkerInterface",
+      "metrics": {
+        "sloc": 8.0,
+        "lineCount": 10.0
+      },
+      "startLine": 174,
+      "endLine": 183
     }],
     "metrics": {
-      "sloc": 70.0,
-      "lineCount": 93.0
+      "sloc": 78.0,
+      "lineCount": 105.0
     }
   }, {
     "name": "StaticNested",
@@ -281,17 +323,17 @@
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 177,
-      "endLine": 180
+      "startLine": 191,
+      "endLine": 194
     }, {
       "name": "getNestedField",
-      "returnType": "void",
+      "returnType": "int",
       "metrics": {
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 182,
-      "endLine": 185
+      "startLine": 196,
+      "endLine": 199
     }],
     "metrics": {
       "sloc": 12.0,
@@ -305,8 +347,8 @@
       "sloc": 1.0,
       "lineCount": 1.0
     },
-    "startLine": 188,
-    "endLine": 188
+    "startLine": 202,
+    "endLine": 202
   }, {
     "name": "module_helper",
     "returnType": "string",
@@ -321,15 +363,15 @@
       "sloc": 4.0,
       "lineCount": 4.0
     },
-    "startLine": 190,
-    "endLine": 193
+    "startLine": 204,
+    "endLine": 207
   }],
   "metrics": {
-    "sloc": 128.0,
-    "cloc": 27.0,
-    "functionCount": 20.0,
-    "variableCount": 23.0,
+    "sloc": 136.0,
+    "cloc": 30.0,
+    "functionCount": 23.0,
+    "variableCount": 24.0,
     "importCount": 2.0,
-    "classCount": 7.0
+    "classCount": 8.0
   }
 }

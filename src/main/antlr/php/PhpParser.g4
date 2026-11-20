@@ -86,10 +86,12 @@ importStatement
     : Import Namespace namespaceNameList SemiColon
     ;
 
+// namespaceDeclaration must precede statement: `namespace A\B;` also matches an expression
+// statement (constant `namespace\...`), and ANTLR resolves ambiguities in favor of the first alternative.
 topStatement
-    : statement
+    : namespaceDeclaration
+    | statement
     | useDeclaration
-    | namespaceDeclaration
     | functionDeclaration
     | classDeclaration
     | globalConstantDeclaration

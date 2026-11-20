@@ -1,7 +1,9 @@
 package net.explorviz.code.analysis.listener;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import net.explorviz.code.analysis.antlr.generated.php.PhpLexer;
 import net.explorviz.code.analysis.antlr.generated.php.PhpParser;
 import net.explorviz.code.analysis.antlr.generated.php.PhpParserBaseListener;
@@ -60,7 +62,7 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     if (ctx.OpenCurlyBracket() != null) {
       fileDataHandler.enterNamespace(namespace);
     } else {
-      fileDataHandler.setPackageName(namespace);
+      fileDataHandler.setNamespace(namespace);
     }
   }
 
@@ -155,6 +157,24 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
   }
 
   @Override
+  public void enterAnonymousClass(final PhpParser.AnonymousClassContext ctx) {
+    fileDataHandler.enterAnonymousClass("Anonymous$" + (fileDataHandler.getClassCount() + 1));
+
+    final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
+    classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+    classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    if (ctx.qualifiedStaticTypeRef() != null) {
+      addFormattedSuperClass(classData, ctx.qualifiedStaticTypeRef().getText());
+    }
+    addInterfaceImplements(classData, ctx.interfaceList());
+  }
+
+  @Override
+  public void exitAnonymousClass(final PhpParser.AnonymousClassContext ctx) {
+    fileDataHandler.leaveClass();
+  }
+
+  @Override
   public void enterEnumDeclaration(final PhpParser.EnumDeclarationContext ctx) {
     if (ctx.identifier() == null) {
       return;
@@ -231,7 +251,7 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     if (ctx.Function_() != null && ctx.identifier() != null) {
       functionCount++;
       final String methodName = ctx.identifier().getText();
-      final String returnType = extractReturnType(ctx.returnTypeDecl());
+      final String returnType = extractReturnType(ctx);
       final MethodDataHandler methodData = createClassMethodHandler(methodName, returnType, ctx);
       if (methodData != null) {
         if (ctx.start != null && ctx.stop != null) {
@@ -332,11 +352,18 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     return "void";
   }
 
-  private String extractReturnType(final PhpParser.ReturnTypeDeclContext returnTypeDecl) {
-    if (returnTypeDecl == null || returnTypeDecl.typeHint() == null) {
-      return "void";
+  private String extractReturnType(final PhpParser.ClassStatementContext ctx) {
+    final PhpParser.ReturnTypeDeclContext returnTypeDecl = ctx.returnTypeDecl();
+    if (returnTypeDecl != null && returnTypeDecl.typeHint() != null) {
+      return returnTypeDecl.typeHint().getText();
     }
-    return returnTypeDecl.typeHint().getText();
+    // The grammar's C#-style baseCtorCall (`: identifier arguments?`) is tried before
+    // returnTypeDecl, so a simple return type such as `: int` ends up there.
+    final PhpParser.BaseCtorCallContext baseCtorCall = ctx.baseCtorCall();
+    if (baseCtorCall != null && baseCtorCall.identifier() != null) {
+      return baseCtorCall.identifier().getText();
+    }
+    return "void";
   }
 
   private List<String> extractParameterTypes(
@@ -388,26 +415,28 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     return namespace.replace('\\', '.');
   }
 
+  /**
+   * Counts the lines containing comments. The markers of single-line comments ({@code //} and
+   * {@code #}) are on the skip channel, block comments on the comment channel.
+   */
   private int getCloc() {
     if (tokens == null) {
       return 0;
     }
 
-    int commentLines = 0;
+    final Set<Integer> commentLines = new HashSet<>();
     for (int i = 0; i < tokens.size(); i++) {
       final var token = tokens.get(i);
-      if (token.getChannel() == PhpLexer.PhpComments) {
-        final String tokenText = token.getText();
-        if (tokenText != null) {
-          if (tokenText.trim().startsWith("//")) {
-            commentLines++;
-          } else if (tokenText.trim().startsWith("/*")) {
-            final long newlines = tokenText.chars().filter(ch -> ch == '\n').count();
-            commentLines += (int) newlines + 1;
-          }
+      final int type = token.getType();
+      if (type == PhpLexer.SingleLineComment || type == PhpLexer.ShellStyleComment) {
+        commentLines.add(token.getLine());
+      } else if (type == PhpLexer.MultiLineComment && token.getText() != null) {
+        final long newlines = token.getText().chars().filter(ch -> ch == '\n').count();
+        for (int line = token.getLine(); line <= token.getLine() + newlines; line++) {
+          commentLines.add(line);
         }
       }
     }
-    return commentLines;
+    return commentLines.size();
   }
 }
