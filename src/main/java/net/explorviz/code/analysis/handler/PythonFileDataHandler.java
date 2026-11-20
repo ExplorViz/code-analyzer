@@ -25,18 +25,33 @@ public class PythonFileDataHandler extends AbstractFileDataHandler {
   public void enterClass(final String name, final String fqn) {
     final ClassDataHandler handler = new ClassDataHandler();
     handler.setName(name);
-    this.classDataMap.put(fqn, handler);
+    // A second type with the same fqn (e.g. a class redefined in an if/else) must not replace
+    // the first one, so it is registered under a unique key.
+    final String key = uniqueClassKey(fqn);
+    this.classDataMap.put(key, handler);
 
     if (this.classStack.isEmpty()) {
-      this.rootClasses.add(fqn);
+      this.rootClasses.add(key);
     } else {
       final String parentClassFqn = this.classStack.peek();
       final ClassDataHandler parent = this.classDataMap.get(parentClassFqn);
       if (parent != null) {
-        parent.addInnerClass(fqn, handler);
+        parent.addInnerClass(key, handler);
       }
     }
-    this.classStack.push(fqn);
+    this.classStack.push(key);
+  }
+
+  /** Returns {@code fqn}, or {@code fqn#n} with the smallest free {@code n >= 2}. */
+  private String uniqueClassKey(final String fqn) {
+    if (!this.classDataMap.containsKey(fqn)) {
+      return fqn;
+    }
+    int suffix = 2;
+    while (this.classDataMap.containsKey(fqn + "#" + suffix)) {
+      suffix++;
+    }
+    return fqn + "#" + suffix;
   }
 
   public void leaveClass() {

@@ -3,7 +3,7 @@
   "filePath": "ParserTestInput.go",
   "language": "GO",
   "packageName": "fixtures",
-  "importNames": ["fmt", "io", "math"],
+  "importNames": ["embed", "fmt", "io", "math", "google.golang.org/protobuf/proto"],
   "classes": [{
     "name": "AbstractBase",
     "type": "STRUCT",
@@ -18,8 +18,8 @@
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 24,
-      "endLine": 26
+      "startLine": 26,
+      "endLine": 28
     }],
     "metrics": {
       "sloc": 3.0,
@@ -48,8 +48,8 @@
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 50,
-      "endLine": 52
+      "startLine": 52,
+      "endLine": 54
     }],
     "metrics": {
       "sloc": 1.0,
@@ -75,8 +75,8 @@
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 89,
-      "endLine": 91
+      "startLine": 91,
+      "endLine": 93
     }, {
       "name": "Call",
       "returnType": "string",
@@ -84,8 +84,8 @@
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 93,
-      "endLine": 96
+      "startLine": 95,
+      "endLine": 98
     }, {
       "name": "GenericMethod",
       "returnType": "interface{}",
@@ -97,8 +97,8 @@
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 98,
-      "endLine": 100
+      "startLine": 100,
+      "endLine": 102
     }, {
       "name": "DoWork",
       "returnType": "bool",
@@ -134,8 +134,8 @@
         "sloc": 32.0,
         "lineCount": 32.0
       },
-      "startLine": 102,
-      "endLine": 133
+      "startLine": 104,
+      "endLine": 135
     }, {
       "name": "AbstractHook",
       "returnType": "int",
@@ -143,8 +143,8 @@
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 135,
-      "endLine": 137
+      "startLine": 137,
+      "endLine": 139
     }, {
       "name": "Mark",
       "returnType": "void",
@@ -152,8 +152,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 139,
-      "endLine": 139
+      "startLine": 141,
+      "endLine": 141
     }, {
       "name": "DefaultMark",
       "returnType": "void",
@@ -161,8 +161,8 @@
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 141,
-      "endLine": 143
+      "startLine": 143,
+      "endLine": 145
     }],
     "metrics": {
       "sloc": 6.0,
@@ -182,8 +182,33 @@
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 154,
-      "endLine": 156
+      "startLine": 156,
+      "endLine": 158
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "LateType",
+    "type": "STRUCT",
+    "fields": [{
+      "name": "name",
+      "type": "string"
+    }],
+    "functions": [{
+      "name": "Describe",
+      "returnType": "string",
+      "parameters": [{
+        "name": "prefix",
+        "type": "string"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 174,
+      "endLine": 176
     }],
     "metrics": {
       "sloc": 3.0,
@@ -197,8 +222,8 @@
       "sloc": 7.0,
       "lineCount": 7.0
     },
-    "startLine": 68,
-    "endLine": 74
+    "startLine": 70,
+    "endLine": 76
   }, {
     "name": "NewParserTestInputWithName",
     "returnType": "*ParserTestInput",
@@ -207,14 +232,14 @@
       "type": "string"
     }, {
       "name": "values",
-      "type": "int"
+      "type": "...int"
     }],
     "metrics": {
       "sloc": 11.0,
       "lineCount": 11.0
     },
-    "startLine": 77,
-    "endLine": 87
+    "startLine": 79,
+    "endLine": 89
   }, {
     "name": "NewStaticNested",
     "returnType": "*StaticNested",
@@ -226,8 +251,8 @@
       "sloc": 3.0,
       "lineCount": 3.0
     },
-    "startLine": 150,
-    "endLine": 152
+    "startLine": 152,
+    "endLine": 154
   }, {
     "name": "PackagePrivateStaticMethod",
     "returnType": "void",
@@ -235,8 +260,8 @@
       "sloc": 1.0,
       "lineCount": 1.0
     },
-    "startLine": 158,
-    "endLine": 158
+    "startLine": 160,
+    "endLine": 160
   }, {
     "name": "ModuleHelper",
     "returnType": "(string,error)",
@@ -251,8 +276,8 @@
       "sloc": 4.0,
       "lineCount": 4.0
     },
-    "startLine": 160,
-    "endLine": 163
+    "startLine": 162,
+    "endLine": 165
   }, {
     "name": "assertPositive",
     "returnType": "void",
@@ -264,15 +289,56 @@
       "sloc": 5.0,
       "lineCount": 5.0
     },
-    "startLine": 165,
-    "endLine": 169
+    "startLine": 167,
+    "endLine": 171
+  }, {
+    "name": "RemoteType.Ping",
+    "returnType": "error",
+    "parameters": [{
+      "name": "a",
+      "type": "int"
+    }, {
+      "name": "b",
+      "type": "int"
+    }, {
+      "name": "rest",
+      "type": "...string"
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    },
+    "startLine": 184,
+    "endLine": 187
+  }, {
+    "name": "Add",
+    "returnType": "int",
+    "parameters": [{
+      "name": "a",
+      "type": "int"
+    }, {
+      "name": "b",
+      "type": "int"
+    }, {
+      "name": "s",
+      "type": "string"
+    }, {
+      "name": "more",
+      "type": "...int"
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    },
+    "startLine": 190,
+    "endLine": 192
   }],
   "metrics": {
-    "sloc": 123.0,
-    "cloc": 18.0,
-    "functionCount": 16.0,
+    "sloc": 138.0,
+    "cloc": 22.0,
+    "functionCount": 19.0,
     "variableCount": 5.0,
-    "importCount": 3.0,
-    "classCount": 6.0
+    "importCount": 5.0,
+    "classCount": 7.0
   }
 }

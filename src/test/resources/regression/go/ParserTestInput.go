@@ -2,9 +2,11 @@
 package fixtures
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"math"
+	pb "google.golang.org/protobuf/proto"
 )
 
 // Single-line comment
@@ -166,4 +168,25 @@ func assertPositive(v int) {
 	if v <= 0 {
 		panic("constant must be positive")
 	}
+}
+
+// Describe is declared above its receiver type and must still be attached to it.
+func (l *LateType) Describe(prefix string) string {
+	return prefix + l.name
+}
+
+// LateType is declared after one of its methods.
+type LateType struct {
+	name string
+}
+
+// Ping has a receiver type declared in another file of the package.
+func (r *RemoteType) Ping(a, b int, rest ...string) error {
+	_ = pb.Message(nil)
+	return nil
+}
+
+// Add declares several parameters sharing one type and a variadic one.
+func Add(a, b int, s string, more ...int) int {
+	return a + b + len(s) + len(more)
 }

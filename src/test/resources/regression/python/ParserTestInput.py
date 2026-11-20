@@ -13,7 +13,7 @@ from __future__ import annotations
 import math
 import os.path as osp
 from collections import defaultdict
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, overload
 
 BLOCK_NOTE = """
 Multi-line
@@ -177,3 +177,55 @@ def noop_factory() -> MarkerMixin:
             pass
 
     return Noop()
+
+
+class PropertyHolder:
+    """Methods sharing a name must all be kept."""
+
+    @property
+    def value(self) -> int:
+        return self._value
+
+    @value.setter
+    def value(self, new_value: int) -> None:
+        self._value = new_value
+
+    @overload
+    def convert(self, item: int) -> int: ...
+
+    @overload
+    def convert(self, item: str) -> str: ...
+
+    def convert(self, item):
+        return item
+
+    def trailing_comment(self) -> None:
+        pass
+        # trailing indented comment is not part of the method
+
+    def last(self) -> int:
+        return 2
+
+
+def one_liner(): return 1
+LATE_CONSTANT = one_liner()
+
+
+def trailing_comment_function() -> None:
+    pass
+    # trailing indented comment is not part of the function
+
+    
+def multi_line_string_function() -> str:
+    return """first
+second"""
+
+
+if LATE_CONSTANT:
+    class Redefined:
+        def first_variant(self) -> int:
+            return 1
+else:
+    class Redefined:
+        def second_variant(self) -> int:
+            return 2

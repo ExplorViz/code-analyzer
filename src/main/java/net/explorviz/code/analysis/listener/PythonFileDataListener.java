@@ -5,6 +5,7 @@ import net.explorviz.code.analysis.antlr.generated.python.PythonParser;
 import net.explorviz.code.analysis.antlr.generated.python.PythonParserBaseListener;
 import net.explorviz.code.analysis.handler.PythonFileDataHandler;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +72,7 @@ public class PythonFileDataListener extends PythonParserBaseListener
       LOGGER.atTrace().addArgument(className).log("Class: {}");
 
       // Calculate class SLOC and LOC
-      final int classLoc = calculateLoc(ctx);
+      final int classLoc = getEndLine(ctx) - ctx.start.getLine() + 1;
       final var classData = fileDataHandler.getCurrentClassData();
       if (classData != null) {
         classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
@@ -119,7 +120,9 @@ public class PythonFileDataListener extends PythonParserBaseListener
     // Check if we're inside a class or this is a global function
     if (fileDataHandler.isInClassContext()) {
       // Function inside a class - treat as a method
-      final String functionFqn = functionName + "#1"; // TODO: Add proper parameter hashing
+      // Same-named methods (property setters, @overload stubs) are all kept: addMethod does not
+      // replace an existing key.
+      final String functionFqn = functionName;
 
       final var methodData =
           fileDataHandler
@@ -128,17 +131,14 @@ public class PythonFileDataListener extends PythonParserBaseListener
 
       LOGGER.atTrace().addArgument(functionName).log("Method: {}");
 
-      // Calculate function SLOC and LOC
-      final int functionLoc = calculateLoc(ctx);
+      final int startLine = ctx.start.getLine();
+      final int endLine = getEndLine(ctx);
+      methodData.setLines(startLine, endLine);
       methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      methodData.addMetric(LINE_COUNT, String.valueOf(functionLoc));
+      methodData.addMetric(LINE_COUNT, String.valueOf(endLine - startLine + 1));
 
       if (ctx.ASYNC() != null) {
         methodData.addModifier("async");
-      }
-
-      if (ctx.start != null && ctx.stop != null) {
-        methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
       }
     } else {
       // Global function
@@ -151,52 +151,53 @@ public class PythonFileDataListener extends PythonParserBaseListener
         funcBuilder.addModifier("async");
       }
 
-      // Set function location - find actual start/end lines
-      int startLine = ctx.start != null ? ctx.start.getLine() : 0;
-      int endLine = startLine;
-
-      // Workaround for ANTLR Python grammar issue where ctx.stop includes next
-      // function
-      // See: https://github.com/antlr/grammars-v4/issues/4153
-      if (ctx.suite() != null) {
-        final var suite = ctx.suite();
-
-        if (suite.simple_stmt() != null && suite.simple_stmt().stop != null) {
-          endLine = suite.simple_stmt().stop.getLine();
-        } else {
-          // Multi-line function body - find the DEDENT token that marks end of function
-          // Python uses INDENT/DEDENT tokens to mark indentation blocks
-          if (suite.stop != null) {
-            final int suiteStopIndex = suite.stop.getTokenIndex();
-
-            for (int i = suiteStopIndex; i >= 0; i--) {
-              final Token token = tokens.get(i);
-
-              // Skip DEDENT, NEWLINE, LINE_BREAK, and COMMENT tokens
-              if (token.getType() == PythonLexer.DEDENT
-                  || token.getType() == PythonLexer.NEWLINE
-                  || token.getType() == PythonLexer.LINE_BREAK
-                  || token.getType() == PythonLexer.COMMENT) {
-                continue;
-              }
-
-              // Found the last actual code token
-              endLine = token.getLine();
-              break;
-            }
-          }
-        }
-      }
-
+      final int startLine = ctx.start.getLine();
+      final int endLine = getEndLine(ctx);
       funcBuilder.setLines(startLine, endLine);
-
-      // Calculate function SLOC and LOC using actual start and end lines
-      final int functionLoc = (endLine >= startLine) ? (endLine - startLine + 1) : 0;
       funcBuilder.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
-      funcBuilder.addMetric(LINE_COUNT, String.valueOf(functionLoc));
+      funcBuilder.addMetric(LINE_COUNT, String.valueOf(endLine - startLine + 1));
 
       LOGGER.atTrace().addArgument(functionName).log("Global function: {}");
     }
+  }
+
+  /**
+   * Returns the line on which the construct really ends.
+   *
+   * <p>{@code ctx.stop} of a function or class is the synthetic {@code DEDENT} or {@code
+   * LINE_BREAK} token that closes its suite. {@link
+   * net.explorviz.code.analysis.antlr.generated.python.PythonLexerBase} stamps these with the
+   * position of the next statement, so the last real token (default channel, not synthetic, not
+   * whitespace) is used instead. For a token spanning several lines, e.g. a multi-line string, its
+   * last line is returned.
+   */
+  private int getEndLine(final ParserRuleContext ctx) {
+    final int startLine = ctx.start.getLine();
+    if (ctx.stop == null || tokens == null) {
+      return startLine;
+    }
+    final int startIndex = ctx.start.getTokenIndex();
+    for (int i = Math.min(ctx.stop.getTokenIndex(), tokens.size() - 1); i >= startIndex; i--) {
+      final Token token = tokens.get(i);
+      if (isRealToken(token)) {
+        final int newlines = (int) token.getText().chars().filter(ch -> ch == '\n').count();
+        return Math.max(startLine, token.getLine() + newlines);
+      }
+    }
+    return startLine;
+  }
+
+  private static boolean isRealToken(final Token token) {
+    final int type = token.getType();
+    if (type == Token.EOF
+        || type == PythonLexer.INDENT
+        || type == PythonLexer.DEDENT
+        || type == PythonLexer.LINE_BREAK
+        || token.getChannel() != Token.DEFAULT_CHANNEL) {
+      return false;
+    }
+    final String text = token.getText();
+    return text != null && !text.isBlank();
   }
 
   @Override

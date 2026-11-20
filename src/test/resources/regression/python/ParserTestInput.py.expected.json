@@ -10,32 +10,32 @@
       "returnType": "None",
       "metrics": {
         "sloc": 2.0,
-        "lineCount": 5.0
+        "lineCount": 3.0
       },
       "startLine": 27,
-      "endLine": 31
+      "endLine": 29
     }, {
       "name": "get_base_value",
       "returnType": "None",
       "metrics": {
         "sloc": 3.0,
-        "lineCount": 5.0
+        "lineCount": 3.0
       },
       "startLine": 31,
-      "endLine": 35
+      "endLine": 33
     }, {
       "name": "abstract_hook",
       "returnType": "None",
       "metrics": {
         "sloc": 2.0,
-        "lineCount": 5.0
+        "lineCount": 2.0
       },
       "startLine": 35,
-      "endLine": 39
+      "endLine": 36
     }],
     "metrics": {
       "sloc": 9.0,
-      "lineCount": 16.0
+      "lineCount": 13.0
     }
   }, {
     "name": "MarkerMixin",
@@ -44,23 +44,23 @@
       "returnType": "None",
       "metrics": {
         "sloc": 2.0,
-        "lineCount": 4.0
+        "lineCount": 2.0
       },
       "startLine": 42,
-      "endLine": 45
+      "endLine": 43
     }, {
       "name": "default_mark",
       "returnType": "None",
       "metrics": {
         "sloc": 2.0,
-        "lineCount": 5.0
+        "lineCount": 2.0
       },
       "startLine": 45,
-      "endLine": 49
+      "endLine": 46
     }],
     "metrics": {
       "sloc": 6.0,
-      "lineCount": 11.0
+      "lineCount": 8.0
     }
   }, {
     "name": "ParserTestInput",
@@ -72,14 +72,14 @@
         "returnType": "None",
         "metrics": {
           "sloc": 2.0,
-          "lineCount": 5.0
+          "lineCount": 3.0
         },
         "startLine": 120,
-        "endLine": 124
+        "endLine": 122
       }],
       "metrics": {
         "sloc": 3.0,
-        "lineCount": 6.0
+        "lineCount": 4.0
       }
     }, {
       "name": "StaticNested",
@@ -88,23 +88,23 @@
         "returnType": "None",
         "metrics": {
           "sloc": 2.0,
-          "lineCount": 4.0
+          "lineCount": 2.0
         },
         "startLine": 133,
-        "endLine": 136
+        "endLine": 134
       }, {
         "name": "get_nested_field",
         "returnType": "None",
         "metrics": {
           "sloc": 2.0,
-          "lineCount": 4.0
+          "lineCount": 2.0
         },
         "startLine": 136,
-        "endLine": 139
+        "endLine": 137
       }],
       "metrics": {
         "sloc": 6.0,
-        "lineCount": 10.0
+        "lineCount": 8.0
       }
     }, {
       "name": "InnerClass",
@@ -113,14 +113,14 @@
         "returnType": "None",
         "metrics": {
           "sloc": 2.0,
-          "lineCount": 5.0
+          "lineCount": 3.0
         },
         "startLine": 142,
-        "endLine": 146
+        "endLine": 144
       }],
       "metrics": {
         "sloc": 4.0,
-        "lineCount": 8.0
+        "lineCount": 6.0
       }
     }, {
       "name": "NestedEnum",
@@ -129,14 +129,14 @@
         "returnType": "None",
         "metrics": {
           "sloc": 2.0,
-          "lineCount": 5.0
+          "lineCount": 2.0
         },
         "startLine": 154,
-        "endLine": 158
+        "endLine": 155
       }],
       "metrics": {
         "sloc": 8.0,
-        "lineCount": 13.0
+        "lineCount": 10.0
       }
     }],
     "functions": [{
@@ -144,59 +144,59 @@
       "returnType": "None",
       "metrics": {
         "sloc": 5.0,
-        "lineCount": 7.0
+        "lineCount": 5.0
       },
       "startLine": 59,
-      "endLine": 65
+      "endLine": 63
     }, {
       "name": "run",
       "returnType": "None",
       "metrics": {
         "sloc": 2.0,
-        "lineCount": 5.0
+        "lineCount": 3.0
       },
       "startLine": 65,
-      "endLine": 69
+      "endLine": 67
     }, {
       "name": "call",
       "returnType": "None",
       "metrics": {
         "sloc": 2.0,
-        "lineCount": 4.0
+        "lineCount": 2.0
       },
       "startLine": 69,
-      "endLine": 72
+      "endLine": 70
     }, {
       "name": "generic_method",
       "returnType": "None",
       "metrics": {
         "sloc": 3.0,
-        "lineCount": 5.0
+        "lineCount": 3.0
       },
       "startLine": 72,
-      "endLine": 76
+      "endLine": 74
     }, {
       "name": "do_work",
       "returnType": "None",
       "metrics": {
         "sloc": 44.0,
-        "lineCount": 52.0
+        "lineCount": 50.0
       },
       "startLine": 76,
-      "endLine": 127
+      "endLine": 125
     }, {
       "name": "abstract_hook",
       "returnType": "None",
       "metrics": {
         "sloc": 2.0,
-        "lineCount": 4.0
+        "lineCount": 2.0
       },
       "startLine": 127,
-      "endLine": 130
+      "endLine": 128
     }],
     "metrics": {
       "sloc": 79.0,
-      "lineCount": 110.0
+      "lineCount": 107.0
     }
   }, {
     "name": "Noop",
@@ -206,14 +206,116 @@
       "returnType": "None",
       "metrics": {
         "sloc": 2.0,
-        "lineCount": 4.0
+        "lineCount": 2.0
       },
       "startLine": 176,
-      "endLine": 179
+      "endLine": 177
     }],
     "metrics": {
       "sloc": 3.0,
-      "lineCount": 5.0
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "PropertyHolder",
+    "functions": [{
+      "name": "value",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 2.0
+      },
+      "startLine": 186,
+      "endLine": 187
+    }, {
+      "name": "value",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 2.0
+      },
+      "startLine": 190,
+      "endLine": 191
+    }, {
+      "name": "convert",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 194,
+      "endLine": 194
+    }, {
+      "name": "convert",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 197,
+      "endLine": 197
+    }, {
+      "name": "convert",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 2.0
+      },
+      "startLine": 199,
+      "endLine": 200
+    }, {
+      "name": "trailing_comment",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 2.0
+      },
+      "startLine": 202,
+      "endLine": 203
+    }, {
+      "name": "last",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 2.0
+      },
+      "startLine": 206,
+      "endLine": 207
+    }],
+    "metrics": {
+      "sloc": 18.0,
+      "lineCount": 26.0
+    }
+  }, {
+    "name": "Redefined",
+    "functions": [{
+      "name": "first_variant",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 2.0
+      },
+      "startLine": 226,
+      "endLine": 227
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "Redefined",
+    "functions": [{
+      "name": "second_variant",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 2.0
+      },
+      "startLine": 230,
+      "endLine": 231
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
     }
   }],
   "functions": [{
@@ -253,13 +355,40 @@
     },
     "startLine": 174,
     "endLine": 179
+  }, {
+    "name": "one_liner",
+    "returnType": "None",
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 210,
+    "endLine": 210
+  }, {
+    "name": "trailing_comment_function",
+    "returnType": "None",
+    "metrics": {
+      "sloc": 2.0,
+      "lineCount": 2.0
+    },
+    "startLine": 214,
+    "endLine": 215
+  }, {
+    "name": "multi_line_string_function",
+    "returnType": "None",
+    "metrics": {
+      "sloc": 2.0,
+      "lineCount": 3.0
+    },
+    "startLine": 219,
+    "endLine": 221
   }],
   "metrics": {
-    "sloc": 115.0,
-    "cloc": 9.0,
-    "functionCount": 21.0,
-    "variableCount": 10.0,
+    "sloc": 147.0,
+    "cloc": 11.0,
+    "functionCount": 33.0,
+    "variableCount": 12.0,
     "importCount": 2.0,
-    "classCount": 8.0
+    "classCount": 11.0
   }
 }
