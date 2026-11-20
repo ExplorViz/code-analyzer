@@ -83,6 +83,48 @@ class TypeScriptFileDataListenerTest {
   }
 
   @Test
+  void genericFunctionTypeAliasesAreTypeAliasesNotFunctions() {
+    final String source =
+        """
+        type Fn = <T>(x: T) => T;
+        export type Ctor = new <T>(x: T) => Box<T>;
+        type Pick2<S> = <K extends keyof S = keyof S>(state: S, key: K) => S[K];
+        declare type Plain = (x: number) => number;
+        let typed: <T>(x: T) => T = (x) => x;
+        function apply(cb: <T>(x: T) => T, make: new <T>() => T) {}
+        """;
+    for (final String fileName : List.of("a.ts", "a.tsx")) {
+      final FileData fileData = parse(source, fileName);
+      assertEquals(List.of("typed", "apply"), functionNames(fileData), fileName);
+      final List<ClassData> aliases = fileData.getClassesList();
+      assertEquals(
+          List.of("Fn", "Ctor", "Pick2", "Plain"),
+          aliases.stream().map(ClassData::getName).toList(),
+          fileName);
+      for (final ClassData alias : aliases) {
+        assertEquals(List.of("typealias"), alias.getModifiersList(), alias.getName());
+        assertEquals(0, alias.getFunctionsCount(), alias.getName());
+      }
+    }
+  }
+
+  @Test
+  void typeRemainsUsableAsJavaScriptIdentifier() {
+    final String source =
+        """
+        let type = 1;
+        type = 2;
+        type += 3;
+        const pick = type => type;
+        """;
+    for (final String fileName : List.of("a.js", "a.ts")) {
+      final FileData fileData = parse(source, fileName);
+      assertEquals(0, fileData.getClassesCount(), fileName);
+      assertEquals(List.of("pick"), functionNames(fileData), fileName);
+    }
+  }
+
+  @Test
   void multiLineJsxKeepsLaterLineNumbers() {
     final String source =
         """

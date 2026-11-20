@@ -184,6 +184,14 @@
       "sloc": 8.0,
       "lineCount": 9.0
     }
+  }, {
+    "name": "GenericMapper",
+    "type": "INTERFACE",
+    "modifiers": ["typealias"],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
   }],
   "functions": [{
     "name": "ParserTestInputView",
@@ -282,11 +290,11 @@
     "endLine": 197
   }],
   "metrics": {
-    "sloc": 126.0,
-    "cloc": 35.0,
+    "sloc": 127.0,
+    "cloc": 36.0,
     "functionCount": 18.0,
     "variableCount": 18.0,
     "importCount": 2.0,
-    "classCount": 6.0
+    "classCount": 7.0
   }
 }

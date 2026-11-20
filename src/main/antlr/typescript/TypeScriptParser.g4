@@ -61,8 +61,7 @@ typeParameterList
     ;
 
 typeParameter
-    : identifier constraint?
-    | identifier '=' typeArgument
+    : identifier constraint? ('=' typeArgument)?
     | typeParameters
     ;
 
@@ -100,6 +99,7 @@ unionOrIntersectionOrPrimaryType
 primaryType
     : '(' type_ ')'                              # ParenthesizedPrimType
     | predefinedType                             # PredefinedPrimType
+    | KeyOf primaryType                          # KeyOfType // before typeReference: `keyof` is also an identifier
     | typeReference                              # ReferencePrimType
     | objectType                                 # ObjectPrimType
     | primaryType {this.notLineTerminator()}? '[' primaryType? ']' # ArrayPrimType
@@ -107,7 +107,6 @@ primaryType
     | typeQuery                                  # QueryPrimType
     | This                                       # ThisPrimType
     | typeReference Is primaryType               # RedefinitionOfType
-    | KeyOf primaryType                          # KeyOfType
     ;
 
 predefinedType
@@ -264,7 +263,7 @@ methodSignature
     ;
 
 typeAliasDeclaration
-    : Export? 'type' identifier typeParameters? '=' type_ eos
+    : Export? Declare? 'type' identifier typeParameters? '=' type_ eos
     ;
 
 constructorDeclaration
@@ -438,7 +437,7 @@ aliasName
     ;
 
 exportStatement
-    : Export TypeAlias? Default? (exportFromBlock | declaration) eos # ExportDeclaration
+    : Export (TypeAlias? Default? exportFromBlock | Default? declaration) eos # ExportDeclaration
     | Export Default singleExpression eos                             # ExportDefaultDeclaration
     ;
 
@@ -468,15 +467,16 @@ declaration
 variableStatement
     : bindingPattern typeAnnotation? initializer SemiColon?
     | accessibilityModifier? varModifier? ReadOnly? variableDeclarationList SemiColon?
-    | Declare varModifier? variableDeclarationList SemiColon?
+    | {this.notTypeAliasStart()}? Declare varModifier? variableDeclarationList SemiColon?
     ;
 
 variableDeclarationList
     : variableDeclaration (',' variableDeclaration)*
     ;
 
+// `type X = ...` / `type X<T> = ...` is a type alias, never a declaration of a variable named `type`
 variableDeclaration
-    : (identifierOrKeyWord | arrayLiteral | objectLiteral) typeAnnotation? singleExpression? (
+    : {this.notTypeAliasStart()}? (identifierOrKeyWord | arrayLiteral | objectLiteral) typeAnnotation? singleExpression? (
         '=' typeParameters? singleExpression
     )? // ECMAScript 6: Array & Object Matching
     ;
@@ -486,7 +486,7 @@ emptyStatement_
     ;
 
 expressionStatement
-    : {this.notOpenBraceAndNotFunctionAndNotInterface()}? expressionSequence SemiColon?
+    : {this.notOpenBraceAndNotFunctionAndNotInterface() && this.notTypeAliasStart()}? expressionSequence SemiColon?
     ;
 
 ifStatement

@@ -74,6 +74,38 @@ public abstract class TypeScriptParserBase extends Parser {
         && nextTokenType != TypeScriptParser.Interface;
   }
 
+  /**
+   * Semantic predicate: {@code false} iff the upcoming tokens start a type alias ({@code type X =}
+   * or {@code type X<}, optionally preceded by {@code declare}). Without it, {@code type X = <T>(x:
+   * T) => T} also parses as a variable named {@code type} (or an expression statement {@code
+   * type}) followed by an assignment, and the lower-numbered variable/expression alternatives win
+   * over {@code typeAliasDeclaration}.
+   */
+  protected boolean notTypeAliasStart() {
+    final int offset = _input.LA(1) == TypeScriptParser.Declare ? 1 : 0;
+    if (_input.LA(1 + offset) != TypeScriptParser.TypeAlias) {
+      return true;
+    }
+    final Token name = _input.LT(2 + offset);
+    if (name == null || !isIdentifierText(name.getText())) {
+      return true;
+    }
+    final int next = _input.LA(3 + offset);
+    return next != TypeScriptParser.Assign && next != TypeScriptParser.LessThan;
+  }
+
+  private static boolean isIdentifierText(final String text) {
+    if (text == null || text.isEmpty() || !Character.isJavaIdentifierStart(text.charAt(0))) {
+      return false;
+    }
+    for (int i = 1; i < text.length(); i++) {
+      if (!Character.isJavaIdentifierPart(text.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   protected boolean closeBrace() {
     return _input.LT(1).getType() == TypeScriptParser.CloseBrace;
   }

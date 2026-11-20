@@ -195,3 +195,6 @@ export const double = (x: number) => x * 2;
 export function afterAllJsx(): boolean {
   return tagPattern.test(usage);
 }
+
+/** Generic function type alias: the type parameter list is not a JSX tag. */
+export type GenericMapper = <T>(value: T) => T;

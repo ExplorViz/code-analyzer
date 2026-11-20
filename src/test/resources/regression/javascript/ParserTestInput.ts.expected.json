@@ -312,6 +312,38 @@
       "sloc": 5.0,
       "lineCount": 5.0
     }
+  }, {
+    "name": "GenericFn",
+    "type": "INTERFACE",
+    "modifiers": ["typealias"],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
+  }, {
+    "name": "GenericCtor",
+    "type": "INTERFACE",
+    "modifiers": ["typealias"],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
+  }, {
+    "name": "Selector",
+    "type": "INTERFACE",
+    "modifiers": ["typealias"],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
+  }, {
+    "name": "PlainFn",
+    "type": "INTERFACE",
+    "modifiers": ["typealias"],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    }
   }],
   "functions": [{
     "name": "packagePrivateStaticMethod",
@@ -434,13 +466,26 @@
     },
     "startLine": 240,
     "endLine": 247
+  }, {
+    "name": "genericIdentity",
+    "returnType": "T",
+    "parameters": [{
+      "name": "x",
+      "type": "T"
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 254,
+    "endLine": 254
   }],
   "metrics": {
-    "sloc": 179.0,
-    "cloc": 24.0,
-    "functionCount": 26.0,
-    "variableCount": 20.0,
+    "sloc": 184.0,
+    "cloc": 25.0,
+    "functionCount": 27.0,
+    "variableCount": 21.0,
     "importCount": 3.0,
-    "classCount": 11.0
+    "classCount": 15.0
   }
 }

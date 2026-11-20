@@ -245,3 +245,10 @@ export function secondFactory(): object {
   }
   return new LocalThing();
 }
+
+/** Generic function / constructor types are type aliases, not functions. */
+type GenericFn = <T>(x: T) => T;
+export type GenericCtor = new <T>(x: T) => Promise<T>;
+export type Selector<S> = <K extends keyof S = keyof S>(state: S, key: K) => S[K];
+declare type PlainFn = (x: number) => number;
+export const genericIdentity: GenericFn = <T>(x: T): T => x;
