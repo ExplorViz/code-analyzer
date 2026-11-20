@@ -15,10 +15,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import net.explorviz.code.analysis.FileIO;
-import net.explorviz.code.analysis.exceptions.NotFoundException;
 import net.explorviz.code.analysis.exceptions.PropertyNotDefinedException;
 import net.explorviz.code.analysis.service.AnalysisConfig;
 import net.explorviz.code.analysis.service.LocalRepositoryService;
@@ -38,7 +36,10 @@ import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.diff.EditList;
 import org.eclipse.jgit.diff.RenameDetector;
+import org.eclipse.jgit.errors.AmbiguousObjectException;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
+import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -54,7 +55,6 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -76,18 +76,12 @@ public class GitRepositoryHandler {
    */
   private static final int RENAME_DETECTION_LIMIT = 1000;
 
-  private static String repositoryPath;
-
   @ConfigProperty(name = "explorviz.gitanalysis.remote.storage-path")
   /* default */ Optional<String> repoLocalStoragePathProperty;
 
   @Inject /* default */ LocalRepositoryService localRepositoryService;
 
   private Git git;
-
-  public static String getCurrentRepositoryPath() {
-    return repositoryPath;
-  }
 
   private static void ensureCommitTreeParsed(final Repository repository, final RevCommit commit)
       throws IOException {
@@ -298,7 +292,6 @@ public class GitRepositoryHandler {
       }
 
       this.git = cloneCommand.call();
-      repositoryPath = new File(repoPath).getAbsolutePath();
       return this.git.getRepository();
     } catch (TransportException te) {
       if (!checkedRepositoryUrl.getKey()) {
@@ -376,9 +369,7 @@ public class GitRepositoryHandler {
       throw new NotDirectoryException(repositoryPath);
     }
 
-    if (Objects.requireNonNull(localRepositoryDirectory.listFiles()).length == 0) {
-      return null;
-    }
+    // Fails with a RepositoryNotFoundException for empty and other non-repository directories.
     this.git = Git.open(localRepositoryDirectory);
     if (!branchName.isBlank()) {
       try {
@@ -401,7 +392,6 @@ public class GitRepositoryHandler {
         throw e;
       }
     }
-    GitRepositoryHandler.repositoryPath = new File(repositoryPath).getAbsolutePath();
     return this.git.getRepository();
   }
 
@@ -486,17 +476,17 @@ public class GitRepositoryHandler {
    * @param repository the current repository
    * @param oldCommit the old commit, as a baseline for the difference calculation
    * @param newCommit the new commit, gets checked against the old commit
-   * @param pathRestrictions comma sep. list of search strings specifying the folders to analyze
+   * @param pathRestrictions comma separated path restrictions, see {@link
+   *     PathRestrictionTreeFilter}
    * @return the added, modified, deleted and renamed files
    * @throws IOException thrown if files are not available
-   * @throws NotFoundException thrown if the restrictionPath was not found
    */
   public FileDiff listDiff(
       final Repository repository,
       final Optional<RevCommit> oldCommit,
       final RevCommit newCommit,
       final String pathRestrictions)
-      throws IOException, NotFoundException {
+      throws IOException {
     if (pathRestrictions == null || pathRestrictions.isEmpty()) {
       return listDiff(repository, oldCommit, newCommit, new ArrayList<>());
     }
@@ -509,6 +499,7 @@ public class GitRepositoryHandler {
    * @param repository the current repository
    * @param oldCommit the old commit, as a baseline for the difference calculation
    * @param newCommit the new commit, gets checked against the old commit
+   * @param pathRestrictions path restrictions, see {@link PathRestrictionTreeFilter}
    * @return the added, modified, deleted and renamed files. A rename is additionally listed as a
    *     deletion of the old and an addition of the new file, see {@link FileDiff}.
    * @throws IOException thrown if files are not available
@@ -518,8 +509,8 @@ public class GitRepositoryHandler {
       final Optional<RevCommit> oldCommit,
       final RevCommit newCommit,
       final List<String> pathRestrictions)
-      throws IOException, NotFoundException {
-    final TreeFilter filter = getSourceFileTreeFilter(pathRestrictions);
+      throws IOException {
+    final TreeFilter filter = PathRestrictionTreeFilter.create(pathRestrictions);
     final FileDiff fileDiff =
         new FileDiff(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
 
@@ -626,39 +617,36 @@ public class GitRepositoryHandler {
   }
 
   /**
-   * Returns a list of all Java Files in the repository.
+   * Returns all files of a commit within the given path restrictions.
    *
    * @param repository the current repository
    * @param commit the commit to get the list of files for
-   * @param pathRestrictions a list of search strings specifying the folders to analyze, if omitted,
-   *     the entire repository will be searched
-   * @return returns a list of FileDescriptors of all java files within the specified folders
+   * @param pathRestrictions path restrictions, see {@link PathRestrictionTreeFilter}; if empty, all
+   *     files of the commit are returned
+   * @return the files of the commit within the path restrictions
    * @throws IOException thrown if files are not available
-   * @throws NotFoundException thrown if the restrictionPath was not found
    */
   public List<FileDescriptor> listFilesInCommit(
       final Repository repository, final RevCommit commit, final List<String> pathRestrictions)
-      throws IOException, NotFoundException {
-    return listFilesInCommit(repository, commit, getSourceFileTreeFilter(pathRestrictions));
+      throws IOException {
+    return listFilesInCommit(
+        repository, commit, PathRestrictionTreeFilter.create(pathRestrictions));
   }
 
   /**
-   * Returns a list of all supported source files in the repository (Java, TypeScript, JavaScript).
+   * Returns all files of a commit within the given path restrictions.
    *
    * @param repository the current repository
    * @param commit the commit to get the list of files for
-   * @param pathRestrictions a comma separated list of search strings specifying the folders to
-   *     analyze, if omitted, the entire repository will be searched
-   * @return returns a list of FileDescriptors of all supported source files within the specified
-   *     folders
+   * @param pathRestrictions comma separated path restrictions, see {@link
+   *     PathRestrictionTreeFilter}
+   * @return the files of the commit within the path restrictions
    * @throws IOException thrown if files are not available
-   * @throws NotFoundException thrown if the restrictionPath was not found
    */
   public List<FileDescriptor> listFilesInCommit(
       final Repository repository, final RevCommit commit, final String pathRestrictions)
-      throws IOException, NotFoundException {
-    return listFilesInCommit(
-        repository, commit, getSourceFileTreeFilter(Arrays.asList(pathRestrictions.split(","))));
+      throws IOException {
+    return listFilesInCommit(repository, commit, Arrays.asList(pathRestrictions.split(",")));
   }
 
   private List<FileDescriptor> listFilesInCommit(
@@ -677,69 +665,80 @@ public class GitRepositoryHandler {
       }
       LOGGER.atDebug().addArgument(objectIdList.size()).log("Discovered {} files in commit tree");
     }
+    if (objectIdList.isEmpty() && filter != TreeFilter.ALL) {
+      LOGGER
+          .atWarn()
+          .addArgument(commit.getName())
+          .addArgument(filter)
+          .log("No file of commit {} matches the path restrictions {}");
+    }
     return objectIdList;
   }
 
-  private TreeFilter getSourceFileTreeFilter(final List<String> pathRestrictions)
-      throws NotFoundException {
-    if (pathRestrictions.isEmpty()
-        || pathRestrictions.size() == 1 && pathRestrictions.get(0).isBlank()) {
-      LOGGER.atInfo().log("No path restrictions provided. Analyzing all files.");
-      return TreeFilter.ALL;
-    } else {
-      LOGGER.atInfo().addArgument(pathRestrictions).log("Applying path restrictions: {}");
-      final List<String> pathList =
-          DirectoryFinder.getRelativeDirectory(pathRestrictions, getCurrentRepositoryPath());
-      final List<String> newPathList = new ArrayList<>();
-      for (final String path : pathList) {
-        newPathList.add(path.replaceFirst("^\\\\|/", "").replaceAll("\\\\", "/"));
-      }
-
-      if (newPathList.isEmpty()) {
-        return TreeFilter.ALL;
-      } else {
-        return PathFilterGroup.createFromStrings(newPathList);
-      }
-    }
-  }
-
-  public boolean isUnreachableCommit(final Optional<String> commitId, final String branch) {
-
-    return commitId.isPresent() && this.isUnreachableCommit(commitId.get(), branch);
+  /**
+   * Checks if the given commit is not part of the given branch.
+   *
+   * @param repository the current repository
+   * @param commitId the id of the commit, may be abbreviated; an empty optional or a blank id is
+   *     always reachable
+   * @param branch the branch name, full ref name or commit id of the branch tip
+   * @return {@code true} if the commit does not exist locally or is no ancestor of the branch tip
+   * @throws IOException thrown if the repository cannot be read
+   */
+  public boolean isUnreachableCommit(
+      final Repository repository, final Optional<String> commitId, final String branch)
+      throws IOException {
+    return commitId.isPresent() && !isReachableCommit(repository, commitId.get(), branch);
   }
 
   /**
-   * Checks if the given commit is unreachable by the given branch (is not part of the branch).
+   * Checks if the given commit is part of the given branch, i.e. an ancestor of its tip or the tip
+   * itself.
    *
-   * @param commitId the full SHA-1 id of the commit
-   * @param branch the branch name
-   * @return if the given commit is unreachable by the given branch
+   * @param repository the current repository
+   * @param commitId the id of the commit, may be abbreviated; a blank id is always reachable
+   * @param branch the branch name, full ref name or commit id of the branch tip, so that a detached
+   *     {@code HEAD} works as well
+   * @return {@code false} if the commit does not exist locally or is no ancestor of the branch tip
+   * @throws IOException thrown if the repository cannot be read
    */
-  public boolean isUnreachableCommit(final String commitId, final String branch) {
-    return !this.isReachableCommit(commitId, branch);
-  }
-
-  /**
-   * Checks if the given commit is reachable by the given branch (is part of the branch).
-   *
-   * @param commitId the full SHA-1 id of the commit
-   * @param branch the branch name
-   * @return if the commit is reachable by the given branch
-   */
-  public boolean isReachableCommit(final String commitId, final String branch) {
-    if (commitId == null || commitId.isEmpty()) {
+  public boolean isReachableCommit(
+      final Repository repository, final String commitId, final String branch) throws IOException {
+    if (commitId == null || commitId.isBlank()) {
       return true;
     }
-    try {
-      final Map<ObjectId, String> map =
-          this.git.nameRev().addPrefix(branch).add(ObjectId.fromString(commitId)).call();
-      if (!map.isEmpty()) {
-        return true;
-      }
-    } catch (GitAPIException | MissingObjectException e) {
-      throw new RuntimeException(e);
+    final ObjectId commit = resolveExistingCommit(repository, commitId);
+    final ObjectId tip = resolveExistingCommit(repository, branch);
+    if (commit == null || tip == null) {
+      return false;
     }
-    return false;
+    try (RevWalk revWalk = new RevWalk(repository)) {
+      return revWalk.isMergedInto(revWalk.parseCommit(commit), revWalk.parseCommit(tip));
+    }
+  }
+
+  /**
+   * Resolves a revision to a commit that exists in the local object database, or {@code null}.
+   * Missing objects, e.g. outside a shallow clone, and malformed or ambiguous ids yield {@code
+   * null}.
+   */
+  private static ObjectId resolveExistingCommit(final Repository repository, final String revision)
+      throws IOException {
+    final ObjectId objectId;
+    try {
+      objectId = repository.resolve(revision);
+    } catch (RevisionSyntaxException | AmbiguousObjectException e) {
+      return null;
+    }
+    if (objectId == null || !repository.getObjectDatabase().has(objectId)) {
+      return null;
+    }
+    try (RevWalk revWalk = new RevWalk(repository)) {
+      revWalk.parseCommit(objectId);
+      return objectId;
+    } catch (IncorrectObjectTypeException | MissingObjectException e) {
+      return null;
+    }
   }
 
   /**

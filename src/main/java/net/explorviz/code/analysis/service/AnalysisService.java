@@ -206,9 +206,9 @@ public class AnalysisService {
       final Optional<String> startCommit = analysisStartContext.startCommit();
 
       final Optional<String> endCommit =
-          exporter.isRemote() ? Optional.empty() : config.endCommit();
+          exporter.isRemote() ? Optional.empty() : withoutNullCommitHash(config.endCommit());
 
-      checkIfCommitsAreReachable(startCommit, endCommit, fullBranch);
+      checkIfCommitsAreReachable(repository, startCommit, endCommit, fullBranch);
 
       final List<CommitWalkEntry> commitsInRange =
           collectCommitWalkEntries(
@@ -457,7 +457,7 @@ public class AnalysisService {
       final String branch,
       final String repositoryUrl) {
     if (!exporter.isRemote()) {
-      return new AnalysisStartContext(config.startCommit(), false);
+      return new AnalysisStartContext(withoutNullCommitHash(config.startCommit()), false);
     }
 
     try {
@@ -477,12 +477,24 @@ public class AnalysisService {
     }
   }
 
+  /**
+   * Treats a blank id and the all-zero id as no commit. GitLab CI sets {@code CI_COMMIT_BEFORE_SHA}
+   * to the all-zero id for the first pipeline of a branch, which is used as default start commit.
+   */
+  /* package */ static Optional<String> withoutNullCommitHash(final Optional<String> commitId) {
+    return commitId.filter(
+        hash -> !hash.isBlank() && !ObjectId.zeroId().name().equals(hash.trim()));
+  }
+
   private void checkIfCommitsAreReachable(
-      final Optional<String> startCommit, final Optional<String> endCommit, final String branch)
-      throws NotFoundException {
-    if (this.gitRepositoryHandler.isUnreachableCommit(startCommit, branch)) {
+      final Repository repository,
+      final Optional<String> startCommit,
+      final Optional<String> endCommit,
+      final String branch)
+      throws NotFoundException, IOException {
+    if (this.gitRepositoryHandler.isUnreachableCommit(repository, startCommit, branch)) {
       throw new NotFoundException(toErrorText("start", startCommit.orElse(""), branch));
-    } else if (this.gitRepositoryHandler.isUnreachableCommit(endCommit, branch)) {
+    } else if (this.gitRepositoryHandler.isUnreachableCommit(repository, endCommit, branch)) {
       throw new NotFoundException(toErrorText("end", endCommit.orElse(""), branch));
     }
   }
@@ -1397,10 +1409,7 @@ public class AnalysisService {
     } catch (StackOverflowError e) {
       // Parsers and tree walkers recurse with the nesting depth of the source, e.g. for minified
       // files. The parser services only catch exceptions, so handle the error for this file here.
-      LOGGER
-          .atWarn()
-          .addArgument(file.reportedPath)
-          .log("Parsing {} exceeded the stack depth");
+      LOGGER.atWarn().addArgument(file.reportedPath).log("Parsing {} exceeded the stack depth");
       handler = null;
     }
     if (handler != null) {
