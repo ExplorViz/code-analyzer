@@ -127,7 +127,7 @@ public class JavaParserService {
       final String fileHash)
       throws IOException {
     // ToDo: Make this configurable
-    StaticJavaParser.getParserConfiguration().setLanguageLevel(LanguageLevel.JAVA_21);
+    StaticJavaParser.getParserConfiguration().setLanguageLevel(LanguageLevel.JAVA_25);
     StaticJavaParser.getParserConfiguration().setSymbolResolver(this.javaSymbolSolver);
     final CompilationUnit compilationUnit;
     try {
