@@ -88,6 +88,8 @@ delegationSpecifiers
     : annotations* delegationSpecifier (NL* COMMA NL* annotations* delegationSpecifier)*
     ;
 
+// A supertype never takes a trailing lambda: in "class A : Iface { ... }" and
+// "class A : Iface by impl { ... }" the braces are always the class body.
 delegationSpecifier
     : constructorInvocation
     | userType
@@ -95,11 +97,24 @@ delegationSpecifier
     ;
 
 constructorInvocation
-    : userType callSuffix
+    : userType valueArguments
     ;
 
 explicitDelegation
-    : userType NL* BY NL* expression
+    : userType NL* BY NL* delegationExpression
+    ;
+
+// The delegate of "Iface by expr": an expression without trailing lambdas, so that a following
+// class body is not swallowed. Arbitrary expressions can be written in parentheses.
+delegationExpression
+    : (atomicExpression | callableReference) delegationExpressionSuffix*
+    ;
+
+delegationExpressionSuffix
+    : EXCL EXCL
+    | typeArguments? valueArguments
+    | arrayAccess
+    | NL* memberAccessOperator simpleIdentifier
     ;
 
 classBody

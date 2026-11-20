@@ -230,9 +230,7 @@ class PropertyScopes(seed: Int) {
 }
 
 /**
- * A bare supertype is an interface; only a constructor call names the superclass. The grammar
- * parses these bodies as a trailing lambda of the last supertype, which must not change the
- * result.
+ * A bare supertype is an interface; only a constructor call names the superclass.
  */
 class RunnableTask : Runnable {
     val state: Int = 1
@@ -268,4 +266,61 @@ fun secondLocalScope(): String {
         fun describe(): String = second
     }
     return LocalType("2").describe()
+}
+
+/** Secondary constructors and init blocks after a bare supertype and after an explicit delegation. */
+class BareSupertypeBody : CallableMarker {
+    val label: String
+
+    init {
+        val initLocal = "init"
+        label = initLocal
+    }
+
+    constructor(label: String, suffix: Int) : this(label + suffix)
+
+    constructor(prefix: String) {
+        this.label = prefix
+    }
+
+    override fun call(): String = label
+}
+
+class DelegatedBody(impl: CallableMarker) : CallableMarker by impl {
+    val extra: Int
+
+    init {
+        extra = 1
+    }
+
+    constructor() : this(InterfaceFirst())
+
+    fun describe(): String = call()
+}
+
+/** Object literals are anonymous classes; their members do not belong to the enclosing class. */
+class AnonymousOwner {
+    val listener = object : Runnable {
+        val runs: Int = 0
+
+        override fun run() {
+            println(runs)
+        }
+    }
+
+    fun createMarker(): CallableMarker {
+        return object : AbstractBase(3), CallableMarker {
+            override fun call(): String = "anonymous"
+
+            override fun abstractHook(): Int = 3
+        }
+    }
+
+    fun ownerMethod(): Int = 1
+}
+
+val topLevelRunnable = object : Runnable {
+    override fun run() {
+        println("top level")
+    }
 }

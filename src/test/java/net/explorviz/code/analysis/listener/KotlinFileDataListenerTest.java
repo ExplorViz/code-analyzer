@@ -7,6 +7,7 @@ import java.util.List;
 import net.explorviz.code.analysis.handler.KotlinFileDataHandler;
 import net.explorviz.code.analysis.parser.AntlrKotlinParserService;
 import net.explorviz.code.proto.ClassData;
+import net.explorviz.code.proto.ClassType;
 import net.explorviz.code.proto.FieldData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.FunctionData;
@@ -19,6 +20,10 @@ public class KotlinFileDataListenerTest {
         new AntlrKotlinParserService().parseFileContent(source, "Test.kt", "hash");
     assertNotNull(handler);
     return handler.getProtoBufObject();
+  }
+
+  private static List<String> functionNames(final ClassData classData) {
+    return classData.getFunctionsList().stream().map(FunctionData::getName).toList();
   }
 
   private static List<String> fieldNames(final ClassData classData) {
@@ -47,8 +52,7 @@ public class KotlinFileDataListenerTest {
   }
 
   @Test
-  void propertiesOfClassBodyParsedAsLambdaAreFields() {
-    // The grammar parses this body as a trailing lambda of "Runnable".
+  void classBodyAfterBareSupertypeIsClassBody() {
     final FileData file =
         parse(
             """
@@ -76,7 +80,122 @@ public class KotlinFileDataListenerTest {
             }
             """);
 
-    assertEquals(List.of("task"), fieldNames(file.getClasses(0)));
+    final ClassData a = file.getClasses(0);
+    assertEquals(List.of("task"), fieldNames(a));
+    assertEquals(List.of("inner"), fieldNames(a.getInnerClasses(0)));
+  }
+
+  @Test
+  void secondaryConstructorAndInitAfterBareSupertypeAreKept() {
+    final FileData file =
+        parse(
+            """
+            class A : Iface {
+                val label: String
+                init { val local = 1; label = "x" }
+                constructor(x: Int) : this(x.toString())
+                constructor(s: String) { label = s }
+                fun f() = label
+            }
+            """);
+
+    final ClassData a = file.getClasses(0);
+    assertEquals(List.of("label"), fieldNames(a));
+    assertEquals(List.of("A", "A", "f"), functionNames(a));
+    assertEquals(2, a.getFunctionsList().stream().filter(FunctionData::getIsConstructor).count());
+    assertEquals(0, a.getSuperclassesCount());
+    assertEquals(List.of("Iface"), a.getImplementedInterfacesList());
+    assertEquals(3.0, file.getMetricsMap().get("functionCount"));
+  }
+
+  @Test
+  void classBodyAfterExplicitDelegationIsClassBody() {
+    final FileData file =
+        parse(
+            """
+            class A(impl: Iface) : Iface by impl {
+                val extra: Int
+                init { extra = 1 }
+                constructor() : this(Impl())
+                fun g() = extra
+            }
+            class B : Base(), Iface by Impl(1).wrapped {
+                constructor(x: Int) : super(x)
+            }
+            """);
+
+    final ClassData a = file.getClasses(0);
+    assertEquals(List.of("extra"), fieldNames(a));
+    assertEquals(List.of("A", "g"), functionNames(a));
+    assertEquals(0, a.getSuperclassesCount());
+    assertEquals(List.of("Iface"), a.getImplementedInterfacesList());
+
+    final ClassData b = file.getClasses(1);
+    assertEquals(List.of("B"), functionNames(b));
+    assertEquals(List.of("Base.kt::Base"), b.getSuperclassesList());
+    assertEquals(List.of("Iface"), b.getImplementedInterfacesList());
+  }
+
+  @Test
+  void objectLiteralInMethodIsNestedAnonymousClass() {
+    final FileData file =
+        parse(
+            """
+            class A {
+                fun create(): Iface {
+                    return object : Base(1), Iface {
+                        val state = 0
+                        override fun run() {}
+                        fun helper(): Int = state
+                    }
+                }
+                fun other() = 1
+            }
+            """);
+
+    assertEquals(1, file.getClassesCount());
+    final ClassData a = file.getClasses(0);
+    assertEquals(List.of("create", "other"), functionNames(a));
+    assertEquals(List.of(), fieldNames(a));
+    assertEquals(1, a.getInnerClassesCount());
+
+    final ClassData anonymous = a.getInnerClasses(0);
+    assertEquals("Anonymous$2", anonymous.getName());
+    assertEquals(ClassType.ANONYMOUS_CLASS, anonymous.getType());
+    assertEquals(List.of("Base.kt::Base"), anonymous.getSuperclassesList());
+    assertEquals(List.of("Iface"), anonymous.getImplementedInterfacesList());
+    assertEquals(List.of("state"), fieldNames(anonymous));
+    assertEquals(List.of("run", "helper"), functionNames(anonymous));
+    assertEquals(4.0, file.getMetricsMap().get("functionCount"));
+  }
+
+  @Test
+  void topLevelObjectLiteralIsRootAnonymousClass() {
+    final FileData file =
+        parse(
+            """
+            val task = object : Runnable {
+                override fun run() {}
+            }
+            fun make() = object {
+                fun hello() = "hi"
+            }
+            """);
+
+    assertEquals(2, file.getClassesCount());
+    assertEquals(
+        List.of("make"), file.getFunctionsList().stream().map(FunctionData::getName).toList());
+
+    final ClassData first = file.getClasses(0);
+    assertEquals("Anonymous$1", first.getName());
+    assertEquals(ClassType.ANONYMOUS_CLASS, first.getType());
+    assertEquals(List.of("Runnable"), first.getImplementedInterfacesList());
+    assertEquals(List.of("run"), functionNames(first));
+
+    final ClassData second = file.getClasses(1);
+    assertEquals("Anonymous$2", second.getName());
+    assertEquals(List.of("hello"), functionNames(second));
+    assertEquals(3.0, file.getMetricsMap().get("functionCount"));
   }
 
   @Test

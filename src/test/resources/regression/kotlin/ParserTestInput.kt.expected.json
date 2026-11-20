@@ -341,6 +341,19 @@
       "name": "task",
       "type": "unknown"
     }],
+    "innerClasses": [{
+      "name": "Anonymous$13",
+      "type": "ANONYMOUS_CLASS",
+      "implementedInterfaces": ["Runnable"],
+      "fields": [{
+        "name": "anonymousState",
+        "type": "unknown"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      }
+    }],
     "functions": [{
       "name": "PropertyScopes",
       "isConstructor": true,
@@ -386,8 +399,8 @@
         "sloc": 4.0,
         "lineCount": 4.0
       },
-      "startLine": 240,
-      "endLine": 243
+      "startLine": 238,
+      "endLine": 241
     }],
     "metrics": {
       "sloc": 7.0,
@@ -409,8 +422,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 249,
-      "endLine": 249
+      "startLine": 247,
+      "endLine": 247
     }, {
       "name": "abstractHook",
       "returnType": "Int",
@@ -418,8 +431,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 251,
-      "endLine": 251
+      "startLine": 249,
+      "endLine": 249
     }],
     "metrics": {
       "sloc": 5.0,
@@ -437,8 +450,8 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 255,
-      "endLine": 255
+      "startLine": 253,
+      "endLine": 253
     }],
     "metrics": {
       "sloc": 3.0,
@@ -477,12 +490,193 @@
         "sloc": 1.0,
         "lineCount": 1.0
       },
-      "startLine": 268,
-      "endLine": 268
+      "startLine": 266,
+      "endLine": 266
     }],
     "metrics": {
       "sloc": 3.0,
       "lineCount": 3.0
+    }
+  }, {
+    "name": "BareSupertypeBody",
+    "type": "CLASS",
+    "implementedInterfaces": ["CallableMarker"],
+    "fields": [{
+      "name": "label",
+      "type": "String"
+    }],
+    "functions": [{
+      "name": "BareSupertypeBody",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "label",
+        "type": "String"
+      }, {
+        "name": "suffix",
+        "type": "Int"
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 280,
+      "endLine": 280
+    }, {
+      "name": "BareSupertypeBody",
+      "isConstructor": true,
+      "parameters": [{
+        "name": "prefix",
+        "type": "String"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 282,
+      "endLine": 284
+    }, {
+      "name": "call",
+      "returnType": "String",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 286,
+      "endLine": 286
+    }],
+    "metrics": {
+      "sloc": 12.0,
+      "lineCount": 16.0
+    }
+  }, {
+    "name": "DelegatedBody",
+    "type": "CLASS",
+    "implementedInterfaces": ["CallableMarker"],
+    "fields": [{
+      "name": "extra",
+      "type": "Int"
+    }],
+    "functions": [{
+      "name": "DelegatedBody",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 296,
+      "endLine": 296
+    }, {
+      "name": "describe",
+      "returnType": "String",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 298,
+      "endLine": 298
+    }],
+    "metrics": {
+      "sloc": 8.0,
+      "lineCount": 11.0
+    }
+  }, {
+    "name": "AnonymousOwner",
+    "type": "CLASS",
+    "fields": [{
+      "name": "listener",
+      "type": "unknown"
+    }],
+    "innerClasses": [{
+      "name": "Anonymous$23",
+      "type": "ANONYMOUS_CLASS",
+      "implementedInterfaces": ["Runnable"],
+      "fields": [{
+        "name": "runs",
+        "type": "Int"
+      }],
+      "functions": [{
+        "name": "run",
+        "returnType": "Unit",
+        "metrics": {
+          "sloc": 3.0,
+          "lineCount": 3.0
+        },
+        "startLine": 306,
+        "endLine": 308
+      }],
+      "metrics": {
+        "sloc": 6.0,
+        "lineCount": 7.0
+      }
+    }, {
+      "name": "Anonymous$24",
+      "type": "ANONYMOUS_CLASS",
+      "implementedInterfaces": ["CallableMarker"],
+      "superclasses": ["AbstractBase.kt::AbstractBase"],
+      "functions": [{
+        "name": "call",
+        "returnType": "String",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 313,
+        "endLine": 313
+      }, {
+        "name": "abstractHook",
+        "returnType": "Int",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 315,
+        "endLine": 315
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 5.0
+      }
+    }],
+    "functions": [{
+      "name": "createMarker",
+      "returnType": "CallableMarker",
+      "metrics": {
+        "sloc": 6.0,
+        "lineCount": 7.0
+      },
+      "startLine": 311,
+      "endLine": 317
+    }, {
+      "name": "ownerMethod",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 319,
+      "endLine": 319
+    }],
+    "metrics": {
+      "sloc": 15.0,
+      "lineCount": 19.0
+    }
+  }, {
+    "name": "Anonymous$25",
+    "type": "ANONYMOUS_CLASS",
+    "implementedInterfaces": ["Runnable"],
+    "functions": [{
+      "name": "run",
+      "returnType": "Unit",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 323,
+      "endLine": 325
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
     }
   }],
   "functions": [{
@@ -492,8 +686,8 @@
       "sloc": 4.0,
       "lineCount": 4.0
     },
-    "startLine": 261,
-    "endLine": 264
+    "startLine": 259,
+    "endLine": 262
   }, {
     "name": "secondLocalScope",
     "returnType": "String",
@@ -501,15 +695,15 @@
       "sloc": 6.0,
       "lineCount": 6.0
     },
-    "startLine": 266,
-    "endLine": 271
+    "startLine": 264,
+    "endLine": 269
   }],
   "metrics": {
-    "sloc": 180.0,
+    "sloc": 220.0,
     "cloc": 43.0,
-    "functionCount": 26.0,
-    "variableCount": 28.0,
+    "functionCount": 37.0,
+    "variableCount": 34.0,
     "importCount": 8.0,
-    "classCount": 18.0
+    "classCount": 25.0
   }
 }

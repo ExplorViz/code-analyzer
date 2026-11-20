@@ -173,15 +173,9 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
     }
   }
 
-  /**
-   * Whether the supertype is a constructor call {@code Base(...)}. The grammar may parse a class
-   * body following a bare supertype as a trailing lambda, i.e. {@code Iface { ... }} as a
-   * constructor invocation without arguments; that is no constructor call.
-   */
+  /** Whether the supertype is a constructor call {@code Base(...)}. */
   private static boolean isConstructorCall(final KotlinParser.DelegationSpecifierContext spec) {
-    return spec.constructorInvocation() != null
-        && spec.constructorInvocation().callSuffix() != null
-        && spec.constructorInvocation().callSuffix().valueArguments() != null;
+    return spec.constructorInvocation() != null;
   }
 
   private static boolean isExplicitDelegation(final KotlinParser.DelegationSpecifierContext spec) {
@@ -271,6 +265,31 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
     }
   }
 
+  /**
+   * An object literal ({@code object : Iface { ... }}) is an anonymous class, nested in the
+   * enclosing class or a root class at file level, named {@code Anonymous$n} like in Java.
+   */
+  @Override
+  public void enterObjectLiteral(final KotlinParser.ObjectLiteralContext ctx) {
+    final String anonymousName = "Anonymous$" + (fileDataHandler.getClassCount() + 1);
+    fileDataHandler.enterClass(anonymousName, fileDataHandler.buildFqn(anonymousName));
+
+    final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
+    if (classData != null) {
+      classData.setIsAnonymousClass();
+      classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
+      classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      if (ctx.delegationSpecifiers() != null) {
+        addDelegationRelations(classData, ctx.delegationSpecifiers().delegationSpecifier(), false);
+      }
+    }
+  }
+
+  @Override
+  public void exitObjectLiteral(final KotlinParser.ObjectLiteralContext ctx) {
+    fileDataHandler.leaveClass();
+  }
+
   @Override
   public void enterCompanionObject(final KotlinParser.CompanionObjectContext ctx) {
     final String companionName =
@@ -351,13 +370,10 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
   }
 
   /**
-   * Whether the declaration is a direct member of the body of a class, object or companion object
-   * (and not, e.g., of an anonymous object expression, which has no class of its own).
+   * Whether the declaration is a direct member of the body of a class, object, companion object or
+   * object literal (and not, e.g., a local variable of a function or initializer).
    */
-  private boolean isClassMember(final ParserRuleContext ctx) {
-    if (ctx.getParent() instanceof KotlinParser.DeclarationContext declaration) {
-      return isInClassBodyLambda(declaration);
-    }
+  private static boolean isClassMember(final ParserRuleContext ctx) {
     if (!(ctx.getParent() instanceof KotlinParser.ClassMemberDeclarationContext member)) {
       return false;
     }
@@ -368,42 +384,8 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
     return body instanceof KotlinParser.ClassBodyContext
         && (body.getParent() instanceof KotlinParser.ClassDeclarationContext
             || body.getParent() instanceof KotlinParser.ObjectDeclarationContext
-            || body.getParent() instanceof KotlinParser.CompanionObjectContext);
-  }
-
-  /**
-   * Whether the declaration is a top-level statement of a class body that the grammar parsed as a
-   * trailing lambda of the last supertype ({@code class A : Iface { ... }} as {@code Iface {...}}).
-   * Only a class, object or companion object without a regular class body qualifies.
-   */
-  private static boolean isInClassBodyLambda(final KotlinParser.DeclarationContext declaration) {
-    if (!(declaration.getParent() instanceof KotlinParser.StatementContext statement)
-        || !(statement.getParent() instanceof KotlinParser.StatementsContext statements)
-        || !(statements.getParent() instanceof KotlinParser.FunctionLiteralContext literal)
-        || !(literal.getParent() instanceof KotlinParser.AnnotatedLambdaContext lambda)
-        || !(lambda.getParent() instanceof KotlinParser.CallSuffixContext callSuffix)
-        || !(callSuffix.getParent() instanceof KotlinParser.ConstructorInvocationContext invocation)
-        || !(invocation.getParent() instanceof KotlinParser.DelegationSpecifierContext specifier)
-        || !(specifier.getParent()
-            instanceof KotlinParser.DelegationSpecifiersContext specifiers)) {
-      return false;
-    }
-    final List<KotlinParser.DelegationSpecifierContext> all = specifiers.delegationSpecifier();
-    final List<KotlinParser.AnnotatedLambdaContext> lambdas = callSuffix.annotatedLambda();
-    if (all.get(all.size() - 1) != specifier || lambdas.get(lambdas.size() - 1) != lambda) {
-      return false;
-    }
-    final ParserRuleContext owner = specifiers.getParent();
-    if (owner instanceof KotlinParser.ClassDeclarationContext classDecl) {
-      return classDecl.classBody() == null && classDecl.enumClassBody() == null;
-    }
-    if (owner instanceof KotlinParser.ObjectDeclarationContext objectDecl) {
-      return objectDecl.classBody() == null;
-    }
-    if (owner instanceof KotlinParser.CompanionObjectContext companion) {
-      return companion.classBody() == null;
-    }
-    return false;
+            || body.getParent() instanceof KotlinParser.CompanionObjectContext
+            || body.getParent() instanceof KotlinParser.ObjectLiteralContext);
   }
 
   @Override
