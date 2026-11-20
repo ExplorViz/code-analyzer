@@ -407,6 +407,12 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
 
   @Override
   public void enterFunctionDeclaration(final KotlinParser.FunctionDeclarationContext ctx) {
+    // A function declared inside a function, constructor, initializer, accessor or lambda is a
+    // local helper of it: neither a method nor a global function, and its lines already belong to
+    // the enclosing function. It is not emitted and not counted.
+    if (isLocalFunction(ctx)) {
+      return;
+    }
     functionCount++;
 
     final String functionName = extractFunctionName(ctx);
@@ -425,6 +431,29 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+  }
+
+  /**
+   * Whether the nearest enclosing declaration of the function is a function, secondary constructor,
+   * initializer, property accessor or lambda rather than a class body (of a class, object,
+   * companion object, object literal or enum entry) or the file.
+   */
+  private static boolean isLocalFunction(final KotlinParser.FunctionDeclarationContext ctx) {
+    for (ParserRuleContext parent = ctx.getParent(); parent != null; parent = parent.getParent()) {
+      if (parent instanceof KotlinParser.ClassBodyContext
+          || parent instanceof KotlinParser.EnumClassBodyContext) {
+        return false;
+      }
+      if (parent instanceof KotlinParser.FunctionDeclarationContext
+          || parent instanceof KotlinParser.SecondaryConstructorContext
+          || parent instanceof KotlinParser.AnonymousInitializerContext
+          || parent instanceof KotlinParser.GetterContext
+          || parent instanceof KotlinParser.SetterContext
+          || parent instanceof KotlinParser.FunctionLiteralContext) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

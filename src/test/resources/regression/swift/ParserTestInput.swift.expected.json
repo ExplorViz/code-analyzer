@@ -332,6 +332,53 @@
       "sloc": 73.0,
       "lineCount": 92.0
     }
+  }, {
+    "name": "LocalFunctionOwner",
+    "type": "CLASS",
+    "fields": [{
+      "name": "computed",
+      "type": "Int"
+    }],
+    "functions": [{
+      "name": "LocalFunctionOwner",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 222,
+      "endLine": 225
+    }, {
+      "name": "outerMethod",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 11.0,
+        "lineCount": 11.0
+      },
+      "startLine": 227,
+      "endLine": 237
+    }],
+    "metrics": {
+      "sloc": 21.0,
+      "lineCount": 23.0
+    }
+  }, {
+    "name": "LocalInFunction",
+    "type": "STRUCT",
+    "functions": [{
+      "name": "localStructMethod",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 243,
+      "endLine": 246
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 6.0
+    }
   }],
   "functions": [{
     "name": "defaultMark",
@@ -367,13 +414,22 @@
     },
     "startLine": 211,
     "endLine": 213
+  }, {
+    "name": "topLevelWithLocals",
+    "returnType": "Int",
+    "metrics": {
+      "sloc": 10.0,
+      "lineCount": 10.0
+    },
+    "startLine": 240,
+    "endLine": 249
   }],
   "metrics": {
-    "sloc": 145.0,
-    "cloc": 28.0,
-    "functionCount": 21.0,
-    "variableCount": 32.0,
+    "sloc": 176.0,
+    "cloc": 29.0,
+    "functionCount": 25.0,
+    "variableCount": 35.0,
     "importCount": 1.0,
-    "classCount": 9.0
+    "classCount": 11.0
   }
 }

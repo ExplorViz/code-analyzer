@@ -211,3 +211,39 @@ func packagePrivateStaticMethod() {
 func moduleHelper(path: String, ignored: MarkerInterface) -> String {
     return (path as NSString).lastPathComponent
 }
+
+/// Local functions are helpers of the enclosing declaration, not methods or global functions.
+class LocalFunctionOwner {
+    var computed: Int {
+        func computedHelper() -> Int { return 1 }
+        return computedHelper()
+    }
+
+    init() {
+        func initHelper() {}
+        initHelper()
+    }
+
+    func outerMethod() -> Int {
+        func localHelper(x: Int) -> Int {
+            func deeperHelper() -> Int { return x }
+            return deeperHelper()
+        }
+        let mapped = [1].map { (value: Int) -> Int in
+            func closureHelper() -> Int { return value }
+            return closureHelper()
+        }
+        return mapped.count + localHelper(x: 2)
+    }
+}
+
+func topLevelWithLocals() -> Int {
+    func localTopHelper() -> Int { return 1 }
+    struct LocalInFunction {
+        func localStructMethod() -> Int {
+            func localStructHelper() -> Int { return 2 }
+            return localStructHelper()
+        }
+    }
+    return localTopHelper() + LocalInFunction().localStructMethod()
+}

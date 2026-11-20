@@ -104,14 +104,61 @@ explicitDelegation
     : userType NL* BY NL* delegationExpression
     ;
 
-// The delegate of "Iface by expr": an expression without trailing lambdas, so that a following
-// class body is not swallowed. Arbitrary expressions can be written in parentheses.
+// The delegate of "Iface by expr": any expression, but without trailing lambdas outside of
+// parentheses, brackets and braces of nested constructs (like the by-clause mode of the Kotlin
+// compiler), so that a "{" following the delegation specifiers always starts the class body, e.g.
+// "class A : Iface by a ?: b { ... }". Operator precedence is not modelled since only the
+// delegated type is analysed; type constraints ("where") cannot follow as an infix call.
 delegationExpression
-    : (atomicExpression | callableReference) delegationExpressionSuffix*
+    : delegationOperand delegationOperation*
+    ;
+
+delegationOperation
+    : NL* (DISJ | CONJ | ELVIS) NL* delegationOperand
+    | (
+        equalityOperation
+        | comparisonOperator
+        | inOperator
+        | RANGE
+        | additiveOperator
+        | multiplicativeOperation
+        | Identifier
+    ) NL* delegationOperand
+    | isOperator NL* type
+    | NL* (AS | AS_SAFE) NL* type
+    ;
+
+delegationOperand
+    : prefixUnaryOperation* (delegationAtomicExpression | callableReference) delegationExpressionSuffix*
+    ;
+
+delegationAtomicExpression
+    : parenthesizedExpression
+    | literalConstant
+    | thisExpression
+    | superExpression
+    | delegationIfExpression
+    | whenExpression
+    | tryExpression
+    | objectLiteral
+    | THROW NL* delegationExpression
+    | collectionLiteral
+    | simpleIdentifier
+    ;
+
+delegationIfExpression
+    : IF NL* LPAREN expression RPAREN NL* delegationControlStructureBody SEMICOLON? NL* ELSE NL* delegationControlStructureBody
+    ;
+
+delegationControlStructureBody
+    : block
+    | delegationExpression
     ;
 
 delegationExpressionSuffix
-    : EXCL EXCL
+    : INCR
+    | DECR
+    | EXCL EXCL
     | typeArguments? valueArguments
     | arrayAccess
     | NL* memberAccessOperator simpleIdentifier

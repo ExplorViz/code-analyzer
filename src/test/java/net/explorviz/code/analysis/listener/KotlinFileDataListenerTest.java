@@ -3,7 +3,10 @@ package net.explorviz.code.analysis.listener;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.ArrayList;
 import java.util.List;
+import net.explorviz.code.analysis.antlr.generated.kotlin.KotlinLexer;
+import net.explorviz.code.analysis.antlr.generated.kotlin.KotlinParser;
 import net.explorviz.code.analysis.handler.KotlinFileDataHandler;
 import net.explorviz.code.analysis.parser.AntlrKotlinParserService;
 import net.explorviz.code.proto.ClassData;
@@ -11,6 +14,11 @@ import net.explorviz.code.proto.ClassType;
 import net.explorviz.code.proto.FieldData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.FunctionData;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
 import org.junit.jupiter.api.Test;
 
 public class KotlinFileDataListenerTest {
@@ -294,5 +302,135 @@ public class KotlinFileDataListenerTest {
     assertEquals(List.of("b"), fieldNames(second));
     assertEquals(1, second.getFunctionsCount());
     assertEquals(0, second.getInnerClassesCount());
+  }
+
+  @Test
+  void localFunctionsAreNotMethodsOrGlobalFunctions() {
+    final FileData file =
+        parse(
+            """
+            class A {
+                val prop: Int
+                    get() {
+                        fun getterHelper() = 1
+                        return getterHelper()
+                    }
+                val lazyProp by lazy {
+                    fun lambdaHelper() = 2
+                    lambdaHelper()
+                }
+                init {
+                    fun initHelper() {}
+                }
+                constructor(x: Int) {
+                    fun ctorHelper() {}
+                }
+                fun m(): Int {
+                    fun helper(): Int {
+                        fun deeper() = 3
+                        return deeper()
+                    }
+                    return helper()
+                }
+                fun n() = run { fun inLambda() = 4; inLambda() }
+            }
+            fun outer() {
+                fun inner() {}
+                class Local {
+                    fun method() {
+                        fun localHelper() {}
+                    }
+                }
+                val anon = object : Runnable {
+                    override fun run() {
+                        fun runHelper() {}
+                    }
+                }
+            }
+            """);
+
+    final ClassData a = file.getClasses(0);
+    assertEquals(List.of("A", "m", "n"), functionNames(a));
+    final FunctionData m = a.getFunctions(1);
+    assertEquals(7.0, m.getMetricsMap().get("lineCount"));
+    assertEquals(
+        List.of("outer"), file.getFunctionsList().stream().map(FunctionData::getName).toList());
+    final ClassData local = file.getClasses(1);
+    assertEquals("Local", local.getName());
+    assertEquals(List.of("method"), functionNames(local));
+    final ClassData anonymous = file.getClasses(2);
+    assertEquals(ClassType.ANONYMOUS_CLASS, anonymous.getType());
+    assertEquals(List.of("run"), functionNames(anonymous));
+    // A (constructor), m, n, outer, Local.method and run; local functions are not counted
+    assertEquals(6.0, file.getMetricsMap().get("functionCount"));
+  }
+
+  private static KotlinParser.KotlinFileContext parseTree(
+      final String source, final List<String> errors) {
+    final KotlinLexer lexer = new KotlinLexer(CharStreams.fromString(source));
+    final KotlinParser parser = new KotlinParser(new CommonTokenStream(lexer));
+    parser.removeErrorListeners();
+    parser.addErrorListener(
+        new BaseErrorListener() {
+          @Override
+          public void syntaxError(
+              final Recognizer<?, ?> recognizer,
+              final Object offendingSymbol,
+              final int line,
+              final int charPositionInLine,
+              final String msg,
+              final RecognitionException e) {
+            errors.add(line + ":" + charPositionInLine + " " + msg);
+          }
+        });
+    return parser.kotlinFile();
+  }
+
+  @Test
+  void delegationExpressionsAllowOperatorsAndKeepClassBody() {
+    final List<String> delegates =
+        List.of(
+            "a ?: b",
+            "a\n    ?: b",
+            "if (x) a else b",
+            "if (x) { a } else { b }",
+            "when (x) { 1 -> a\n else -> b }",
+            "a as Iface",
+            "a as? Iface ?: b",
+            "(a ?: b)",
+            "(list.map { it }.first())",
+            "a.b?.c!!",
+            "a && b || c",
+            "x + y * z",
+            "a to b",
+            "a[0]",
+            "make<Iface>(1)",
+            "-a",
+            "Impl::create",
+            "object : Iface {\n        fun inner() = 1\n    }",
+            "try { a } catch (e: Exception) { b }",
+            "throw IllegalStateException()");
+    for (final String delegate : delegates) {
+      final String source =
+          "class A : Iface by "
+              + delegate
+              + " {\n    fun f() = 1\n}\n"
+              + "class B<T> : Iface by "
+              + delegate
+              + " where T : Any {\n    fun g() = 2\n}\n";
+      final List<String> errors = new ArrayList<>();
+      final KotlinParser.KotlinFileContext tree = parseTree(source, errors);
+      assertEquals(List.of(), errors, delegate);
+      for (final KotlinParser.TopLevelObjectContext object : tree.topLevelObject()) {
+        final KotlinParser.ClassDeclarationContext declaration = object.classDeclaration();
+        assertNotNull(declaration.classBody(), delegate);
+        assertEquals(1, declaration.classBody().classMemberDeclaration().size(), delegate);
+      }
+
+      final FileData file = parse(source);
+      assertEquals(List.of("f"), functionNames(file.getClasses(0)), delegate);
+      assertEquals(List.of("Iface"), file.getClasses(0).getImplementedInterfacesList(), delegate);
+      assertEquals(List.of("g"), functionNames(file.getClasses(1)), delegate);
+    }
   }
 }

@@ -678,6 +678,110 @@
       "sloc": 5.0,
       "lineCount": 5.0
     }
+  }, {
+    "name": "ElvisDelegated",
+    "type": "CLASS",
+    "implementedInterfaces": ["CallableMarker"],
+    "functions": [{
+      "name": "describe",
+      "returnType": "String",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 331,
+      "endLine": 331
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    }
+  }, {
+    "name": "ConditionalDelegated",
+    "type": "CLASS",
+    "implementedInterfaces": ["CallableMarker"],
+    "fields": [{
+      "name": "chosen",
+      "type": "Boolean"
+    }],
+    "metrics": {
+      "sloc": 4.0,
+      "lineCount": 4.0
+    }
+  }, {
+    "name": "CastDelegated",
+    "type": "CLASS",
+    "implementedInterfaces": ["CallableMarker", "Serializable"],
+    "functions": [{
+      "name": "CastDelegated",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 340,
+      "endLine": 340
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "LocalFunctionOwner",
+    "type": "CLASS",
+    "fields": [{
+      "name": "computed",
+      "type": "Int"
+    }],
+    "functions": [{
+      "name": "outerMethod",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 7.0,
+        "lineCount": 7.0
+      },
+      "startLine": 356,
+      "endLine": 362
+    }],
+    "metrics": {
+      "sloc": 18.0,
+      "lineCount": 20.0
+    }
+  }, {
+    "name": "LocalInFunction",
+    "type": "CLASS",
+    "functions": [{
+      "name": "localClassMethod",
+      "returnType": "Unit",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 368,
+      "endLine": 370
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 5.0
+    }
+  }, {
+    "name": "Anonymous$31",
+    "type": "ANONYMOUS_CLASS",
+    "implementedInterfaces": ["Runnable"],
+    "functions": [{
+      "name": "run",
+      "returnType": "Unit",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 374,
+      "endLine": 377
+    }],
+    "metrics": {
+      "sloc": 6.0,
+      "lineCount": 6.0
+    }
   }],
   "functions": [{
     "name": "firstLocalScope",
@@ -697,13 +801,22 @@
     },
     "startLine": 264,
     "endLine": 269
+  }, {
+    "name": "topLevelWithLocals",
+    "returnType": "Runnable",
+    "metrics": {
+      "sloc": 15.0,
+      "lineCount": 15.0
+    },
+    "startLine": 365,
+    "endLine": 379
   }],
   "metrics": {
-    "sloc": 220.0,
-    "cloc": 43.0,
-    "functionCount": 37.0,
-    "variableCount": 34.0,
+    "sloc": 264.0,
+    "cloc": 45.0,
+    "functionCount": 43.0,
+    "variableCount": 36.0,
     "importCount": 8.0,
-    "classCount": 25.0
+    "classCount": 31.0
   }
 }

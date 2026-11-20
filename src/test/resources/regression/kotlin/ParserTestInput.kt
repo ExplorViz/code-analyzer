@@ -324,3 +324,56 @@ val topLevelRunnable = object : Runnable {
         println("top level")
     }
 }
+
+/** Delegates may be arbitrary expressions; the following braces are still the class body. */
+class ElvisDelegated(primary: CallableMarker?, fallback: CallableMarker) :
+    CallableMarker by primary ?: fallback {
+    fun describe(): String = call()
+}
+
+class ConditionalDelegated(flag: Boolean, a: CallableMarker, b: CallableMarker) :
+    CallableMarker by if (flag) a else b {
+    val chosen: Boolean = flag
+}
+
+class CastDelegated(impl: Any) : CallableMarker by impl as CallableMarker, Serializable {
+    constructor() : this(InterfaceFirst())
+}
+
+/** Local functions are helpers of the enclosing function, not methods or global functions. */
+class LocalFunctionOwner {
+    val computed: Int
+        get() {
+            fun getterHelper(): Int = 1
+            return getterHelper()
+        }
+
+    init {
+        fun initHelper() {}
+        initHelper()
+    }
+
+    fun outerMethod(): Int {
+        fun localHelper(x: Int): Int {
+            fun deeperHelper(): Int = x
+            return deeperHelper()
+        }
+        return listOf(1).map { fun lambdaHelper(): Int = it; lambdaHelper() }.sum() + localHelper(2)
+    }
+}
+
+fun topLevelWithLocals(): Runnable {
+    fun localTopHelper() {}
+    class LocalInFunction {
+        fun localClassMethod() {
+            fun localClassHelper() {}
+        }
+    }
+    localTopHelper()
+    return object : Runnable {
+        override fun run() {
+            fun runHelper() {}
+            runHelper()
+        }
+    }
+}

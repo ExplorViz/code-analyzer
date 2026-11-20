@@ -119,4 +119,70 @@ public class SwiftFileDataListenerTest {
     assertEquals(List.of("second"), functionNames(fileData.getClasses(1)));
     assertEquals(2.0, fileData.getMetricsMap().get(CommonFileDataListener.CLASS_COUNT));
   }
+
+  @Test
+  void localFunctionsAreNotMethodsOrGlobalFunctions() {
+    final FileData fileData =
+        parse(
+            """
+            class A {
+                var computed: Int {
+                    func computedHelper() -> Int { return 1 }
+                    return computedHelper()
+                }
+                var accessors: Int {
+                    get {
+                        func getterHelper() -> Int { return 2 }
+                        return getterHelper()
+                    }
+                    set {
+                        func setterHelper() {}
+                    }
+                }
+                var observed: Int = 0 {
+                    didSet {
+                        func observerHelper() {}
+                    }
+                }
+                lazy var closure: () -> Int = {
+                    func closureHelper() -> Int { return 3 }
+                    return closureHelper()
+                }
+                init() {
+                    func initHelper() {}
+                }
+                deinit {
+                    func deinitHelper() {}
+                }
+                func m() -> Int {
+                    func helper() -> Int {
+                        func deeper() -> Int { return 4 }
+                        return deeper()
+                    }
+                    return helper()
+                }
+                func n() {}
+            }
+            func outer() {
+                func inner() {}
+                struct Local {
+                    init() {}
+                    func method() {
+                        func localHelper() {}
+                    }
+                }
+            }
+            """);
+
+    final ClassData a = fileData.getClasses(0);
+    assertEquals(List.of("A", "m", "n"), functionNames(a));
+    assertEquals(7.0, a.getFunctions(1).getMetricsMap().get(CommonFileDataListener.LINE_COUNT));
+    assertEquals(
+        List.of("outer"), fileData.getFunctionsList().stream().map(FunctionData::getName).toList());
+    final ClassData local = fileData.getClasses(1);
+    assertEquals("Local", local.getName());
+    assertEquals(List.of("Local", "method"), functionNames(local));
+    // init, m, n, outer, Local.init and Local.method; local functions are not counted
+    assertEquals(6.0, fileData.getMetricsMap().get(CommonFileDataListener.FUNCTION_COUNT));
+  }
 }

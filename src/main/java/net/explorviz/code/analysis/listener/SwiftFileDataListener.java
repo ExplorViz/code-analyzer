@@ -328,6 +328,12 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
 
   @Override
   public void enterFunction_declaration(final Swift5Parser.Function_declarationContext ctx) {
+    // A function declared inside a function, initializer, deinitializer, subscript, accessor,
+    // computed property or closure is a local helper of it: neither a method nor a global function,
+    // and its lines already belong to the enclosing declaration. It is not emitted and not counted.
+    if (isLocalFunction(ctx)) {
+      return;
+    }
     functionCount++;
 
     final String functionName = extractFunctionName(ctx);
@@ -346,6 +352,34 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+  }
+
+  /**
+   * Whether the nearest enclosing declaration of the function is a function, initializer,
+   * deinitializer, subscript, accessor block, property observer or closure rather than a type body
+   * (class, struct, enum, protocol, extension) or the file.
+   */
+  private static boolean isLocalFunction(final Swift5Parser.Function_declarationContext ctx) {
+    for (ParserRuleContext parent = ctx.getParent(); parent != null; parent = parent.getParent()) {
+      if (parent instanceof Swift5Parser.Class_bodyContext
+          || parent instanceof Swift5Parser.Struct_bodyContext
+          || parent instanceof Swift5Parser.Union_style_enum_membersContext
+          || parent instanceof Swift5Parser.Raw_value_style_enum_membersContext
+          || parent instanceof Swift5Parser.Protocol_bodyContext
+          || parent instanceof Swift5Parser.Extension_bodyContext) {
+        return false;
+      }
+      if (parent instanceof Swift5Parser.Function_declarationContext
+          || parent instanceof Swift5Parser.Initializer_declarationContext
+          || parent instanceof Swift5Parser.Deinitializer_declarationContext
+          || parent instanceof Swift5Parser.Subscript_declarationContext
+          || parent instanceof Swift5Parser.Getter_setter_blockContext
+          || parent instanceof Swift5Parser.WillSet_didSet_blockContext
+          || parent instanceof Swift5Parser.Closure_expressionContext) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
