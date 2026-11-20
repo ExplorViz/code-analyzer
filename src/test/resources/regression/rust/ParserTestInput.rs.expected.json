@@ -178,11 +178,13 @@
         "name": "flag",
         "type": "bool"
       }, {
-        "name": "mutb",
-        "type": "u8"
+        "name": "b",
+        "type": "u8",
+        "modifiers": ["mut"]
       }, {
-        "name": "muts",
-        "type": "i16"
+        "name": "s",
+        "type": "i16",
+        "modifiers": ["mut"]
       }, {
         "name": "c",
         "type": "char"
@@ -274,6 +276,89 @@
       "sloc": 3.0,
       "lineCount": 3.0
     }
+  }, {
+    "name": "Handle",
+    "type": "STRUCT",
+    "fields": [{
+      "name": "fd",
+      "type": "i32"
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "Handle",
+    "type": "STRUCT",
+    "fields": [{
+      "name": "h",
+      "type": "usize"
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
+  }, {
+    "name": "Wrapper",
+    "type": "STRUCT",
+    "implementedInterfaces": ["std::fmt::Display", "std::fmt::Debug"],
+    "fields": [{
+      "name": "value",
+      "type": "T"
+    }],
+    "functions": [{
+      "name": "new",
+      "returnType": "Self",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 202,
+      "endLine": 204
+    }, {
+      "name": "get",
+      "returnType": "T",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 206,
+      "endLine": 208
+    }, {
+      "name": "fmt",
+      "returnType": "std::fmt::Result",
+      "parameters": [{
+        "name": "f",
+        "type": "&mut std::fmt::Formatter<'_>"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 216,
+      "endLine": 218
+    }, {
+      "name": "fmt",
+      "returnType": "std::fmt::Result",
+      "parameters": [{
+        "name": "f",
+        "type": "&mut std::fmt::Formatter<'_>"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 222,
+      "endLine": 224
+    }],
+    "metrics": {
+      "sloc": 3.0,
+      "lineCount": 3.0
+    }
   }],
   "functions": [{
     "name": "package_private_static_method",
@@ -292,7 +377,7 @@
       "type": "&str"
     }, {
       "name": "out",
-      "type": "&mutdynWrite"
+      "type": "&mut dyn Write"
     }],
     "metrics": {
       "sloc": 4.0,
@@ -300,13 +385,36 @@
     },
     "startLine": 184,
     "endLine": 187
+  }, {
+    "name": "mark",
+    "returnType": "void",
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 229,
+    "endLine": 229
+  }, {
+    "name": "inner_helper",
+    "returnType": "void",
+    "parameters": [{
+      "name": "name",
+      "type": "&'static str",
+      "modifiers": ["ref"]
+    }],
+    "metrics": {
+      "sloc": 1.0,
+      "lineCount": 1.0
+    },
+    "startLine": 233,
+    "endLine": 233
   }],
   "metrics": {
-    "sloc": 149.0,
-    "cloc": 11.0,
-    "functionCount": 19.0,
-    "variableCount": 9.0,
+    "sloc": 184.0,
+    "cloc": 14.0,
+    "functionCount": 25.0,
+    "variableCount": 12.0,
     "importCount": 2.0,
-    "classCount": 7.0
+    "classCount": 10.0
   }
 }

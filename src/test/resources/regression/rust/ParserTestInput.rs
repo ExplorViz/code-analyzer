@@ -185,3 +185,50 @@ pub fn module_helper(path: &str, out: &mut dyn Write) -> io::Result<String> {
     out.write_all(path.as_bytes())?;
     Ok(path.to_string())
 }
+
+// Platform-specific declarations of the same type must both be kept.
+#[cfg(unix)]
+pub struct Handle {
+    fd: i32,
+}
+
+#[cfg(windows)]
+pub struct Handle {
+    h: usize,
+}
+
+// An impl on a generic type that precedes the type declaration.
+impl<T: Clone> Wrapper<T> {
+    pub fn new(value: T) -> Self {
+        Wrapper { value }
+    }
+
+    pub fn get(&self) -> T {
+        self.value.clone()
+    }
+}
+
+pub struct Wrapper<T> {
+    value: T,
+}
+
+impl<T> std::fmt::Display for Wrapper<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "wrapper")
+    }
+}
+
+impl<T> std::fmt::Debug for Wrapper<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Wrapper")
+    }
+}
+
+// An impl for a type declared elsewhere stays a file-level function.
+impl MarkerInterface for Vec<i32> {
+    fn mark(&self) {}
+}
+
+mod inner {
+    pub fn inner_helper(ref name: &'static str) {}
+}

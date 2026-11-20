@@ -166,5 +166,27 @@ namespace ExplorViz.Code.Analysis.Fixtures
     public static class ModuleHelper
     {
         public static void PackagePrivateStaticMethod() { }
+
+        // Overloads that differ only in a params array.
+        public static void Log() { }
+
+        public static void Log(params object[] args) { }
+
+        public static void Log(string format, params object[] args) { }
+    }
+
+    // Same name, different arity: both declarations must be kept.
+    public class Result
+    {
+        public int Code;
+
+        public int GetCode() { return Code; }
+    }
+
+    public class Result<T>
+    {
+        public T Value;
+
+        public T GetValue() { return Value; }
     }
 }

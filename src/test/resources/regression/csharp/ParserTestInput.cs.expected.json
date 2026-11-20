@@ -2,7 +2,7 @@
   "fileHash": "regression-hash",
   "filePath": "ParserTestInput.cs",
   "language": "CSHARP",
-  "packageName": "",
+  "packageName": "ExplorViz.Code.Analysis.Fixtures",
   "importNames": ["System", "System.Collections.Generic", "System.IO"],
   "classes": [{
     "name": "ParserTestInput",
@@ -101,6 +101,10 @@
       "parameters": [{
         "name": "name",
         "type": "string"
+      }, {
+        "name": "values",
+        "type": "int[]",
+        "modifiers": ["params"]
       }],
       "metrics": {
         "sloc": 5.0,
@@ -304,18 +308,100 @@
       },
       "startLine": 168,
       "endLine": 168
+    }, {
+      "name": "Log",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 171,
+      "endLine": 171
+    }, {
+      "name": "Log",
+      "returnType": "void",
+      "parameters": [{
+        "name": "args",
+        "type": "object[]",
+        "modifiers": ["params"]
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 173,
+      "endLine": 173
+    }, {
+      "name": "Log",
+      "returnType": "void",
+      "parameters": [{
+        "name": "format",
+        "type": "string"
+      }, {
+        "name": "args",
+        "type": "object[]",
+        "modifiers": ["params"]
+      }],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 175,
+      "endLine": 175
     }],
     "metrics": {
-      "sloc": 4.0,
-      "lineCount": 4.0
+      "sloc": 7.0,
+      "lineCount": 11.0
+    }
+  }, {
+    "name": "Result",
+    "type": "CLASS",
+    "fields": [{
+      "name": "Code",
+      "type": "int"
+    }],
+    "functions": [{
+      "name": "GetCode",
+      "returnType": "int",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 183,
+      "endLine": 183
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 6.0
+    }
+  }, {
+    "name": "Result",
+    "type": "CLASS",
+    "fields": [{
+      "name": "Value",
+      "type": "T"
+    }],
+    "functions": [{
+      "name": "GetValue",
+      "returnType": "T",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 190,
+      "endLine": 190
+    }],
+    "metrics": {
+      "sloc": 5.0,
+      "lineCount": 6.0
     }
   }],
   "metrics": {
-    "sloc": 123.0,
-    "cloc": 0.0,
-    "functionCount": 17.0,
-    "variableCount": 8.0,
+    "sloc": 136.0,
+    "cloc": 18.0,
+    "functionCount": 22.0,
+    "variableCount": 10.0,
     "importCount": 3.0,
-    "classCount": 10.0
+    "classCount": 12.0
   }
 }

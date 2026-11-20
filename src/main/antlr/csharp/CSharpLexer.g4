@@ -215,11 +215,12 @@ New_Line
 // ║     | Delimited_Comment
 // ║     ;
 // ║ 
-// [SKIP]
+// [HIDDEN] instead of [SKIP]: the parser ignores comments, but they stay in the token
+// stream so that the analyzer can count comment lines (CLOC).
 Comment
     : ( Single_Line_Comment
       | Delimited_Comment
-      ) -> skip
+      ) -> channel(HIDDEN)
     ;
 
 fragment Single_Line_Comment

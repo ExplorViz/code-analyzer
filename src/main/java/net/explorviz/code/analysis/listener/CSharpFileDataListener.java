@@ -1,7 +1,10 @@
 package net.explorviz.code.analysis.listener;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import net.explorviz.code.analysis.antlr.generated.csharp.CSharpLexer;
 import net.explorviz.code.analysis.antlr.generated.csharp.CSharpParser;
 import net.explorviz.code.analysis.antlr.generated.csharp.CSharpParserBaseListener;
 import net.explorviz.code.analysis.handler.CSharpFileDataHandler;
@@ -9,6 +12,7 @@ import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -401,59 +405,77 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
     return extractParameterTypes(declarator.parameter_list());
   }
 
+  /** Returns the parameter types, including a trailing {@code params} array, e.g. "object[]". */
   private List<String> extractParameterTypes(
       final CSharpParser.Parameter_listContext parameterList) {
     final List<String> paramTypes = new ArrayList<>();
-    if (parameterList == null || parameterList.fixed_parameters() == null) {
+    if (parameterList == null) {
       return paramTypes;
     }
 
-    for (final CSharpParser.Fixed_parameterContext param :
-        parameterList.fixed_parameters().fixed_parameter()) {
-      if (param.type_() != null) {
-        paramTypes.add(param.type_().getText());
+    if (parameterList.fixed_parameters() != null) {
+      for (final CSharpParser.Fixed_parameterContext param :
+          parameterList.fixed_parameters().fixed_parameter()) {
+        if (param.type_() != null) {
+          paramTypes.add(param.type_().getText());
+        }
       }
+    }
+    final CSharpParser.Parameter_arrayContext paramArray = parameterList.parameter_array();
+    if (paramArray != null && paramArray.array_type() != null) {
+      paramTypes.add("params " + paramArray.array_type().getText());
     }
     return paramTypes;
   }
 
   private void addParameters(
       final MethodDataHandler methodData, final CSharpParser.Parameter_listContext parameterList) {
-    if (parameterList == null || parameterList.fixed_parameters() == null) {
+    if (parameterList == null) {
       return;
     }
 
-    for (final CSharpParser.Fixed_parameterContext param :
-        parameterList.fixed_parameters().fixed_parameter()) {
-      final String paramType = param.type_() != null ? param.type_().getText() : "unknown";
-      String paramName = "";
-      if (param.identifier() != null) {
-        paramName = param.identifier().getText();
+    if (parameterList.fixed_parameters() != null) {
+      for (final CSharpParser.Fixed_parameterContext param :
+          parameterList.fixed_parameters().fixed_parameter()) {
+        final String paramType = param.type_() != null ? param.type_().getText() : "unknown";
+        String paramName = "";
+        if (param.identifier() != null) {
+          paramName = param.identifier().getText();
+        }
+        methodData.addParameter(paramName, paramType, new ArrayList<>());
       }
-      methodData.addParameter(paramName, paramType, new ArrayList<>());
+    }
+
+    final CSharpParser.Parameter_arrayContext paramArray = parameterList.parameter_array();
+    if (paramArray != null) {
+      final String paramType =
+          paramArray.array_type() != null ? paramArray.array_type().getText() : "unknown";
+      final String paramName =
+          paramArray.identifier() != null ? paramArray.identifier().getText() : "";
+      methodData.addParameter(paramName, paramType, List.of("params"));
     }
   }
 
+  /**
+   * Counts the lines that contain a comment. Comments are lexed onto the hidden channel, so the
+   * parser does not see them but they remain in the token stream.
+   */
   private int getCloc() {
     if (tokens == null) {
       return 0;
     }
 
-    int commentLines = 0;
+    final Set<Integer> commentLines = new HashSet<>();
     for (int i = 0; i < tokens.size(); i++) {
-      final var token = tokens.get(i);
-      if (token.getChannel() != 0) {
-        final String tokenText = token.getText();
-        if (tokenText != null) {
-          if (tokenText.trim().startsWith("//")) {
-            commentLines++;
-          } else if (tokenText.trim().startsWith("/*")) {
-            final long newlines = tokenText.chars().filter(ch -> ch == '\n').count();
-            commentLines += (int) newlines + 1;
-          }
-        }
+      final Token token = tokens.get(i);
+      if (token.getType() != CSharpLexer.Comment || token.getText() == null) {
+        continue;
+      }
+      final int newlines = (int) token.getText().chars().filter(ch -> ch == '\n').count();
+      for (int line = token.getLine(); line <= token.getLine() + newlines; line++) {
+        commentLines.add(line);
       }
     }
-    return commentLines;
+    return commentLines.size();
   }
 }

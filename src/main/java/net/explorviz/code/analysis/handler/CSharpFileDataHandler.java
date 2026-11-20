@@ -12,15 +12,27 @@ import net.explorviz.code.proto.Language;
 public class CSharpFileDataHandler extends AbstractFileDataHandler
     implements ProtoBufConvertable<FileData> {
 
+  /** Keys into {@link #classDataMap} of the enclosing types, innermost on top. */
   private final Stack<String> classStack;
+
+  /** Fully qualified names of the enclosing types, parallel to {@link #classStack}. */
+  private final Stack<String> classFqnStack;
+
   private final Stack<String> namespaceStack;
   private final Map<String, ClassDataHandler> classDataMap;
   private final List<MethodDataHandler> globalFunctionHandlers;
   private final List<String> rootClasses;
 
+  /** Namespace of the file's first declaration, see {@link #noteDeclaration()}. */
+  private String fileNamespace;
+
+  /** First namespace declared in the file, the fallback if it declares nothing. */
+  private String firstNamespace;
+
   public CSharpFileDataHandler(final String fileName) {
     super(fileName);
     this.classStack = new Stack<>();
+    this.classFqnStack = new Stack<>();
     this.namespaceStack = new Stack<>();
     this.classDataMap = new HashMap<>();
     this.globalFunctionHandlers = new ArrayList<>();
@@ -29,14 +41,44 @@ public class CSharpFileDataHandler extends AbstractFileDataHandler
 
   public void enterNamespace(final String name) {
     namespaceStack.push(name);
+    if (firstNamespace == null) {
+      firstNamespace = getCurrentNamespace();
+    }
     setPackageName(getCurrentNamespace());
   }
 
+  /**
+   * Leaves the innermost namespace. While inside a namespace the package name is that namespace;
+   * after the last one is left it becomes the file's namespace instead of the empty string.
+   */
   public void leaveNamespace() {
     if (!namespaceStack.isEmpty()) {
       namespaceStack.pop();
     }
-    setPackageName(getCurrentNamespace());
+    final String packageName =
+        namespaceStack.isEmpty() ? getFileNamespace() : getCurrentNamespace();
+    if (packageName.isEmpty()) {
+      builder.clearPackageName();
+    } else {
+      setPackageName(packageName);
+    }
+  }
+
+  /**
+   * Returns the namespace of the file: the namespace of its first type or function declaration, or,
+   * if it has none, the first namespace it declares.
+   */
+  public String getFileNamespace() {
+    if (fileNamespace != null) {
+      return fileNamespace;
+    }
+    return firstNamespace != null ? firstNamespace : "";
+  }
+
+  private void noteDeclaration() {
+    if (fileNamespace == null) {
+      fileNamespace = getCurrentNamespace();
+    }
   }
 
   public String getCurrentNamespace() {
@@ -46,37 +88,57 @@ public class CSharpFileDataHandler extends AbstractFileDataHandler
     return String.join(".", namespaceStack);
   }
 
+  /**
+   * Enters a type declaration. A type whose fqn is already registered, e.g. {@code Result} and
+   * {@code Result<T>}, is stored under a unique key so that neither declaration is lost.
+   *
+   * @param name the simple name of the type
+   * @param fqn the fully qualified name of the type
+   */
   public void enterClass(final String name, final String fqn) {
+    noteDeclaration();
     final ClassDataHandler handler = new ClassDataHandler();
     handler.setName(name);
-    this.classDataMap.put(fqn, handler);
+    final String key = uniqueClassKey(fqn);
+    this.classDataMap.put(key, handler);
 
     if (this.classStack.isEmpty()) {
-      this.rootClasses.add(fqn);
+      this.rootClasses.add(key);
     } else {
-      final String parentClassFqn = this.classStack.peek();
-      final ClassDataHandler parent = this.classDataMap.get(parentClassFqn);
+      final ClassDataHandler parent = this.classDataMap.get(this.classStack.peek());
       if (parent != null) {
-        parent.addInnerClass(fqn, handler);
+        parent.addInnerClass(key, handler);
       }
     }
 
-    this.classStack.push(fqn);
+    this.classStack.push(key);
+    this.classFqnStack.push(fqn);
+  }
+
+  private String uniqueClassKey(final String fqn) {
+    if (!classDataMap.containsKey(fqn)) {
+      return fqn;
+    }
+    int suffix = 2;
+    while (classDataMap.containsKey(fqn + "#" + suffix)) {
+      suffix++;
+    }
+    return fqn + "#" + suffix;
   }
 
   public void leaveClass() {
     if (!classStack.isEmpty()) {
       this.classStack.pop();
+      this.classFqnStack.pop();
     }
   }
 
   public String getCurrentClassFqnOrNull() {
-    return classStack.isEmpty() ? null : classStack.peek();
+    return classFqnStack.isEmpty() ? null : classFqnStack.peek();
   }
 
   public ClassDataHandler getCurrentClassData() {
-    final String fqn = getCurrentClassFqnOrNull();
-    return fqn != null ? classDataMap.get(fqn) : null;
+    return classStack.isEmpty() ? null : classDataMap.get(classStack.peek());
   }
 
   @Override
@@ -89,6 +151,7 @@ public class CSharpFileDataHandler extends AbstractFileDataHandler
   }
 
   public MethodDataHandler addGlobalFunction(final String name, final String returnType) {
+    noteDeclaration();
     final MethodDataHandler handler = new MethodDataHandler(name, returnType);
     globalFunctionHandlers.add(handler);
     return handler;
@@ -120,10 +183,6 @@ public class CSharpFileDataHandler extends AbstractFileDataHandler
     builder.clearFunctions();
     for (final MethodDataHandler handler : globalFunctionHandlers) {
       builder.addFunctions(handler.getProtoBufObject());
-    }
-
-    if (builder.getPackageName().isEmpty() && !namespaceStack.isEmpty()) {
-      builder.setPackageName(getCurrentNamespace());
     }
 
     builder.setLanguage(Language.CSHARP);
