@@ -13,7 +13,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.sse.Sse;
 import jakarta.ws.rs.sse.SseEventSink;
 import java.io.IOException;
-import net.explorviz.code.analysis.exceptions.AnalysisCancelledException;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import net.explorviz.code.analysis.export.DataExporter;
 import net.explorviz.code.analysis.export.GrpcExporter;
 import net.explorviz.code.analysis.export.JsonExporter;
@@ -69,10 +70,9 @@ public class AnalysisResource {
               : (request.getRepoRemoteUrl() != null ? request.getRepoRemoteUrl() : "unknown");
       LOGGER.info("📥 Received analysis request for repository: {}", repoInfo);
 
-      final String landscapeToken = request.getLandscapeToken();
-      analysisStatusService.markPending(landscapeToken);
-
+      // Status is tracked under the token of the config, which falls back to a default token.
       final AnalysisConfig config = request.toConfig();
+      final String landscapeToken = config.landscapeToken();
 
       final DataExporter exporter;
       if (request.isSendToRemote()) {
@@ -82,31 +82,17 @@ public class AnalysisResource {
             new JsonExporter(config.getRepositoryName(), config.primaryApplicationNameForExport());
       }
 
-      // Submit to queue for async processing
-      analysisService
-          .analyzeAndSendRepoAsync(config, exporter)
-          .whenComplete(
-              (result, error) -> {
-                if (analysisStatusService
-                    .getStatus(landscapeToken)
-                    .map(analysisStatusService::isTerminalStatus)
-                    .orElse(false)) {
-                  return;
-                }
-                if (error != null) {
-                  if (isCancelledError(error)) {
-                    analysisStatusService.markCancelled(landscapeToken);
-                    LOGGER.info("🛑 Async analysis cancelled for {}", repoInfo);
-                  } else {
-                    analysisStatusService.markFailed(landscapeToken);
-                    LOGGER.error(
-                        "❌ Async analysis failed for {}: {}", repoInfo, error.getMessage());
-                  }
-                } else {
-                  analysisStatusService.markFinished(landscapeToken);
-                  LOGGER.info("✅ Async analysis completed for {}", repoInfo);
-                }
-              });
+      // Queuing marks the analysis as pending; its final status is set by the queue.
+      final Optional<CompletableFuture<Void>> job =
+          analysisService.analyzeAndSendRepoAsync(config, exporter);
+      if (job.isEmpty()) {
+        return Response.status(Response.Status.CONFLICT)
+            .entity(
+                "An analysis for landscapeToken="
+                    + landscapeToken
+                    + " is already queued or running. Wait for it to finish or cancel it first.")
+            .build();
+      }
 
       LOGGER.info("✅ Analysis request queued for repository: {}", repoInfo);
       return Response.status(Response.Status.ACCEPTED)
@@ -139,17 +125,6 @@ public class AnalysisResource {
                       + landscapeToken)
               .build();
     };
-  }
-
-  private boolean isCancelledError(final Throwable error) {
-    Throwable current = error;
-    while (current != null) {
-      if (current instanceof AnalysisCancelledException) {
-        return true;
-      }
-      current = current.getCause();
-    }
-    return false;
   }
 
   @GET
