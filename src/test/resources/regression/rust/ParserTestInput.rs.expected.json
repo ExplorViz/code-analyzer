@@ -7,15 +7,6 @@
     "name": "AbstractBase",
     "type": "INTERFACE",
     "functions": [{
-      "name": "abstract_hook",
-      "returnType": "i32",
-      "metrics": {
-        "sloc": 1.0,
-        "lineCount": 1.0
-      },
-      "startLine": 16,
-      "endLine": 16
-    }, {
       "name": "get_base_value",
       "returnType": "i32",
       "metrics": {
@@ -24,6 +15,15 @@
       },
       "startLine": 15,
       "endLine": 15
+    }, {
+      "name": "abstract_hook",
+      "returnType": "i32",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 16,
+      "endLine": 16
     }],
     "metrics": {
       "sloc": 4.0,
@@ -33,15 +33,6 @@
     "name": "MarkerInterface",
     "type": "INTERFACE",
     "functions": [{
-      "name": "default_mark",
-      "returnType": "void",
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 22,
-      "endLine": 24
-    }, {
       "name": "mark",
       "returnType": "void",
       "metrics": {
@@ -50,6 +41,15 @@
       },
       "startLine": 21,
       "endLine": 21
+    }, {
+      "name": "default_mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 22,
+      "endLine": 24
     }],
     "metrics": {
       "sloc": 6.0,
@@ -141,19 +141,6 @@
       "startLine": 78,
       "endLine": 85
     }, {
-      "name": "generic_method",
-      "returnType": "T",
-      "parameters": [{
-        "name": "value",
-        "type": "T"
-      }],
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 96,
-      "endLine": 98
-    }, {
       "name": "run",
       "returnType": "void",
       "metrics": {
@@ -172,23 +159,18 @@
       "startLine": 91,
       "endLine": 94
     }, {
-      "name": "abstract_hook",
-      "returnType": "i32",
+      "name": "generic_method",
+      "returnType": "T",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
       "metrics": {
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 159,
-      "endLine": 161
-    }, {
-      "name": "mark",
-      "returnType": "void",
-      "metrics": {
-        "sloc": 1.0,
-        "lineCount": 1.0
-      },
-      "startLine": 165,
-      "endLine": 165
+      "startLine": 96,
+      "endLine": 98
     }, {
       "name": "do_work",
       "returnType": "bool",
@@ -235,6 +217,24 @@
       },
       "startLine": 155,
       "endLine": 157
+    }, {
+      "name": "abstract_hook",
+      "returnType": "i32",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 159,
+      "endLine": 161
+    }, {
+      "name": "mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 165,
+      "endLine": 165
     }],
     "metrics": {
       "sloc": 6.0,

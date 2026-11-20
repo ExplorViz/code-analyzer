@@ -49,43 +49,6 @@
         "lineCount": 5.0
       }
     }, {
-      "name": "InnerClass",
-      "type": "CLASS",
-      "modifiers": ["private"],
-      "functions": [{
-        "name": "innerMethod",
-        "returnType": "void",
-        "metrics": {
-          "sloc": 3.0,
-          "lineCount": 4.0
-        },
-        "startLine": 165,
-        "endLine": 168
-      }],
-      "metrics": {
-        "sloc": 5.0,
-        "lineCount": 6.0
-      }
-    }, {
-      "name": "NestedAnnotation",
-      "type": "INTERFACE",
-      "modifiers": ["annotation", "public"],
-      "functions": [{
-        "name": "value",
-        "returnType": "Object",
-        "startLine": 197,
-        "endLine": 197
-      }, {
-        "name": "priority",
-        "returnType": "Object",
-        "startLine": 199,
-        "endLine": 199
-      }],
-      "metrics": {
-        "sloc": 4.0,
-        "lineCount": 5.0
-      }
-    }, {
       "name": "StaticNested",
       "type": "CLASS",
       "modifiers": ["public", "static", "final"],
@@ -122,6 +85,24 @@
       "metrics": {
         "sloc": 9.0,
         "lineCount": 11.0
+      }
+    }, {
+      "name": "InnerClass",
+      "type": "CLASS",
+      "modifiers": ["private"],
+      "functions": [{
+        "name": "innerMethod",
+        "returnType": "void",
+        "metrics": {
+          "sloc": 3.0,
+          "lineCount": 4.0
+        },
+        "startLine": 165,
+        "endLine": 168
+      }],
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 6.0
       }
     }, {
       "name": "NestedInterface",
@@ -181,21 +162,36 @@
         "sloc": 8.0,
         "lineCount": 9.0
       }
-    }],
-    "functions": [{
-      "name": "genericMethod",
-      "returnType": "net.explorviz.code.analysis.fixtures.T",
-      "parameters": [{
+    }, {
+      "name": "NestedAnnotation",
+      "type": "INTERFACE",
+      "modifiers": ["annotation", "public"],
+      "functions": [{
         "name": "value",
-        "type": "net.explorviz.code.analysis.fixtures.T",
-        "modifiers": ["final"]
+        "returnType": "Object",
+        "startLine": 197,
+        "endLine": 197
+      }, {
+        "name": "priority",
+        "returnType": "Object",
+        "startLine": 199,
+        "endLine": 199
       }],
       "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
+        "sloc": 4.0,
+        "lineCount": 5.0
+      }
+    }],
+    "functions": [{
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "modifiers": ["public"],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
       },
-      "startLine": 71,
-      "endLine": 73
+      "startLine": 48,
+      "endLine": 51
     }, {
       "name": "ParserTestInput",
       "isConstructor": true,
@@ -214,6 +210,60 @@
       },
       "startLine": 56,
       "endLine": 59
+    }, {
+      "name": "run",
+      "returnType": "void",
+      "modifiers": ["public", "synchronized"],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 62,
+      "endLine": 64
+    }, {
+      "name": "call",
+      "returnType": "java.lang.String",
+      "modifiers": ["public"],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 67,
+      "endLine": 69
+    }, {
+      "name": "genericMethod",
+      "returnType": "net.explorviz.code.analysis.fixtures.T",
+      "parameters": [{
+        "name": "value",
+        "type": "net.explorviz.code.analysis.fixtures.T",
+        "modifiers": ["final"]
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 71,
+      "endLine": 73
+    }, {
+      "name": "nativeMethod",
+      "returnType": "void",
+      "modifiers": ["private", "static", "native"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 75,
+      "endLine": 75
+    }, {
+      "name": "packagePrivateStaticMethod",
+      "returnType": "void",
+      "modifiers": ["static"],
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 3.0
+      },
+      "startLine": 77,
+      "endLine": 79
     }, {
       "name": "doWork",
       "returnType": "boolean",
@@ -253,26 +303,6 @@
       "startLine": 81,
       "endLine": 143
     }, {
-      "name": "packagePrivateStaticMethod",
-      "returnType": "void",
-      "modifiers": ["static"],
-      "metrics": {
-        "sloc": 2.0,
-        "lineCount": 3.0
-      },
-      "startLine": 77,
-      "endLine": 79
-    }, {
-      "name": "run",
-      "returnType": "void",
-      "modifiers": ["public", "synchronized"],
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 62,
-      "endLine": 64
-    }, {
       "name": "abstractHook",
       "returnType": "int",
       "modifiers": ["public"],
@@ -282,36 +312,6 @@
       },
       "startLine": 146,
       "endLine": 148
-    }, {
-      "name": "ParserTestInput",
-      "isConstructor": true,
-      "modifiers": ["public"],
-      "metrics": {
-        "sloc": 4.0,
-        "lineCount": 4.0
-      },
-      "startLine": 48,
-      "endLine": 51
-    }, {
-      "name": "nativeMethod",
-      "returnType": "void",
-      "modifiers": ["private", "static", "native"],
-      "metrics": {
-        "sloc": 1.0,
-        "lineCount": 1.0
-      },
-      "startLine": 75,
-      "endLine": 75
-    }, {
-      "name": "call",
-      "returnType": "java.lang.String",
-      "modifiers": ["public"],
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 67,
-      "endLine": 69
     }],
     "metrics": {
       "sloc": 124.0,
@@ -370,15 +370,6 @@
     "type": "INTERFACE",
     "implementedInterfaces": ["java.io.Closeable"],
     "functions": [{
-      "name": "noop",
-      "returnType": "net.explorviz.code.analysis.fixtures.MarkerInterface",
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 230,
-      "endLine": 232
-    }, {
       "name": "mark",
       "returnType": "void",
       "metrics": {
@@ -397,6 +388,15 @@
       },
       "startLine": 226,
       "endLine": 228
+    }, {
+      "name": "noop",
+      "returnType": "net.explorviz.code.analysis.fixtures.MarkerInterface",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 230,
+      "endLine": 232
     }],
     "metrics": {
       "sloc": 9.0,
@@ -424,6 +424,15 @@
       "modifiers": ["private", "final"]
     }],
     "functions": [{
+      "name": "PointRecord",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 248,
+      "endLine": 252
+    }, {
       "name": "sum",
       "returnType": "int",
       "modifiers": ["public"],
@@ -433,15 +442,6 @@
       },
       "startLine": 254,
       "endLine": 256
-    }, {
-      "name": "PointRecord",
-      "isConstructor": true,
-      "metrics": {
-        "sloc": 5.0,
-        "lineCount": 5.0
-      },
-      "startLine": 248,
-      "endLine": 252
     }],
     "metrics": {
       "sloc": 10.0,

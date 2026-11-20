@@ -20,24 +20,6 @@
       "type": "Map<String,List<Int>>"
     }],
     "innerClasses": [{
-      "name": "NestedEnum",
-      "type": "ENUM",
-      "functions": [{
-        "name": "isAlpha",
-        "returnType": "Boolean",
-        "metrics": {
-          "sloc": 1.0,
-          "lineCount": 1.0
-        },
-        "startLine": 140,
-        "endLine": 140
-      }],
-      "enumValues": ["ALPHA", "BETA", "GAMMA"],
-      "metrics": {
-        "sloc": 6.0,
-        "lineCount": 7.0
-      }
-    }, {
       "name": "Companion",
       "type": "CLASS",
       "fields": [{
@@ -62,24 +44,6 @@
         "lineCount": 10.0
       }
     }, {
-      "name": "NestedInterface",
-      "type": "INTERFACE",
-      "implementedInterfaces": ["Serializable"],
-      "functions": [{
-        "name": "abstractInterfaceMethod",
-        "returnType": "Unit",
-        "metrics": {
-          "sloc": 1.0,
-          "lineCount": 1.0
-        },
-        "startLine": 131,
-        "endLine": 131
-      }],
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      }
-    }, {
       "name": "StaticNested",
       "type": "CLASS",
       "fields": [{
@@ -100,8 +64,53 @@
         "sloc": 3.0,
         "lineCount": 3.0
       }
+    }, {
+      "name": "NestedInterface",
+      "type": "INTERFACE",
+      "implementedInterfaces": ["Serializable"],
+      "functions": [{
+        "name": "abstractInterfaceMethod",
+        "returnType": "Unit",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 131,
+        "endLine": 131
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      }
+    }, {
+      "name": "NestedEnum",
+      "type": "ENUM",
+      "functions": [{
+        "name": "isAlpha",
+        "returnType": "Boolean",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 140,
+        "endLine": 140
+      }],
+      "enumValues": ["ALPHA", "BETA", "GAMMA"],
+      "metrics": {
+        "sloc": 6.0,
+        "lineCount": 7.0
+      }
     }],
     "functions": [{
+      "name": "ParserTestInput",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 47,
+      "endLine": 49
+    }, {
       "name": "ParserTestInput",
       "isConstructor": true,
       "parameters": [{
@@ -117,15 +126,6 @@
       },
       "startLine": 52,
       "endLine": 54
-    }, {
-      "name": "ParserTestInput",
-      "isConstructor": true,
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 47,
-      "endLine": 49
     }, {
       "name": "run",
       "returnType": "Unit",
@@ -145,14 +145,18 @@
       "startLine": 61,
       "endLine": 63
     }, {
-      "name": "abstractHook",
-      "returnType": "Int",
+      "name": "genericMethod",
+      "returnType": "T",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
       "metrics": {
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 120,
-      "endLine": 122
+      "startLine": 65,
+      "endLine": 67
     }, {
       "name": "doWork",
       "returnType": "Boolean",
@@ -191,18 +195,14 @@
       "startLine": 69,
       "endLine": 118
     }, {
-      "name": "genericMethod",
-      "returnType": "T",
-      "parameters": [{
-        "name": "value",
-        "type": "T"
-      }],
+      "name": "abstractHook",
+      "returnType": "Int",
       "metrics": {
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 65,
-      "endLine": 67
+      "startLine": 120,
+      "endLine": 122
     }],
     "metrics": {
       "sloc": 91.0,
@@ -216,15 +216,6 @@
       "type": "Int"
     }],
     "functions": [{
-      "name": "abstractHook",
-      "returnType": "Int",
-      "metrics": {
-        "sloc": 1.0,
-        "lineCount": 1.0
-      },
-      "startLine": 150,
-      "endLine": 150
-    }, {
       "name": "getBaseValue",
       "returnType": "Int",
       "metrics": {
@@ -233,6 +224,15 @@
       },
       "startLine": 148,
       "endLine": 148
+    }, {
+      "name": "abstractHook",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 150,
+      "endLine": 150
     }],
     "metrics": {
       "sloc": 4.0,

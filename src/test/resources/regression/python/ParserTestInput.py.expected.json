@@ -15,15 +15,6 @@
       "startLine": 27,
       "endLine": 31
     }, {
-      "name": "abstract_hook",
-      "returnType": "None",
-      "metrics": {
-        "sloc": 2.0,
-        "lineCount": 5.0
-      },
-      "startLine": 35,
-      "endLine": 39
-    }, {
       "name": "get_base_value",
       "returnType": "None",
       "metrics": {
@@ -32,6 +23,15 @@
       },
       "startLine": 31,
       "endLine": 35
+    }, {
+      "name": "abstract_hook",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 5.0
+      },
+      "startLine": 35,
+      "endLine": 39
     }],
     "metrics": {
       "sloc": 9.0,
@@ -40,15 +40,6 @@
   }, {
     "name": "MarkerMixin",
     "functions": [{
-      "name": "default_mark",
-      "returnType": "None",
-      "metrics": {
-        "sloc": 2.0,
-        "lineCount": 5.0
-      },
-      "startLine": 45,
-      "endLine": 49
-    }, {
       "name": "mark",
       "returnType": "None",
       "metrics": {
@@ -57,6 +48,15 @@
       },
       "startLine": 42,
       "endLine": 45
+    }, {
+      "name": "default_mark",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 5.0
+      },
+      "startLine": 45,
+      "endLine": 49
     }],
     "metrics": {
       "sloc": 6.0,
@@ -66,6 +66,22 @@
     "name": "ParserTestInput",
     "superclasses": ["AbstractBase.py::AbstractBase", "MarkerMixin.py::MarkerMixin"],
     "innerClasses": [{
+      "name": "LocalHelper",
+      "functions": [{
+        "name": "help",
+        "returnType": "None",
+        "metrics": {
+          "sloc": 2.0,
+          "lineCount": 5.0
+        },
+        "startLine": 120,
+        "endLine": 124
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 6.0
+      }
+    }, {
       "name": "StaticNested",
       "functions": [{
         "name": "__init__",
@@ -91,38 +107,6 @@
         "lineCount": 10.0
       }
     }, {
-      "name": "NestedEnum",
-      "functions": [{
-        "name": "is_alpha",
-        "returnType": "None",
-        "metrics": {
-          "sloc": 2.0,
-          "lineCount": 5.0
-        },
-        "startLine": 154,
-        "endLine": 158
-      }],
-      "metrics": {
-        "sloc": 8.0,
-        "lineCount": 13.0
-      }
-    }, {
-      "name": "LocalHelper",
-      "functions": [{
-        "name": "help",
-        "returnType": "None",
-        "metrics": {
-          "sloc": 2.0,
-          "lineCount": 5.0
-        },
-        "startLine": 120,
-        "endLine": 124
-      }],
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 6.0
-      }
-    }, {
       "name": "InnerClass",
       "functions": [{
         "name": "inner_method",
@@ -138,16 +122,32 @@
         "sloc": 4.0,
         "lineCount": 8.0
       }
+    }, {
+      "name": "NestedEnum",
+      "functions": [{
+        "name": "is_alpha",
+        "returnType": "None",
+        "metrics": {
+          "sloc": 2.0,
+          "lineCount": 5.0
+        },
+        "startLine": 154,
+        "endLine": 158
+      }],
+      "metrics": {
+        "sloc": 8.0,
+        "lineCount": 13.0
+      }
     }],
     "functions": [{
-      "name": "do_work",
+      "name": "__init__",
       "returnType": "None",
       "metrics": {
-        "sloc": 44.0,
-        "lineCount": 52.0
+        "sloc": 5.0,
+        "lineCount": 7.0
       },
-      "startLine": 76,
-      "endLine": 127
+      "startLine": 59,
+      "endLine": 65
     }, {
       "name": "run",
       "returnType": "None",
@@ -158,15 +158,6 @@
       "startLine": 65,
       "endLine": 69
     }, {
-      "name": "__init__",
-      "returnType": "None",
-      "metrics": {
-        "sloc": 5.0,
-        "lineCount": 7.0
-      },
-      "startLine": 59,
-      "endLine": 65
-    }, {
       "name": "call",
       "returnType": "None",
       "metrics": {
@@ -176,15 +167,6 @@
       "startLine": 69,
       "endLine": 72
     }, {
-      "name": "abstract_hook",
-      "returnType": "None",
-      "metrics": {
-        "sloc": 2.0,
-        "lineCount": 4.0
-      },
-      "startLine": 127,
-      "endLine": 130
-    }, {
       "name": "generic_method",
       "returnType": "None",
       "metrics": {
@@ -193,6 +175,24 @@
       },
       "startLine": 72,
       "endLine": 76
+    }, {
+      "name": "do_work",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 44.0,
+        "lineCount": 52.0
+      },
+      "startLine": 76,
+      "endLine": 127
+    }, {
+      "name": "abstract_hook",
+      "returnType": "None",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 4.0
+      },
+      "startLine": 127,
+      "endLine": 130
     }],
     "metrics": {
       "sloc": 79.0,

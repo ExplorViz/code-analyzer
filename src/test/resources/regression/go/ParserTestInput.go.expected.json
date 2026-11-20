@@ -69,6 +69,15 @@
       "type": "[2]float64"
     }],
     "functions": [{
+      "name": "Run",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 89,
+      "endLine": 91
+    }, {
       "name": "Call",
       "returnType": "string",
       "metrics": {
@@ -90,15 +99,6 @@
       },
       "startLine": 98,
       "endLine": 100
-    }, {
-      "name": "Run",
-      "returnType": "void",
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 89,
-      "endLine": 91
     }, {
       "name": "DoWork",
       "returnType": "bool",
@@ -137,6 +137,15 @@
       "startLine": 102,
       "endLine": 133
     }, {
+      "name": "AbstractHook",
+      "returnType": "int",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 135,
+      "endLine": 137
+    }, {
       "name": "Mark",
       "returnType": "void",
       "metrics": {
@@ -154,15 +163,6 @@
       },
       "startLine": 141,
       "endLine": 143
-    }, {
-      "name": "AbstractHook",
-      "returnType": "int",
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 135,
-      "endLine": 137
     }],
     "metrics": {
       "sloc": 6.0,

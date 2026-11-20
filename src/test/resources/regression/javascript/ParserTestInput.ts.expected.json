@@ -13,15 +13,6 @@
       "modifiers": ["readonly", "private"]
     }],
     "functions": [{
-      "name": "abstractHook",
-      "returnType": "number",
-      "metrics": {
-        "sloc": 1.0,
-        "lineCount": 1.0
-      },
-      "startLine": 32,
-      "endLine": 32
-    }, {
       "name": "constructor",
       "isConstructor": true,
       "parameters": [{
@@ -43,6 +34,15 @@
       },
       "startLine": 28,
       "endLine": 30
+    }, {
+      "name": "abstractHook",
+      "returnType": "number",
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 32,
+      "endLine": 32
     }],
     "metrics": {
       "sloc": 10.0,
@@ -108,6 +108,37 @@
       "type": "string"
     }],
     "functions": [{
+      "name": "constructor",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 89,
+      "endLine": 92
+    }, {
+      "name": "withName",
+      "returnType": "ParserTestInput",
+      "parameters": [{
+        "name": "rest",
+        "type": "number[]"
+      }],
+      "metrics": {
+        "sloc": 6.0,
+        "lineCount": 6.0
+      },
+      "startLine": 94,
+      "endLine": 99
+    }, {
+      "name": "run",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 101,
+      "endLine": 105
+    }, {
       "name": "call",
       "returnType": "string",
       "metrics": {
@@ -116,6 +147,19 @@
       },
       "startLine": 107,
       "endLine": 109
+    }, {
+      "name": "genericMethod",
+      "returnType": "T",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 111,
+      "endLine": 113
     }, {
       "name": "doWork",
       "returnType": "boolean",
@@ -154,6 +198,15 @@
       "startLine": 115,
       "endLine": 165
     }, {
+      "name": "abstractHook",
+      "returnType": "number",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 167,
+      "endLine": 169
+    }, {
       "name": "mark",
       "returnType": "void",
       "metrics": {
@@ -171,59 +224,6 @@
       },
       "startLine": 173,
       "endLine": 175
-    }, {
-      "name": "withName",
-      "returnType": "ParserTestInput",
-      "parameters": [{
-        "name": "rest",
-        "type": "number[]"
-      }],
-      "metrics": {
-        "sloc": 6.0,
-        "lineCount": 6.0
-      },
-      "startLine": 94,
-      "endLine": 99
-    }, {
-      "name": "abstractHook",
-      "returnType": "number",
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 167,
-      "endLine": 169
-    }, {
-      "name": "genericMethod",
-      "returnType": "T",
-      "parameters": [{
-        "name": "value",
-        "type": "T"
-      }],
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 111,
-      "endLine": 113
-    }, {
-      "name": "run",
-      "returnType": "void",
-      "metrics": {
-        "sloc": 5.0,
-        "lineCount": 5.0
-      },
-      "startLine": 101,
-      "endLine": 105
-    }, {
-      "name": "constructor",
-      "isConstructor": true,
-      "metrics": {
-        "sloc": 4.0,
-        "lineCount": 4.0
-      },
-      "startLine": 89,
-      "endLine": 92
     }],
     "metrics": {
       "sloc": 90.0,

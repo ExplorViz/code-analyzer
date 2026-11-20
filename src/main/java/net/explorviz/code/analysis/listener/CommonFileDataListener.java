@@ -123,16 +123,20 @@ public interface CommonFileDataListener {
     }
     baseFqn = baseFqn.replace("[]", "");
 
-    // Convert fqn to path
+    final String currentDirectory =
+        currentFilePath != null && currentFilePath.contains("/")
+            ? currentFilePath.substring(0, currentFilePath.lastIndexOf('/') + 1)
+            : "";
+
+    // An unqualified name is (best guess) declared next to the current file.
     final int lastDot = baseFqn.lastIndexOf('.');
-    final String fqnPath;
-    if (lastDot != -1) {
-      fqnPath = baseFqn.replace('.', '/') + fileExtension;
-    } else {
-      fqnPath = baseFqn + fileExtension;
+    if (lastDot == -1) {
+      return currentDirectory + baseFqn + fileExtension;
     }
 
-    // Use current file path to best guess path prefix of given class
+    // A qualified name is resolved relative to the source root, i.e. the part of the current file
+    // path before the directories of the current package.
+    final String fqnPath = baseFqn.replace('.', '/') + fileExtension;
     String pathPrefix = "";
     if (currentFilePath != null && currentPackage != null && !currentPackage.isEmpty()) {
       final String packagePath = currentPackage.replace('.', '/');
@@ -140,8 +144,8 @@ public interface CommonFileDataListener {
       if (packageIdx != -1) {
         pathPrefix = currentFilePath.substring(0, packageIdx);
       }
-    } else if (currentFilePath != null && currentFilePath.contains("/")) {
-      pathPrefix = currentFilePath.substring(0, currentFilePath.lastIndexOf("/") + 1);
+    } else {
+      pathPrefix = currentDirectory;
     }
 
     // Return (best guess) path for given fqn

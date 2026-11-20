@@ -1,6 +1,6 @@
 package net.explorviz.code.analysis.handler;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.explorviz.code.proto.ClassData;
@@ -18,8 +18,9 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
   /** Creates a blank ClassData object. */
   public ClassDataHandler() {
     this.builder = ClassData.newBuilder();
-    this.methodDataMap = new HashMap<>();
-    this.innerClassDataMap = new HashMap<>();
+    // Insertion order keeps the output in source order.
+    this.methodDataMap = new LinkedHashMap<>();
+    this.innerClassDataMap = new LinkedHashMap<>();
   }
 
   public void setName(final String name) {
@@ -27,16 +28,45 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
   }
 
   /**
-   * Adds a methodData object.
+   * Adds a methodData object. A method whose key is already taken, e.g. an overload that the key
+   * does not distinguish, is added as well instead of replacing the existing one.
    *
    * @param name the method's simple name
-   * @param fqn the method's fully qualified name
+   * @param fqn the method's fully qualified name, used as key
    * @param returnType the return type of the method
    * @return the created methodData object
    */
   public MethodDataHandler addMethod(final String name, final String fqn, final String returnType) {
-    this.methodDataMap.put(fqn, new MethodDataHandler(name, returnType));
-    return methodDataMap.get(fqn);
+    final MethodDataHandler handler = new MethodDataHandler(name, returnType);
+    this.methodDataMap.put(uniqueKey(this.methodDataMap, fqn), handler);
+    return handler;
+  }
+
+  /**
+   * Adds a methodData object, replacing a method with the same key. Use this to merge several
+   * declarations of the same method, e.g. a declaration and its out-of-line definition.
+   *
+   * @param name the method's simple name
+   * @param fqn the method's fully qualified name, used as key
+   * @param returnType the return type of the method
+   * @return the created methodData object
+   */
+  public MethodDataHandler putMethod(final String name, final String fqn, final String returnType) {
+    final MethodDataHandler handler = new MethodDataHandler(name, returnType);
+    this.methodDataMap.put(fqn, handler);
+    return handler;
+  }
+
+  /** Returns {@code key}, or {@code key#n} with the smallest free {@code n >= 2}. */
+  private static String uniqueKey(final Map<String, ?> map, final String key) {
+    if (!map.containsKey(key)) {
+      return key;
+    }
+    int suffix = 2;
+    while (map.containsKey(key + "#" + suffix)) {
+      suffix++;
+    }
+    return key + "#" + suffix;
   }
 
   public MethodDataHandler getMethod(final String methodFqn) {
@@ -50,15 +80,29 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
   }
 
   /**
-   * Adds a constructor object.
+   * Adds a constructor object. Like {@link #addMethod}, an existing key is not replaced.
    *
    * @param name the constructor's simple name
-   * @param fqn the constructor's fully qualified name
+   * @param fqn the constructor's fully qualified name, used as key
    * @return the created methodData object
    */
   public MethodDataHandler addConstructor(final String name, final String fqn) {
-    this.methodDataMap.put(fqn, new MethodDataHandler(name));
-    return methodDataMap.get(fqn);
+    final MethodDataHandler handler = new MethodDataHandler(name);
+    this.methodDataMap.put(uniqueKey(this.methodDataMap, fqn), handler);
+    return handler;
+  }
+
+  /**
+   * Adds a constructor object, replacing a method with the same key, see {@link #putMethod}.
+   *
+   * @param name the constructor's simple name
+   * @param fqn the constructor's fully qualified name, used as key
+   * @return the created methodData object
+   */
+  public MethodDataHandler putConstructor(final String name, final String fqn) {
+    final MethodDataHandler handler = new MethodDataHandler(name);
+    this.methodDataMap.put(fqn, handler);
+    return handler;
   }
 
   public void addField(
@@ -76,7 +120,7 @@ public class ClassDataHandler implements ProtoBufConvertable<ClassData> {
   }
 
   public void addInnerClass(final String fqn, final ClassDataHandler innerClassHandler) {
-    this.innerClassDataMap.put(fqn, innerClassHandler);
+    this.innerClassDataMap.put(uniqueKey(this.innerClassDataMap, fqn), innerClassHandler);
   }
 
   public void addEnumConstant(final String name) {

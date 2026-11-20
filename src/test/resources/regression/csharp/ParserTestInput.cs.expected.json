@@ -27,23 +27,6 @@
       "type": "Dictionary<string,List<int>>"
     }],
     "innerClasses": [{
-      "name": "NestedInterface",
-      "type": "INTERFACE",
-      "functions": [{
-        "name": "AbstractInterfaceMethod",
-        "returnType": "void",
-        "metrics": {
-          "sloc": 1.0,
-          "lineCount": 1.0
-        },
-        "startLine": 130,
-        "endLine": 130
-      }],
-      "metrics": {
-        "sloc": 4.0,
-        "lineCount": 4.0
-      }
-    }, {
       "name": "StaticNested",
       "type": "CLASS",
       "fields": [{
@@ -78,6 +61,23 @@
         "lineCount": 14.0
       }
     }, {
+      "name": "NestedInterface",
+      "type": "INTERFACE",
+      "functions": [{
+        "name": "AbstractInterfaceMethod",
+        "returnType": "void",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 130,
+        "endLine": 130
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      }
+    }, {
       "name": "NestedEnum",
       "type": "ENUM",
       "enumValues": ["Alpha", "Beta", "Gamma"],
@@ -95,28 +95,6 @@
       },
       "startLine": 36,
       "endLine": 39
-    }, {
-      "name": "GenericMethod",
-      "returnType": "T",
-      "parameters": [{
-        "name": "value",
-        "type": "T"
-      }],
-      "metrics": {
-        "sloc": 4.0,
-        "lineCount": 4.0
-      },
-      "startLine": 61,
-      "endLine": 64
-    }, {
-      "name": "Call",
-      "returnType": "string",
-      "metrics": {
-        "sloc": 4.0,
-        "lineCount": 4.0
-      },
-      "startLine": 56,
-      "endLine": 59
     }, {
       "name": "ParserTestInput",
       "isConstructor": true,
@@ -139,6 +117,28 @@
       },
       "startLine": 48,
       "endLine": 54
+    }, {
+      "name": "Call",
+      "returnType": "string",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 56,
+      "endLine": 59
+    }, {
+      "name": "GenericMethod",
+      "returnType": "T",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 61,
+      "endLine": 64
     }, {
       "name": "DoWork",
       "returnType": "bool",
@@ -198,15 +198,6 @@
       "type": "int"
     }],
     "functions": [{
-      "name": "GetBaseValue",
-      "returnType": "int",
-      "metrics": {
-        "sloc": 4.0,
-        "lineCount": 4.0
-      },
-      "startLine": 152,
-      "endLine": 155
-    }, {
       "name": "AbstractBase",
       "isConstructor": true,
       "parameters": [{
@@ -219,6 +210,15 @@
       },
       "startLine": 147,
       "endLine": 150
+    }, {
+      "name": "GetBaseValue",
+      "returnType": "int",
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 152,
+      "endLine": 155
     }, {
       "name": "AbstractHook",
       "returnType": "int",

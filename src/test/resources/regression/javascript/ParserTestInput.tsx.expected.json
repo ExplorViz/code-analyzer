@@ -49,23 +49,14 @@
       "startLine": 65,
       "endLine": 68
     }, {
-      "name": "mark",
+      "name": "run",
       "returnType": "void",
       "metrics": {
-        "sloc": 2.0,
-        "lineCount": 3.0
+        "sloc": 5.0,
+        "lineCount": 5.0
       },
-      "startLine": 103,
-      "endLine": 105
-    }, {
-      "name": "abstractHook",
-      "returnType": "number",
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 99,
-      "endLine": 101
+      "startLine": 70,
+      "endLine": 74
     }, {
       "name": "genericMethod",
       "returnType": "T",
@@ -79,15 +70,6 @@
       },
       "startLine": 76,
       "endLine": 78
-    }, {
-      "name": "run",
-      "returnType": "void",
-      "metrics": {
-        "sloc": 5.0,
-        "lineCount": 5.0
-      },
-      "startLine": 70,
-      "endLine": 74
     }, {
       "name": "doWork",
       "returnType": "boolean",
@@ -107,6 +89,24 @@
       },
       "startLine": 80,
       "endLine": 97
+    }, {
+      "name": "abstractHook",
+      "returnType": "number",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 99,
+      "endLine": 101
+    }, {
+      "name": "mark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 3.0
+      },
+      "startLine": 103,
+      "endLine": 105
     }],
     "metrics": {
       "sloc": 40.0,

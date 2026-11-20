@@ -33,15 +33,6 @@
       "type": "unknown"
     }],
     "functions": [{
-      "name": "abstractHook",
-      "returnType": "Int",
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 52,
-      "endLine": 54
-    }, {
       "name": "AbstractBase",
       "isConstructor": true,
       "parameters": [{
@@ -63,6 +54,15 @@
       },
       "startLine": 48,
       "endLine": 50
+    }, {
+      "name": "abstractHook",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 52,
+      "endLine": 54
     }],
     "metrics": {
       "sloc": 12.0,
@@ -102,15 +102,6 @@
       "type": "unknown"
     }],
     "functions": [{
-      "name": "getNestedField",
-      "returnType": "Int",
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 83,
-      "endLine": 85
-    }, {
       "name": "StaticNested",
       "isConstructor": true,
       "parameters": [{
@@ -123,6 +114,15 @@
       },
       "startLine": 79,
       "endLine": 81
+    }, {
+      "name": "getNestedField",
+      "returnType": "Int",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 83,
+      "endLine": 85
     }],
     "metrics": {
       "sloc": 9.0,
@@ -158,6 +158,15 @@
     "functions": [{
       "name": "ParserTestInput",
       "isConstructor": true,
+      "metrics": {
+        "sloc": 4.0,
+        "lineCount": 4.0
+      },
+      "startLine": 102,
+      "endLine": 105
+    }, {
+      "name": "ParserTestInput",
+      "isConstructor": true,
       "parameters": [{
         "name": "name",
         "type": "String?"
@@ -171,15 +180,6 @@
       },
       "startLine": 108,
       "endLine": 111
-    }, {
-      "name": "ParserTestInput",
-      "isConstructor": true,
-      "metrics": {
-        "sloc": 4.0,
-        "lineCount": 4.0
-      },
-      "startLine": 102,
-      "endLine": 105
     }, {
       "name": "run",
       "returnType": "Void",
@@ -199,23 +199,18 @@
       "startLine": 117,
       "endLine": 119
     }, {
-      "name": "abstractHook",
-      "returnType": "Int",
+      "name": "genericMethod",
+      "returnType": "T",
+      "parameters": [{
+        "name": "value",
+        "type": "T"
+      }],
       "metrics": {
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 173,
-      "endLine": 175
-    }, {
-      "name": "mark",
-      "returnType": "Void",
-      "metrics": {
-        "sloc": 2.0,
-        "lineCount": 3.0
-      },
-      "startLine": 177,
-      "endLine": 179
+      "startLine": 121,
+      "endLine": 123
     }, {
       "name": "doWork",
       "returnType": "Bool",
@@ -254,18 +249,23 @@
       "startLine": 125,
       "endLine": 171
     }, {
-      "name": "genericMethod",
-      "returnType": "T",
-      "parameters": [{
-        "name": "value",
-        "type": "T"
-      }],
+      "name": "abstractHook",
+      "returnType": "Int",
       "metrics": {
         "sloc": 3.0,
         "lineCount": 3.0
       },
-      "startLine": 121,
-      "endLine": 123
+      "startLine": 173,
+      "endLine": 175
+    }, {
+      "name": "mark",
+      "returnType": "Void",
+      "metrics": {
+        "sloc": 2.0,
+        "lineCount": 3.0
+      },
+      "startLine": 177,
+      "endLine": 179
     }],
     "metrics": {
       "sloc": 73.0,

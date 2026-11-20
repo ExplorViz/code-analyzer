@@ -23,16 +23,6 @@
     "name": "MarkerInterface",
     "type": "CLASS",
     "functions": [{
-      "name": "mark",
-      "returnType": "void",
-      "modifiers": ["virtual", "pure"],
-      "metrics": {
-        "sloc": 1.0,
-        "lineCount": 1.0
-      },
-      "startLine": 39,
-      "endLine": 39
-    }, {
       "name": "~MarkerInterface",
       "returnType": "void",
       "modifiers": ["virtual"],
@@ -42,6 +32,16 @@
       },
       "startLine": 38,
       "endLine": 38
+    }, {
+      "name": "mark",
+      "returnType": "void",
+      "modifiers": ["virtual", "pure"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 39,
+      "endLine": 39
     }, {
       "name": "defaultMark",
       "returnType": "void",
@@ -61,16 +61,6 @@
     "name": "CallableMarker",
     "type": "CLASS",
     "functions": [{
-      "name": "call",
-      "returnType": "std::string",
-      "modifiers": ["virtual", "pure"],
-      "metrics": {
-        "sloc": 1.0,
-        "lineCount": 1.0
-      },
-      "startLine": 46,
-      "endLine": 46
-    }, {
       "name": "~CallableMarker",
       "returnType": "void",
       "modifiers": ["virtual"],
@@ -80,6 +70,16 @@
       },
       "startLine": 45,
       "endLine": 45
+    }, {
+      "name": "call",
+      "returnType": "std::string",
+      "modifiers": ["virtual", "pure"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 46,
+      "endLine": 46
     }],
     "metrics": {
       "sloc": 5.0,
@@ -93,26 +93,6 @@
       "type": "int"
     }],
     "functions": [{
-      "name": "abstractHook",
-      "returnType": "int",
-      "modifiers": ["virtual", "pure"],
-      "metrics": {
-        "sloc": 1.0,
-        "lineCount": 1.0
-      },
-      "startLine": 59,
-      "endLine": 59
-    }, {
-      "name": "~AbstractBase",
-      "returnType": "void",
-      "modifiers": ["virtual"],
-      "metrics": {
-        "sloc": 1.0,
-        "lineCount": 1.0
-      },
-      "startLine": 57,
-      "endLine": 57
-    }, {
       "name": "AbstractBase",
       "isConstructor": true,
       "modifiers": ["explicit"],
@@ -127,6 +107,16 @@
       "startLine": 54,
       "endLine": 54
     }, {
+      "name": "~AbstractBase",
+      "returnType": "void",
+      "modifiers": ["virtual"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 57,
+      "endLine": 57
+    }, {
       "name": "getBaseValue",
       "returnType": "int",
       "metrics": {
@@ -135,6 +125,16 @@
       },
       "startLine": 58,
       "endLine": 58
+    }, {
+      "name": "abstractHook",
+      "returnType": "int",
+      "modifiers": ["virtual", "pure"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 59,
+      "endLine": 59
     }],
     "metrics": {
       "sloc": 10.0,
@@ -168,15 +168,6 @@
         "type": "int"
       }],
       "functions": [{
-        "name": "getNestedField",
-        "returnType": "int",
-        "metrics": {
-          "sloc": 1.0,
-          "lineCount": 1.0
-        },
-        "startLine": 141,
-        "endLine": 141
-      }, {
         "name": "StaticNested",
         "isConstructor": true,
         "modifiers": ["explicit"],
@@ -190,6 +181,15 @@
         },
         "startLine": 140,
         "endLine": 140
+      }, {
+        "name": "getNestedField",
+        "returnType": "int",
+        "metrics": {
+          "sloc": 1.0,
+          "lineCount": 1.0
+        },
+        "startLine": 141,
+        "endLine": 141
       }],
       "metrics": {
         "sloc": 7.0,
@@ -205,35 +205,6 @@
       },
       "startLine": 77,
       "endLine": 81
-    }, {
-      "name": "run",
-      "returnType": "void",
-      "metrics": {
-        "sloc": 5.0,
-        "lineCount": 5.0
-      },
-      "startLine": 91,
-      "endLine": 95
-    }, {
-      "name": "call",
-      "returnType": "std::string",
-      "modifiers": ["virtual"],
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 97,
-      "endLine": 99
-    }, {
-      "name": "abstractHook",
-      "returnType": "int",
-      "modifiers": ["virtual"],
-      "metrics": {
-        "sloc": 1.0,
-        "lineCount": 1.0
-      },
-      "startLine": 133,
-      "endLine": 133
     }, {
       "name": "ParserTestInput",
       "isConstructor": true,
@@ -253,15 +224,24 @@
       "startLine": 83,
       "endLine": 89
     }, {
-      "name": "mark",
+      "name": "run",
       "returnType": "void",
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 91,
+      "endLine": 95
+    }, {
+      "name": "call",
+      "returnType": "std::string",
       "modifiers": ["virtual"],
       "metrics": {
-        "sloc": 1.0,
-        "lineCount": 1.0
+        "sloc": 3.0,
+        "lineCount": 3.0
       },
-      "startLine": 134,
-      "endLine": 134
+      "startLine": 97,
+      "endLine": 99
     }, {
       "name": "genericMethod",
       "returnType": "T",
@@ -313,6 +293,26 @@
       },
       "startLine": 106,
       "endLine": 131
+    }, {
+      "name": "abstractHook",
+      "returnType": "int",
+      "modifiers": ["virtual"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 133,
+      "endLine": 133
+    }, {
+      "name": "mark",
+      "returnType": "void",
+      "modifiers": ["virtual"],
+      "metrics": {
+        "sloc": 1.0,
+        "lineCount": 1.0
+      },
+      "startLine": 134,
+      "endLine": 134
     }],
     "metrics": {
       "sloc": 67.0,

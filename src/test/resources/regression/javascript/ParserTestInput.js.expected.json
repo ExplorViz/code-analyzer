@@ -7,15 +7,6 @@
     "name": "AbstractBase",
     "type": "CLASS",
     "functions": [{
-      "name": "abstractHook",
-      "returnType": "void",
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 34,
-      "endLine": 36
-    }, {
       "name": "constructor",
       "isConstructor": true,
       "parameters": [{
@@ -37,6 +28,15 @@
       },
       "startLine": 30,
       "endLine": 32
+    }, {
+      "name": "abstractHook",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 34,
+      "endLine": 36
     }],
     "metrics": {
       "sloc": 11.0,
@@ -59,6 +59,37 @@
       "type": "any"
     }],
     "functions": [{
+      "name": "constructor",
+      "isConstructor": true,
+      "metrics": {
+        "sloc": 7.0,
+        "lineCount": 7.0
+      },
+      "startLine": 53,
+      "endLine": 59
+    }, {
+      "name": "withName",
+      "returnType": "void",
+      "parameters": [{
+        "name": "rest",
+        "type": "..."
+      }],
+      "metrics": {
+        "sloc": 7.0,
+        "lineCount": 7.0
+      },
+      "startLine": 66,
+      "endLine": 72
+    }, {
+      "name": "run",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 5.0,
+        "lineCount": 5.0
+      },
+      "startLine": 74,
+      "endLine": 78
+    }, {
       "name": "call",
       "returnType": "void",
       "metrics": {
@@ -80,33 +111,6 @@
       },
       "startLine": 84,
       "endLine": 86
-    }, {
-      "name": "mark",
-      "returnType": "void",
-      "metrics": {
-        "sloc": 2.0,
-        "lineCount": 3.0
-      },
-      "startLine": 136,
-      "endLine": 138
-    }, {
-      "name": "defaultMark",
-      "returnType": "void",
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 140,
-      "endLine": 142
-    }, {
-      "name": "abstractHook",
-      "returnType": "void",
-      "metrics": {
-        "sloc": 3.0,
-        "lineCount": 3.0
-      },
-      "startLine": 132,
-      "endLine": 134
     }, {
       "name": "doWork",
       "returnType": "void",
@@ -145,36 +149,32 @@
       "startLine": 88,
       "endLine": 130
     }, {
-      "name": "withName",
-      "returnType": "void",
-      "parameters": [{
-        "name": "rest",
-        "type": "..."
-      }],
-      "metrics": {
-        "sloc": 7.0,
-        "lineCount": 7.0
-      },
-      "startLine": 66,
-      "endLine": 72
-    }, {
-      "name": "run",
+      "name": "abstractHook",
       "returnType": "void",
       "metrics": {
-        "sloc": 5.0,
-        "lineCount": 5.0
+        "sloc": 3.0,
+        "lineCount": 3.0
       },
-      "startLine": 74,
-      "endLine": 78
+      "startLine": 132,
+      "endLine": 134
     }, {
-      "name": "constructor",
-      "isConstructor": true,
+      "name": "mark",
+      "returnType": "void",
       "metrics": {
-        "sloc": 7.0,
-        "lineCount": 7.0
+        "sloc": 2.0,
+        "lineCount": 3.0
       },
-      "startLine": 53,
-      "endLine": 59
+      "startLine": 136,
+      "endLine": 138
+    }, {
+      "name": "defaultMark",
+      "returnType": "void",
+      "metrics": {
+        "sloc": 3.0,
+        "lineCount": 3.0
+      },
+      "startLine": 140,
+      "endLine": 142
     }],
     "metrics": {
       "sloc": 78.0,
