@@ -7,6 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import net.explorviz.code.proto.CommitData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.StateData;
@@ -44,6 +45,9 @@ public interface DataExporter {
    *
    * <p>Uses a single batch accumulator so each commit produces at most {@code ceil(fileCount /
    * batchSize)} batches. Concurrent sends are limited by {@code maxConcurrentSends}.
+   *
+   * <p>The queue is always drained completely. If a batch could not be persisted, the first failure
+   * is rethrown once all sends have finished, and no further batches are sent.
    */
   default void persistFilesFromQueueInBatches(
       final BlockingQueue<FileData> completedFiles,
@@ -66,6 +70,7 @@ public interface DataExporter {
     final Semaphore sendPermits = new Semaphore(effectiveConcurrency);
     final List<Thread> sendThreads = new ArrayList<>();
     final List<FileData> batch = new ArrayList<>(effectiveBatchSize);
+    final AtomicReference<Throwable> sendFailure = new AtomicReference<>();
     try {
       while (analysisFinished.getCount() > 0 || !completedFiles.isEmpty()) {
         final FileData fileData = completedFiles.poll(100, TimeUnit.MILLISECONDS);
@@ -74,19 +79,36 @@ public interface DataExporter {
         }
         batch.add(fileData);
         if (batch.size() >= effectiveBatchSize) {
-          dispatchPersistBatch(batch, sendPermits, sendThreads);
+          dispatchPersistBatch(batch, sendPermits, sendThreads, sendFailure);
         }
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    dispatchPersistBatch(batch, sendPermits, sendThreads);
+    dispatchPersistBatch(batch, sendPermits, sendThreads, sendFailure);
     waitForPersistSendThreads(sendThreads);
+
+    final Throwable failure = sendFailure.get();
+    if (failure instanceof RuntimeException runtimeException) {
+      throw runtimeException;
+    } else if (failure instanceof Error error) {
+      throw error;
+    } else if (failure != null) {
+      throw new IllegalStateException("Failed to persist file data", failure);
+    }
   }
 
   private void dispatchPersistBatch(
-      final List<FileData> batch, final Semaphore sendPermits, final List<Thread> sendThreads) {
+      final List<FileData> batch,
+      final Semaphore sendPermits,
+      final List<Thread> sendThreads,
+      final AtomicReference<Throwable> sendFailure) {
     if (batch.isEmpty()) {
+      return;
+    }
+    if (sendFailure.get() != null) {
+      // The commit is already known to be incomplete; keep draining without sending.
+      batch.clear();
       return;
     }
     try {
@@ -103,6 +125,8 @@ public interface DataExporter {
                 () -> {
                   try {
                     persistFilesBatch(toSend);
+                  } catch (RuntimeException | Error e) {
+                    sendFailure.compareAndSet(null, e);
                   } finally {
                     sendPermits.release();
                   }

@@ -23,6 +23,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import net.explorviz.code.analysis.FileLanguageResolver;
 import net.explorviz.code.analysis.exceptions.AnalysisCancelledException;
@@ -59,6 +60,7 @@ import net.explorviz.code.proto.Language;
 import net.explorviz.code.proto.StateData;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.LargeObjectException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
@@ -787,6 +789,9 @@ public class AnalysisService {
    * <p>The number of files in flight is bounded before a task is submitted, so executor threads
    * never block while waiting for a slot. Finished results go straight to the persist queue and are
    * not retained until the whole commit is done.
+   *
+   * <p>A failed persistence fails the commit, so that it is not treated as persisted although the
+   * receiver misses some of its files.
    */
   private void pipelineAnalyzeAndPersistFiles(
       final AnalysisConfig config,
@@ -801,21 +806,31 @@ public class AnalysisService {
     final String commitId = commit.getName();
     final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
     final CountDownLatch analysisFinished = new CountDownLatch(1);
+    final AtomicReference<Throwable> persistFailure = new AtomicReference<>();
     final Thread persistThread =
         Thread.ofVirtual()
             .name("file-persist-" + commitId)
             .start(
-                () ->
+                () -> {
+                  try {
                     exporter.persistFilesFromQueueInBatches(
                         completedFiles,
                         analysisFinished,
                         filePersistBatchSizeProperty,
-                        filePersistConcurrencyProperty));
+                        filePersistConcurrencyProperty);
+                  } catch (RuntimeException | Error e) {
+                    persistFailure.set(e);
+                  }
+                });
 
+    Throwable analysisFailure = null;
     try {
       final List<CompletableFuture<Void>> analysisTasks =
           submitFileAnalysisTasks(config, repository, commit, descriptorList, completedFiles);
       CompletableFuture.allOf(analysisTasks.toArray(new CompletableFuture<?>[0])).join();
+    } catch (RuntimeException | Error e) {
+      analysisFailure = e;
+      throw e;
     } finally {
       // Always release the persist thread, also when the analysis failed or was cancelled.
       analysisFinished.countDown();
@@ -823,6 +838,13 @@ public class AnalysisService {
         persistThread.join();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
+      }
+      final Throwable failure = persistFailure.get();
+      if (failure != null && analysisFailure != null) {
+        analysisFailure.addSuppressed(failure);
+      } else if (failure != null) {
+        throw new IllegalStateException(
+            "Failed to persist files of commit " + commitId + ": " + failure.getMessage(), failure);
       }
     }
   }
@@ -930,8 +952,8 @@ public class AnalysisService {
     final byte[] fileBytes;
     try {
       fileBytes = GitRepositoryHandler.getBytes(fileDescriptor.objectId, repository);
-    } catch (IOException e) {
-      // skipping unreadable files
+    } catch (IOException | LargeObjectException e) {
+      // Unreadable files and blobs too large to load into memory get minimal file data.
       LOGGER.error("Failed to read file {}: {}", fileDescriptor.reportedPath, e.getMessage());
       return null;
     }
@@ -1369,7 +1391,18 @@ public class AnalysisService {
       final FileDescriptor file,
       final String fileContent,
       final Language language) {
-    final AbstractFileDataHandler handler = parseCall.get();
+    AbstractFileDataHandler handler;
+    try {
+      handler = parseCall.get();
+    } catch (StackOverflowError e) {
+      // Parsers and tree walkers recurse with the nesting depth of the source, e.g. for minified
+      // files. The parser services only catch exceptions, so handle the error for this file here.
+      LOGGER
+          .atWarn()
+          .addArgument(file.reportedPath)
+          .log("Parsing {} exceeded the stack depth");
+      handler = null;
+    }
     if (handler != null) {
       GitMetricCollector.addFileGitMetrics(handler, file);
       return handler;

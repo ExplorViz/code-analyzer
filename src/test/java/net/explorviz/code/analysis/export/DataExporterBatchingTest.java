@@ -84,9 +84,32 @@ class DataExporterBatchingTest {
     Assertions.assertEquals(List.of(200, 500, 500), sorted);
   }
 
+  @Test
+  void failedBatchIsRethrownAfterTheQueueWasDrained() {
+    final RecordingExporter exporter = new RecordingExporter();
+    exporter.failure = new IllegalStateException("landscape-service unavailable");
+    final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
+    final CountDownLatch analysisFinished = new CountDownLatch(1);
+
+    for (int i = 0; i < 1200; i++) {
+      completedFiles.offer(FileData.getDefaultInstance());
+    }
+    analysisFinished.countDown();
+
+    final IllegalStateException thrown =
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () ->
+                exporter.persistFilesFromQueueInBatches(completedFiles, analysisFinished, 500, 8));
+
+    Assertions.assertSame(exporter.failure, thrown);
+    Assertions.assertTrue(completedFiles.isEmpty());
+  }
+
   private static final class RecordingExporter implements DataExporter {
 
     private final List<Integer> batchSizes = Collections.synchronizedList(new ArrayList<>());
+    private volatile RuntimeException failure;
 
     @Override
     public StateData getStateData(
@@ -106,6 +129,9 @@ class DataExporterBatchingTest {
 
     @Override
     public void persistFilesBatch(final List<FileData> files) {
+      if (failure != null) {
+        throw failure;
+      }
       batchSizes.add(files.size());
     }
 
