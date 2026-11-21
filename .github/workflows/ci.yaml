@@ -157,10 +157,22 @@ jobs:
         run: exit 1
 
   docker-image-native:
-    name: Docker image native
+    name: Docker image native (${{ matrix.arch }})
     if: github.event_name == 'push' && github.ref_name == 'main'
     needs: [test]
-    runs-on: ubuntu-latest
+    # A native executable only runs on the architecture it was built for, so every architecture is
+    # built on a runner of that architecture and pushed to its own tag. The docker-image-native-manifest
+    # job combines them into the multi-arch "native" tag.
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64/v8
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
@@ -171,11 +183,30 @@ jobs:
           QUARKUS_NATIVE_CONTAINER_BUILD: "true"
           QUARKUS_NATIVE_BUILDER_IMAGE: quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25
         with:
-          platforms: "linux/amd64,linux/arm64/v8"
+          platforms: ${{ matrix.platform }}
           docker-username: ${{ secrets.DOCKER_USERNAME }}
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
           image-name: ${{ vars.DOCKER_IMAGE_NAME }}
-          image-tag: "native"
+          image-tag: native-${{ matrix.arch }}
+
+  docker-image-native-manifest:
+    name: Docker image native (multi-arch manifest)
+    needs: [docker-image-native]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Create and push multi-arch manifest
+        env:
+          IMAGE: explorviz/${{ vars.DOCKER_IMAGE_NAME }}
+        run: |
+          docker buildx imagetools create \
+            --tag "$IMAGE:native" \
+            "$IMAGE:native-amd64" \
+            "$IMAGE:native-arm64"
 
   docker-image-jvm:
     name: Docker image JVM
