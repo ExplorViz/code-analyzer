@@ -10,10 +10,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** In-memory status tracking for analysis jobs. */
 @ApplicationScoped
 public class AnalysisStatusService {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(AnalysisStatusService.class);
 
   public static final String STATUS_PENDING = "pending";
   public static final String STATUS_RUNNING = "running";
@@ -333,6 +337,12 @@ public class AnalysisStatusService {
                 .build())
         .whenComplete(
             (ignored, throwable) -> {
+              if (throwable != null && !sink.isClosed()) {
+                LOGGER.warn(
+                    "Failed to send analysis state to subscriber of landscapeToken={}",
+                    landscapeToken,
+                    throwable);
+              }
               if (throwable != null || sink.isClosed()) {
                 removeSubscriber(landscapeToken, subscriber);
               }
