@@ -120,6 +120,7 @@ function collectPayload(formData) {
 
   payload.includeDataStructures = formData.get("includeDataStructures") !== null;
   payload.sendToRemote = formData.get("sendToRemote") !== null;
+  payload.anonymize = formData.get("anonymize") !== null;
   payload.fetchSocialData = formData.get("fetchSocialData") !== null;
   payload.syncSocialWindow = formData.get("syncSocialWindow") !== null;
   payload.firstParentCommitsOnly = formData.get("firstParentCommitsOnly") !== null;
@@ -303,8 +304,10 @@ function applySample() {
   });
   form.elements.includeDataStructures.checked = true;
   form.elements.sendToRemote.checked = true;
+  form.elements.anonymize.checked = false;
   form.elements.fetchSocialData.checked = false;
   form.elements.syncSocialWindow.checked = true;
+  syncAnonymizeState();
   form.elements.firstParentCommitsOnly.checked = true;
 
   if (applicationRowsContainer) {
@@ -318,6 +321,7 @@ function applySample() {
 
 function resetForm() {
   form.reset();
+  syncAnonymizeState();
   resetApplicationRows();
   updateRepoVisibility();
   loadLocalRepositories();
@@ -353,9 +357,21 @@ function updateRepoVisibility() {
   }
 }
 
+// Social data (issue/PR texts) is never exported anonymized, so the option is locked while active.
+function syncAnonymizeState() {
+  const anonymize = form.elements.anonymize.checked;
+  form.elements.fetchSocialData.disabled = anonymize;
+  if (anonymize) {
+    form.elements.fetchSocialData.checked = false;
+  }
+}
+
 form.addEventListener("input", handleInput);
 form.addEventListener("change", (e) => {
-  if (e.target.name === "repoType") {
+  if (e.target.name === "anonymize") {
+    syncAnonymizeState();
+    handleInput();
+  } else if (e.target.name === "repoType") {
     updateRepoVisibility();
     if (e.target.value === "local") {
       loadLocalRepositories();

@@ -9,9 +9,11 @@ import java.io.IOException;
 import java.util.Optional;
 import net.explorviz.code.analysis.exceptions.NotFoundException;
 import net.explorviz.code.analysis.exceptions.PropertyNotDefinedException;
+import net.explorviz.code.analysis.export.AnonymizingExporter;
 import net.explorviz.code.analysis.export.DataExporter;
 import net.explorviz.code.analysis.export.GrpcExporter;
 import net.explorviz.code.analysis.export.JsonExporter;
+import net.explorviz.code.analysis.export.Pseudonymizer;
 import net.explorviz.code.analysis.service.AnalysisConfig;
 import net.explorviz.code.analysis.service.AnalysisService;
 import net.explorviz.code.analysis.service.AnalysisStatusService;
@@ -97,7 +99,12 @@ public class GitAnalysis {
   @ConfigProperty(name = "explorviz.gitanalysis.application-name")
   /* default */ String applicationNameProperty;
 
+  @ConfigProperty(name = "explorviz.gitanalysis.anonymize", defaultValue = "false")
+  /* default */ boolean anonymizeProperty;
+
   @Inject /* package */ GrpcExporter grpcExporter;
+
+  @Inject /* package */ Pseudonymizer pseudonymizer;
 
   @Inject /* package */ AnalysisService analysisService;
 
@@ -158,6 +165,9 @@ public class GitAnalysis {
       exporter = grpcExporter;
     } else {
       exporter = new JsonExporter(config.getRepositoryName(), applicationNameProperty);
+    }
+    if (anonymizeProperty) {
+      exporter = new AnonymizingExporter(exporter, pseudonymizer);
     }
     try {
       analyzeAndSendRepo(exporter);

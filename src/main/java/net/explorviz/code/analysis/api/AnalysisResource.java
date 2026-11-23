@@ -15,9 +15,11 @@ import jakarta.ws.rs.sse.SseEventSink;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import net.explorviz.code.analysis.export.AnonymizingExporter;
 import net.explorviz.code.analysis.export.DataExporter;
 import net.explorviz.code.analysis.export.GrpcExporter;
 import net.explorviz.code.analysis.export.JsonExporter;
+import net.explorviz.code.analysis.export.Pseudonymizer;
 import net.explorviz.code.analysis.service.AnalysisCancellationResult;
 import net.explorviz.code.analysis.service.AnalysisConfig;
 import net.explorviz.code.analysis.service.AnalysisStatusService;
@@ -39,6 +41,8 @@ public class AnalysisResource {
   @Inject /* default */ ConcurrentAnalysisService analysisService;
 
   @Inject /* default */ GrpcExporter grpcExporter;
+
+  @Inject /* default */ Pseudonymizer pseudonymizer;
 
   @Inject /* default */ AnalysisStatusService analysisStatusService;
 
@@ -74,12 +78,15 @@ public class AnalysisResource {
       final AnalysisConfig config = request.toConfig();
       final String landscapeToken = config.landscapeToken();
 
-      final DataExporter exporter;
+      DataExporter exporter;
       if (request.isSendToRemote()) {
         exporter = grpcExporter;
       } else {
         exporter =
             new JsonExporter(config.getRepositoryName(), config.primaryApplicationNameForExport());
+      }
+      if (request.isAnonymize()) {
+        exporter = new AnonymizingExporter(exporter, pseudonymizer);
       }
 
       // Queuing marks the analysis as pending; its final status is set by the queue.

@@ -56,6 +56,8 @@ public class AnalysisRequest {
   private String applicationRoot;
   private List<ApplicationSpec> applications;
 
+  private boolean anonymize = false;
+
   private boolean fetchSocialData = false;
   private boolean syncSocialWindow = true;
   private String fetchEndDate;
@@ -232,6 +234,14 @@ public class AnalysisRequest {
     this.skipCommitsWithoutRelevantFileChanges = skipCommitsWithoutRelevantFileChanges;
   }
 
+  public boolean isAnonymize() {
+    return anonymize;
+  }
+
+  public void setAnonymize(final boolean anonymize) {
+    this.anonymize = anonymize;
+  }
+
   public boolean isFetchSocialData() {
     return fetchSocialData;
   }
@@ -304,7 +314,8 @@ public class AnalysisRequest {
                     ? landscapeToken
                     : "mytokenvalue")
             .applicationRoot(Optional.ofNullable(applicationRoot))
-            .fetchSocialData(fetchSocialData)
+            // Anonymized exports drop issue/PR events, so there is nothing to fetch.
+            .fetchSocialData(fetchSocialData && !anonymize)
             .syncSocialWindow(syncSocialWindow)
             .socialDataTimeFrameDays(Optional.ofNullable(socialDataTimeFrameDays))
             .fetchEndDate(Optional.ofNullable(fetchEndDate).filter(s -> !s.isEmpty()));
