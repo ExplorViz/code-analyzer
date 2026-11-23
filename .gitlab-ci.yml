@@ -1,7 +1,7 @@
 default:
   tags:
     - exec-docker
-  image: ghcr.io/graalvm/graalvm-community:25
+  image: ghcr.io/graalvm/graalvm-community:25i-ol9
   cache:
     key: $CI_COMMIT_REF_SLUG
     paths:
