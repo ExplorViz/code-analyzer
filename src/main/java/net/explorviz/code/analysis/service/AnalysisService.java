@@ -472,8 +472,13 @@ public class AnalysisService {
               !ciMode);
       return resolveAnalysisStartContext(config, exporter, remoteState, ciMode, branch);
     } catch (final Exception e) {
-      LOGGER.warn("Could not initialize remote state: {}", e.getMessage());
-      return new AnalysisStartContext(config.startCommit(), false);
+      // The receiver rejects commits without state data, so continuing could only fail later on.
+      throw new RuntimeException(
+          "Could not initialize remote state for repository "
+              + config.getRepositoryName()
+              + " on branch "
+              + branch,
+          e);
     }
   }
 

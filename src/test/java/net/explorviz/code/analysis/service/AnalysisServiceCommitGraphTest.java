@@ -229,6 +229,20 @@ class AnalysisServiceCommitGraphTest {
     assertReplayMatchesGit(reports, Set.of(), path -> true);
   }
 
+  @Test
+  void abortsBeforeSendingCommitsIfRemoteStateCannotBeInitialized() {
+    final RecordingExporter exporter = new RecordingExporter(true);
+    exporter.stateDataFailure = new IllegalStateException("state request failed");
+
+    final RuntimeException exception =
+        Assertions.assertThrows(
+            RuntimeException.class,
+            () -> analysisService.analyzeAndSendRepo(config(false), exporter));
+
+    Assertions.assertSame(exporter.stateDataFailure, exception.getCause());
+    Assertions.assertTrue(exporter.commits.isEmpty());
+  }
+
   private List<CommitData> analyze(final AnalysisConfig config, final boolean remote)
       throws Exception {
     final RecordingExporter exporter = new RecordingExporter(remote);
@@ -398,6 +412,8 @@ class AnalysisServiceCommitGraphTest {
     private final boolean remote;
     private final List<CommitData> commits = Collections.synchronizedList(new ArrayList<>());
 
+    private RuntimeException stateDataFailure;
+
     private RecordingExporter(final boolean remote) {
       this.remote = remote;
     }
@@ -410,6 +426,9 @@ class AnalysisServiceCommitGraphTest {
         final Map<String, String> applicationPaths,
         final String repositoryUrl,
         final boolean skipLatestCommitLookup) {
+      if (stateDataFailure != null) {
+        throw stateDataFailure;
+      }
       return StateData.newBuilder().build();
     }
 
