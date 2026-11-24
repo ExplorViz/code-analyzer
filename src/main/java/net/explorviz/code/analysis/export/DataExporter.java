@@ -19,6 +19,13 @@ import net.explorviz.code.proto.TrackableResourceEvent;
  */
 public interface DataExporter {
 
+  /**
+   * Marker that producers may put on the queue of {@link #persistFilesFromQueueInBatches} after
+   * counting down the latch. It wakes the consumer right away, which otherwise only notices the end
+   * of the analysis once its current poll times out. Compared by identity and never persisted.
+   */
+  FileData END_OF_FILES = FileData.newBuilder().setFilePath("\u0000end-of-files").build();
+
   StateData getStateData(
       final String repositoryName,
       final String branchName,
@@ -48,6 +55,9 @@ public interface DataExporter {
    *
    * <p>The queue is always drained completely. If a batch could not be persisted, the first failure
    * is rethrown once all sends have finished, and no further batches are sent.
+   *
+   * <p>Producers should offer {@link #END_OF_FILES} after counting down the latch, so that the
+   * final flush is not delayed until the current poll times out.
    */
   default void persistFilesFromQueueInBatches(
       final BlockingQueue<FileData> completedFiles,
@@ -74,7 +84,7 @@ public interface DataExporter {
     try {
       while (analysisFinished.getCount() > 0 || !completedFiles.isEmpty()) {
         final FileData fileData = completedFiles.poll(100, TimeUnit.MILLISECONDS);
-        if (fileData == null) {
+        if (fileData == null || fileData == END_OF_FILES) {
           continue;
         }
         batch.add(fileData);

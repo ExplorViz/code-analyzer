@@ -849,8 +849,10 @@ public class AnalysisService {
       analysisFailure = e;
       throw e;
     } finally {
-      // Always release the persist thread, also when the analysis failed or was cancelled.
+      // Always release the persist thread, also when the analysis failed or was cancelled. The
+      // marker wakes it right away instead of after its poll timeout, which adds up over commits.
       analysisFinished.countDown();
+      completedFiles.offer(DataExporter.END_OF_FILES);
       try {
         persistThread.join();
       } catch (InterruptedException e) {

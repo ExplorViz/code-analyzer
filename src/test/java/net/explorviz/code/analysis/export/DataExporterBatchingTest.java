@@ -60,6 +60,30 @@ class DataExporterBatchingTest {
   }
 
   @Test
+  void endOfFilesMarkerIsNotPersisted() throws InterruptedException {
+    final RecordingExporter exporter = new RecordingExporter();
+    final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
+    final CountDownLatch analysisFinished = new CountDownLatch(1);
+
+    final Thread batcher =
+        Thread.ofVirtual()
+            .start(
+                () ->
+                    exporter.persistFilesFromQueueInBatches(
+                        completedFiles, analysisFinished, 500, 8));
+
+    for (int i = 0; i < 3; i++) {
+      completedFiles.offer(FileData.getDefaultInstance());
+    }
+    analysisFinished.countDown();
+    completedFiles.offer(DataExporter.END_OF_FILES);
+    batcher.join();
+
+    Assertions.assertEquals(List.of(3), exporter.batchSizes);
+    Assertions.assertTrue(completedFiles.isEmpty());
+  }
+
+  @Test
   void largeCommitUsesFullBatchesAndMinimalRemainder() throws InterruptedException {
     final RecordingExporter exporter = new RecordingExporter();
     final BlockingQueue<FileData> completedFiles = new LinkedBlockingQueue<>();
