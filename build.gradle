@@ -48,6 +48,10 @@ dependencies {
     testImplementation 'io.rest-assured:rest-assured'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'io.grpc:grpc-testing'
+    // Reference for the code metrics
+    testImplementation('com.puppycrawl.tools:checkstyle:14.4.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
+    }
 }
 
 group = 'net.explorviz'

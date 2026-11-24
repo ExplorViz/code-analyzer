@@ -13,6 +13,7 @@ import net.explorviz.code.analysis.antlr.generated.java.JavaParser;
 import net.explorviz.code.analysis.antlr.generated.java.JavaParserBaseListener;
 import net.explorviz.code.analysis.handler.JavaFileDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
+import net.explorviz.code.analysis.metrics.java.JavaMetricsCollector;
 import net.explorviz.code.analysis.types.Verification;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -32,6 +33,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   private final org.antlr.v4.runtime.CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private final JavaMetricsCollector metricsCollector = new JavaMetricsCollector();
 
   /**
    * Scopes of declared type variables (innermost first). Type variables are never qualified by
@@ -55,6 +57,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void enterCompilationUnit(final JavaParser.CompilationUnitContext ctx) {
+    metricsCollector.enterFile(ctx);
     final int sloc = getSloc(tokens);
     final int cloc = getCloc(ctx);
 
@@ -73,6 +76,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
     addImportAndClassCountMetrics(fileDataHandler);
+    metricsCollector.exitFile(fileDataHandler);
   }
 
   @Override
@@ -108,6 +112,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     final String fqn = buildFqn(className);
 
     fileDataHandler.enterClass(className, fqn);
+    metricsCollector.enterClass();
 
     final List<? extends ParserRuleContext> typeModifiers = getTypeModifiers(ctx);
     final boolean isAbstract = hasModifier(typeModifiers, "abstract");
@@ -146,6 +151,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void exitClassDeclaration(final JavaParser.ClassDeclarationContext ctx) {
+    metricsCollector.exitClass(fileDataHandler.getCurrentClassData(), ctx);
     fileDataHandler.leaveClass();
     typeParameterScopes.pop();
   }
@@ -157,6 +163,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     final String fqn = buildFqn(interfaceName);
 
     fileDataHandler.enterClass(interfaceName, fqn);
+    metricsCollector.enterClass();
     fileDataHandler.getCurrentClassData().setIsInterface();
 
     addModifiers(getTypeModifiers(ctx));
@@ -174,6 +181,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void exitInterfaceDeclaration(final JavaParser.InterfaceDeclarationContext ctx) {
+    metricsCollector.exitClass(fileDataHandler.getCurrentClassData(), ctx);
     fileDataHandler.leaveClass();
     typeParameterScopes.pop();
   }
@@ -185,6 +193,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     final String fqn = buildFqn(enumName);
 
     fileDataHandler.enterClass(enumName, fqn);
+    metricsCollector.enterClass();
     fileDataHandler.getCurrentClassData().setIsEnum();
 
     addModifiers(getTypeModifiers(ctx));
@@ -194,6 +203,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void exitEnumDeclaration(final JavaParser.EnumDeclarationContext ctx) {
+    metricsCollector.exitClass(fileDataHandler.getCurrentClassData(), ctx);
     fileDataHandler.leaveClass();
     typeParameterScopes.pop();
   }
@@ -209,6 +219,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     final String fqn = buildFqn(recordName);
 
     fileDataHandler.enterClass(recordName, fqn);
+    metricsCollector.enterClass();
     fileDataHandler.getCurrentClassData().setIsClass();
     fileDataHandler.getCurrentClassData().addModifier("record");
 
@@ -245,6 +256,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     if (ctx.identifier() == null) {
       return;
     }
+    metricsCollector.exitClass(fileDataHandler.getCurrentClassData(), ctx);
     fileDataHandler.leaveClass();
     typeParameterScopes.pop();
   }
@@ -277,6 +289,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     }
     constructor.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     constructor.addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
+    metricsCollector.addConstructor(constructor, ctx, ctx.constructorBody);
   }
 
   @Override
@@ -298,6 +311,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     final String fqn = buildFqn(annotationName);
 
     fileDataHandler.enterClass(annotationName, fqn);
+    metricsCollector.enterClass();
     fileDataHandler.getCurrentClassData().setIsInterface();
     fileDataHandler.getCurrentClassData().addModifier("annotation");
 
@@ -308,6 +322,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
   @Override
   public void exitAnnotationTypeDeclaration(final JavaParser.AnnotationTypeDeclarationContext ctx) {
+    metricsCollector.exitClass(fileDataHandler.getCurrentClassData(), ctx);
     fileDataHandler.leaveClass();
   }
 
@@ -352,6 +367,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
     final String anonymousName = "Anonymous$" + (fileDataHandler.getClassCount() + 1);
     final String fqn = buildFqn(anonymousName);
     fileDataHandler.enterAnonymousClass(anonymousName, fqn);
+    metricsCollector.enterClass();
     fileDataHandler.getCurrentClassData().addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     fileDataHandler.getCurrentClassData().addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
   }
@@ -359,6 +375,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
   @Override
   public void exitClassCreatorRest(final JavaParser.ClassCreatorRestContext ctx) {
     if (ctx.classBody() != null) {
+      metricsCollector.exitClass(fileDataHandler.getCurrentClassData(), ctx);
       fileDataHandler.leaveAnonymousClass();
     }
   }
@@ -429,6 +446,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
+    metricsCollector.addMethod(methodData, ctx, ctx.methodBody());
   }
 
   @Override
@@ -577,6 +595,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
+    metricsCollector.addMethod(methodData, body, body.methodBody());
   }
 
   private void exitInterfaceMethod(final JavaParser.InterfaceCommonBodyDeclarationContext body) {
@@ -617,6 +636,7 @@ public class JavaFileDataListener extends JavaParserBaseListener implements Comm
 
     constructor.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     constructor.addMetric(LINE_COUNT, String.valueOf(getLoc(ctx)));
+    metricsCollector.addConstructor(constructor, ctx, ctx.constructorBody);
   }
 
   @Override

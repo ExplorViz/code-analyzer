@@ -56,35 +56,33 @@ class AnalysisServiceCommitRangeTest {
       writeAndCommit(sourceGit, "v2");
     }
 
-    try (Git ignored =
-        Git.cloneRepository()
-            .setURI(sourceDir.toURI().toString())
-            .setDirectory(shallowDir)
-            .setDepth(1)
-            .call()) {
-      try (Git shallowGit = Git.open(shallowDir);
-          Repository shallowRepository = shallowGit.getRepository()) {
-        final RevCommit shallowTip = shallowGit.log().setMaxCount(1).call().iterator().next();
+    Git.cloneRepository()
+        .setURI(sourceDir.toURI().toString())
+        .setDirectory(shallowDir)
+        .setDepth(1)
+        .call()
+        .close();
 
-        Assertions.assertTrue(
-            analysisService.isShallowBoundaryCommit(shallowRepository, shallowTip));
-        Assertions.assertTrue(
-            analysisService.shouldExcludeAsShallowCloneBoundary(shallowRepository, shallowTip));
+    try (Git shallowGit = Git.open(shallowDir);
+        Repository shallowRepository = shallowGit.getRepository()) {
+      final RevCommit shallowTip = shallowGit.log().setMaxCount(1).call().iterator().next();
 
-        final List<CommitWalkEntry> commitsInRange =
-            List.of(
-                new CommitWalkEntry(shallowTip.getName(), shallowTip.getCommitTime(), List.of()));
+      Assertions.assertTrue(analysisService.isShallowBoundaryCommit(shallowRepository, shallowTip));
+      Assertions.assertTrue(
+          analysisService.shouldExcludeAsShallowCloneBoundary(shallowRepository, shallowTip));
 
-        final AnalysisService.CommitRangeSelection adjustedSelection =
-            analysisService.adjustSkipForShallowCloneBoundary(
-                shallowRepository,
-                commitsInRange,
-                new AnalysisService.CommitRangeSelection(1, 0),
-                configWithLimit(1));
+      final List<CommitWalkEntry> commitsInRange =
+          List.of(new CommitWalkEntry(shallowTip.getName(), shallowTip.getCommitTime(), List.of()));
 
-        Assertions.assertEquals(1, adjustedSelection.commitsToSkipBeforeAnalyzing());
-        Assertions.assertEquals(0, adjustedSelection.commitsToAnalyze());
-      }
+      final AnalysisService.CommitRangeSelection adjustedSelection =
+          analysisService.adjustSkipForShallowCloneBoundary(
+              shallowRepository,
+              commitsInRange,
+              new AnalysisService.CommitRangeSelection(1, 0),
+              configWithLimit(1));
+
+      Assertions.assertEquals(1, adjustedSelection.commitsToSkipBeforeAnalyzing());
+      Assertions.assertEquals(0, adjustedSelection.commitsToAnalyze());
     }
   }
 

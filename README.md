@@ -175,6 +175,7 @@ Type: Boolean or Empty (defaults to true)
 When enabled, classes, functions, and parameters are included in exported file data.
 When disabled, only file-level metadata and computed metrics are sent.
 Metrics are always computed regardless of this setting.
+The code metrics for Java are described in [docs/java-metrics.md](docs/java-metrics.md).
 
 ### explorviz.gitanalysis.assume-unresolved-types-from-wildcard-imports
 
