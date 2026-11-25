@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import net.explorviz.code.analysis.antlr.generated.java.JavaParser;
+import net.explorviz.code.analysis.metrics.controlflow.NpathPaths;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 

@@ -1,17 +1,13 @@
 package net.explorviz.code.analysis.metrics.java;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.function.Predicate;
 import net.explorviz.code.analysis.antlr.generated.java.JavaParser;
 import net.explorviz.code.analysis.antlr.generated.java.JavaParserListener;
+import net.explorviz.code.analysis.metrics.TreeWalker;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-/**
- * Walks parse trees depth-first while skipping selected subtrees. The walk is iterative because
- * long expressions, e.g. string concatenations, result in trees as deep as the expression is long.
- */
+/** Walks parse trees of Java with listeners while skipping selected subtrees. */
 public final class JavaTreeWalker {
 
   private JavaTreeWalker() {}
@@ -27,24 +23,25 @@ public final class JavaTreeWalker {
       final JavaParserListener listener,
       final ParserRuleContext root,
       final Predicate<ParseTree> skip) {
-    if (root == null || skip.test(root)) {
-      return;
-    }
-    final Deque<Frame> stack = new ArrayDeque<>();
-    enter(listener, root, stack);
-    while (!stack.isEmpty()) {
-      final Frame frame = stack.peek();
-      if (frame.nextChild < frame.context.getChildCount()) {
-        final ParseTree child = frame.context.getChild(frame.nextChild++);
-        if (child instanceof ParserRuleContext childContext && !skip.test(child)) {
-          enter(listener, childContext, stack);
-        }
-      } else {
-        frame.context.exitRule(listener);
-        listener.exitEveryRule(frame.context);
-        stack.pop();
-      }
-    }
+    TreeWalker.walk(
+        root,
+        new TreeWalker.Visitor() {
+          @Override
+          public boolean enter(final ParserRuleContext context) {
+            if (skip.test(context)) {
+              return false;
+            }
+            listener.enterEveryRule(context);
+            context.enterRule(listener);
+            return true;
+          }
+
+          @Override
+          public void exit(final ParserRuleContext context) {
+            context.exitRule(listener);
+            listener.exitEveryRule(context);
+          }
+        });
   }
 
   /** Notifies the listener about every rule below and including {@code root}. */
@@ -67,23 +64,5 @@ public final class JavaTreeWalker {
         || tree instanceof JavaParser.EnumBodyDeclarationsContext
         || tree instanceof JavaParser.EnumConstantsContext
         || tree instanceof JavaParser.RecordBodyContext;
-  }
-
-  private static void enter(
-      final JavaParserListener listener,
-      final ParserRuleContext context,
-      final Deque<Frame> stack) {
-    listener.enterEveryRule(context);
-    context.enterRule(listener);
-    stack.push(new Frame(context));
-  }
-
-  private static final class Frame {
-    private final ParserRuleContext context;
-    private int nextChild;
-
-    private Frame(final ParserRuleContext context) {
-      this.context = context;
-    }
   }
 }

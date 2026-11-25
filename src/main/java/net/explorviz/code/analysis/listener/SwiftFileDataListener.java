@@ -7,6 +7,9 @@ import net.explorviz.code.analysis.antlr.generated.swift.Swift5ParserBaseListene
 import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.handler.SwiftFileDataHandler;
+import net.explorviz.code.analysis.metrics.MetricsCollector;
+import net.explorviz.code.analysis.metrics.swift.SwiftControlFlow;
+import net.explorviz.code.analysis.metrics.swift.SwiftMembers;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
@@ -22,6 +25,8 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private final MetricsCollector metricsCollector =
+      new MetricsCollector(new SwiftControlFlow(), new SwiftMembers());
 
   public SwiftFileDataListener(
       final SwiftFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
@@ -31,6 +36,7 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
 
   @Override
   public void enterTop_level(final Swift5Parser.Top_levelContext ctx) {
+    metricsCollector.enterFile(ctx);
     final int sloc = getSloc(tokens);
     final int cloc = getCloc();
 
@@ -49,6 +55,7 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
     addImportAndClassCountMetrics(fileDataHandler);
+    metricsCollector.exitFile(fileDataHandler);
   }
 
   @Override
@@ -177,6 +184,7 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
 
     classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addClass(classData, ctx);
   }
 
   private void addInheritanceRelations(
@@ -352,6 +360,7 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addFunction(methodData, fileDataHandler.getCurrentClassData(), ctx);
   }
 
   /**
@@ -401,6 +410,7 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addFunction(methodData, fileDataHandler.getCurrentClassData(), ctx);
   }
 
   @Override

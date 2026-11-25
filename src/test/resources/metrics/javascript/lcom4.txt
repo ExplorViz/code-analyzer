@@ -1,0 +1,58 @@
+=== 2
+class A { x = 1; y = 2; a() { this.x++; } b() { this.y++; } }
+=== 1
+class A { x = 1; a() { this.x++; } b() { f(this.x); } }
+=== 1
+class A { #x = 1; a() { this.#x++; } b() { f(this.#x); } }
+=== 2
+class A { x = 1; a() { x++; } b() { this.x++; } }
+=== 1
+class A { static x = 1; a() { A.x++; } b() { this.x++; } }
+=== 2
+class A { x = 1; a() { o.x++; } b() { this.x++; } }
+=== 1
+class A { x = 1; a() { this?.x; } b() { this.x; } }
+=== 1
+class A { x = 1; a() { f(this.x.y.z); } b() { this.x[0] = 1; } }
+=== 1
+class A { x = 1; a() { const { x } = this; } b() { this.x; } }
+=== 1
+class A { x = 1; a() { f(`${this.x}`); } b() { this.x; } }
+=== 1
+class A { x = []; a() { for (const i of this.x) { f(i); } } b() { this.x; } }
+=== 1
+class A {  a() { this.b(); } b() { f(); } }
+=== 1
+class A {  a() { A.b(); } b() { f(); } }
+=== 2
+class A {  a() { b(); } b() { f(); } }
+=== 2
+class A {  a() { o.b(); } b() { f(); } }
+=== 1
+class A {  a() { f(this.b); } b() { f(); } }
+=== 1
+class A {  a() { return this.b(); } b() { f(); } }
+=== 1
+class A {  a() { if (c) { this.b(); } else { f(); } } b() { f(); } }
+=== 1
+class A { x = 1; a() { return () => this.x; } b() { this.x; } }
+=== 1
+class A { x = 1; a() { f(() => { this.x = 1; }); } b() { this.x; } }
+=== 2
+class A { x = 1; a() { f(function () { this.x = 1; }); } b() { this.x; } }
+=== 2
+class A { constructor() { this.x = 1; this.y = 2; } a() { this.x; } b() { this.y; } }
+=== 1
+class A { constructor() { this.x = 1; } a() { this.x; } b() { this.x; } }
+=== 1
+class A { h = () => { this.b(); }; a() { this.h(); } b() { f(); } }
+=== 1
+class A { get v() { return this.x; } a() { this.v; } b() { this.x; } }
+=== 2
+class A { x = 1; a() { class B { m() { this.x; } } } b() { this.x; } }
+=== 3
+class A { get v() { return 1; } a() { f(); } b() { g(); } }
+=== 2
+class A { a2() { } a() { f(); } b() { g(); } }
+=== 0
+class A { x = 1; }

@@ -4,12 +4,15 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import net.explorviz.code.analysis.antlr.generated.rust.RustParser;
 import net.explorviz.code.analysis.antlr.generated.rust.RustParserBaseListener;
 import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.handler.RustFileDataHandler;
+import net.explorviz.code.analysis.metrics.MetricsCollector;
+import net.explorviz.code.analysis.metrics.rust.RustControlFlow;
+import net.explorviz.code.analysis.metrics.rust.RustMembers;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -26,6 +29,8 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private final MetricsCollector metricsCollector =
+      new MetricsCollector(new RustControlFlow(), new RustMembers());
 
   /** Fqns of the types of the enclosing {@code impl} blocks, innermost first. */
   private final Deque<String> implTypeStack = new ArrayDeque<>();
@@ -44,7 +49,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
       String functionKey,
       String returnType,
       MethodDataHandler fallback,
-      Consumer<MethodDataHandler> populate) {}
+      BiConsumer<MethodDataHandler, ClassDataHandler> populate) {}
 
   public RustFileDataListener(
       final RustFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
@@ -54,6 +59,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
 
   @Override
   public void enterCrate(final RustParser.CrateContext ctx) {
+    metricsCollector.enterFile(ctx);
     final int sloc = getSloc(tokens);
     final int cloc = getCloc();
 
@@ -73,6 +79,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
     addImportAndClassCountMetrics(fileDataHandler);
+    metricsCollector.exitFile(fileDataHandler);
   }
 
   @Override
@@ -112,6 +119,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
       classData.setIsStruct();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
     }
   }
 
@@ -137,6 +145,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
       classData.setIsStruct();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
     }
   }
 
@@ -162,6 +171,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
       classData.setIsEnum();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
     }
   }
 
@@ -197,6 +207,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
       classData.setIsInterface();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
     }
   }
 
@@ -222,6 +233,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
       classData.setIsStruct();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
     }
   }
 
@@ -272,11 +284,13 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
         }
       } else if (classData != null) {
         fileDataHandler.removeGlobalFunction(member.fallback());
+        metricsCollector.removeFunction(member.fallback());
         member
             .populate()
             .accept(
                 classData.addMethod(
-                    member.functionName(), member.functionKey(), member.returnType()));
+                    member.functionName(), member.functionKey(), member.returnType()),
+                classData);
       }
     }
     pendingImplMembers.clear();
@@ -302,14 +316,15 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
     functionCount++;
     final String functionName = ctx.identifier().getText();
     final String returnType = extractReturnType(ctx);
-    final Consumer<MethodDataHandler> populate =
-        methodData -> {
+    final BiConsumer<MethodDataHandler, ClassDataHandler> populate =
+        (methodData, owner) -> {
           addFunctionParameters(methodData, ctx);
           if (ctx.start != null && ctx.stop != null) {
             methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
           }
           methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
           methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+          metricsCollector.addFunction(methodData, owner, ctx);
         };
     final String functionKey = functionName + "#" + extractParameterTypes(ctx).hashCode();
 
@@ -318,7 +333,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
       // Added as a file-level function for now, moved to the type once the walk is done.
       final MethodDataHandler fallback =
           fileDataHandler.addGlobalFunction(functionName, returnType);
-      populate.accept(fallback);
+      populate.accept(fallback, null);
       if (!implTypeFqn.isEmpty()) {
         pendingImplMembers.add(
             new PendingImplMember(
@@ -329,9 +344,9 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
 
     final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
     if (classData != null) {
-      populate.accept(classData.addMethod(functionName, functionKey, returnType));
+      populate.accept(classData.addMethod(functionName, functionKey, returnType), classData);
     } else {
-      populate.accept(fileDataHandler.addGlobalFunction(functionName, returnType));
+      populate.accept(fileDataHandler.addGlobalFunction(functionName, returnType), null);
     }
   }
 

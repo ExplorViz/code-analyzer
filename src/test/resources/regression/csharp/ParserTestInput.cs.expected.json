@@ -42,7 +42,10 @@
         }],
         "metrics": {
           "sloc": 4.0,
-          "lineCount": 4.0
+          "lineCount": 4.0,
+          "cyclomatic_complexity": 1.0,
+          "npath_complexity": 0.0,
+          "nestedBlockDepth": 1.0
         },
         "startLine": 116,
         "endLine": 119
@@ -51,14 +54,20 @@
         "returnType": "int",
         "metrics": {
           "sloc": 4.0,
-          "lineCount": 4.0
+          "lineCount": 4.0,
+          "cyclomatic_complexity": 1.0,
+          "npath_complexity": 1.0,
+          "nestedBlockDepth": 1.0
         },
         "startLine": 121,
         "endLine": 124
       }],
       "metrics": {
         "sloc": 12.0,
-        "lineCount": 14.0
+        "lineCount": 14.0,
+        "cyclomatic_complexity": 2.0,
+        "cyclomatic_complexity_weighted": 1.0,
+        "LCOM4": 1.0
       }
     }, {
       "name": "NestedInterface",
@@ -68,14 +77,19 @@
         "returnType": "void",
         "metrics": {
           "sloc": 1.0,
-          "lineCount": 1.0
+          "lineCount": 1.0,
+          "cyclomatic_complexity": 1.0,
+          "npath_complexity": 0.0
         },
         "startLine": 130,
         "endLine": 130
       }],
       "metrics": {
         "sloc": 4.0,
-        "lineCount": 4.0
+        "lineCount": 4.0,
+        "cyclomatic_complexity": 1.0,
+        "cyclomatic_complexity_weighted": 1.0,
+        "LCOM4": 0.0
       }
     }, {
       "name": "NestedEnum",
@@ -83,7 +97,10 @@
       "enumValues": ["Alpha", "Beta", "Gamma"],
       "metrics": {
         "sloc": 6.0,
-        "lineCount": 6.0
+        "lineCount": 6.0,
+        "cyclomatic_complexity": 0.0,
+        "cyclomatic_complexity_weighted": 0.0,
+        "LCOM4": 0.0
       }
     }],
     "functions": [{
@@ -91,7 +108,10 @@
       "isConstructor": true,
       "metrics": {
         "sloc": 4.0,
-        "lineCount": 4.0
+        "lineCount": 4.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 36,
       "endLine": 39
@@ -108,7 +128,10 @@
       }],
       "metrics": {
         "sloc": 5.0,
-        "lineCount": 5.0
+        "lineCount": 5.0,
+        "cyclomatic_complexity": 2.0,
+        "npath_complexity": 2.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 42,
       "endLine": 46
@@ -117,7 +140,10 @@
       "returnType": "void",
       "metrics": {
         "sloc": 7.0,
-        "lineCount": 7.0
+        "lineCount": 7.0,
+        "cyclomatic_complexity": 2.0,
+        "npath_complexity": 2.0,
+        "nestedBlockDepth": 2.0
       },
       "startLine": 48,
       "endLine": 54
@@ -126,7 +152,10 @@
       "returnType": "string",
       "metrics": {
         "sloc": 4.0,
-        "lineCount": 4.0
+        "lineCount": 4.0,
+        "cyclomatic_complexity": 2.0,
+        "npath_complexity": 2.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 56,
       "endLine": 59
@@ -139,7 +168,10 @@
       }],
       "metrics": {
         "sloc": 4.0,
-        "lineCount": 4.0
+        "lineCount": 4.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 1.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 61,
       "endLine": 64
@@ -176,7 +208,10 @@
       }],
       "metrics": {
         "sloc": 36.0,
-        "lineCount": 39.0
+        "lineCount": 39.0,
+        "cyclomatic_complexity": 14.0,
+        "npath_complexity": 328.0,
+        "nestedBlockDepth": 4.0
       },
       "startLine": 66,
       "endLine": 104
@@ -185,14 +220,20 @@
       "returnType": "int",
       "metrics": {
         "sloc": 4.0,
-        "lineCount": 4.0
+        "lineCount": 4.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 1.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 106,
       "endLine": 109
     }],
     "metrics": {
       "sloc": 96.0,
-      "lineCount": 122.0
+      "lineCount": 122.0,
+      "cyclomatic_complexity": 23.0,
+      "cyclomatic_complexity_weighted": 3.2857142857142856,
+      "LCOM4": 4.0
     }
   }, {
     "name": "AbstractBase",
@@ -210,7 +251,10 @@
       }],
       "metrics": {
         "sloc": 4.0,
-        "lineCount": 4.0
+        "lineCount": 4.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 147,
       "endLine": 150
@@ -219,7 +263,10 @@
       "returnType": "int",
       "metrics": {
         "sloc": 4.0,
-        "lineCount": 4.0
+        "lineCount": 4.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 1.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 152,
       "endLine": 155
@@ -228,14 +275,19 @@
       "returnType": "int",
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0
       },
       "startLine": 157,
       "endLine": 157
     }],
     "metrics": {
       "sloc": 13.0,
-      "lineCount": 16.0
+      "lineCount": 16.0,
+      "cyclomatic_complexity": 3.0,
+      "cyclomatic_complexity_weighted": 1.0,
+      "LCOM4": 1.0
     }
   }, {
     "name": "ISerializableMarker",
@@ -245,14 +297,19 @@
       "returnType": "void",
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0
       },
       "startLine": 160,
       "endLine": 160
     }],
     "metrics": {
       "sloc": 1.0,
-      "lineCount": 1.0
+      "lineCount": 1.0,
+      "cyclomatic_complexity": 1.0,
+      "cyclomatic_complexity_weighted": 1.0,
+      "LCOM4": 0.0
     }
   }, {
     "name": "IRunnable",
@@ -262,14 +319,19 @@
       "returnType": "void",
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0
       },
       "startLine": 161,
       "endLine": 161
     }],
     "metrics": {
       "sloc": 1.0,
-      "lineCount": 1.0
+      "lineCount": 1.0,
+      "cyclomatic_complexity": 1.0,
+      "cyclomatic_complexity_weighted": 1.0,
+      "LCOM4": 0.0
     }
   }, {
     "name": "ICallable",
@@ -279,14 +341,19 @@
       "returnType": "string",
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0
       },
       "startLine": 162,
       "endLine": 162
     }],
     "metrics": {
       "sloc": 1.0,
-      "lineCount": 1.0
+      "lineCount": 1.0,
+      "cyclomatic_complexity": 1.0,
+      "cyclomatic_complexity_weighted": 1.0,
+      "LCOM4": 0.0
     }
   }, {
     "name": "TopLevelEnum",
@@ -294,7 +361,10 @@
     "enumValues": ["One", "Two", "Three"],
     "metrics": {
       "sloc": 1.0,
-      "lineCount": 1.0
+      "lineCount": 1.0,
+      "cyclomatic_complexity": 0.0,
+      "cyclomatic_complexity_weighted": 0.0,
+      "LCOM4": 0.0
     }
   }, {
     "name": "ModuleHelper",
@@ -304,7 +374,10 @@
       "returnType": "void",
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 168,
       "endLine": 168
@@ -313,7 +386,10 @@
       "returnType": "void",
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 171,
       "endLine": 171
@@ -327,7 +403,10 @@
       }],
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 173,
       "endLine": 173
@@ -344,7 +423,10 @@
       }],
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 175,
       "endLine": 175
@@ -358,7 +440,10 @@
       }],
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 1.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 178,
       "endLine": 178
@@ -376,7 +461,10 @@
       }],
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 180,
       "endLine": 180
@@ -393,7 +481,10 @@
       }],
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 1.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 182,
       "endLine": 182
@@ -411,7 +502,10 @@
       }],
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 1.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 184,
       "endLine": 184
@@ -424,7 +518,10 @@
       }],
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 187,
       "endLine": 187
@@ -438,14 +535,20 @@
       }],
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 0.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 189,
       "endLine": 189
     }],
     "metrics": {
       "sloc": 13.0,
-      "lineCount": 25.0
+      "lineCount": 25.0,
+      "cyclomatic_complexity": 10.0,
+      "cyclomatic_complexity_weighted": 1.0,
+      "LCOM4": 5.0
     }
   }, {
     "name": "Result",
@@ -459,14 +562,20 @@
       "returnType": "int",
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 1.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 197,
       "endLine": 197
     }],
     "metrics": {
       "sloc": 5.0,
-      "lineCount": 6.0
+      "lineCount": 6.0,
+      "cyclomatic_complexity": 1.0,
+      "cyclomatic_complexity_weighted": 1.0,
+      "LCOM4": 1.0
     }
   }, {
     "name": "Result",
@@ -480,14 +589,20 @@
       "returnType": "T",
       "metrics": {
         "sloc": 1.0,
-        "lineCount": 1.0
+        "lineCount": 1.0,
+        "cyclomatic_complexity": 1.0,
+        "npath_complexity": 1.0,
+        "nestedBlockDepth": 1.0
       },
       "startLine": 204,
       "endLine": 204
     }],
     "metrics": {
       "sloc": 5.0,
-      "lineCount": 6.0
+      "lineCount": 6.0,
+      "cyclomatic_complexity": 1.0,
+      "cyclomatic_complexity_weighted": 1.0,
+      "LCOM4": 1.0
     }
   }],
   "metrics": {
@@ -496,6 +611,8 @@
     "functionCount": 28.0,
     "variableCount": 10.0,
     "importCount": 3.0,
-    "classCount": 12.0
+    "classCount": 12.0,
+    "cyclomatic_complexity": 44.0,
+    "cyclomatic_complexity_weighted": 1.5714285714285714
   }
 }

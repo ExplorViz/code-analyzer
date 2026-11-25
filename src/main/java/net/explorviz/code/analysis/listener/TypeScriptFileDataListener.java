@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import net.explorviz.code.analysis.antlr.generated.typescript.TypeScriptParser;
 import net.explorviz.code.analysis.antlr.generated.typescript.TypeScriptParserBaseListener;
+import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.handler.TypeScriptFileDataHandler;
+import net.explorviz.code.analysis.metrics.MetricsCollector;
+import net.explorviz.code.analysis.metrics.typescript.TypeScriptControlFlow;
+import net.explorviz.code.analysis.metrics.typescript.TypeScriptMembers;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
@@ -24,6 +28,10 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private final MetricsCollector metricsCollector =
+      new MetricsCollector(
+          new TypeScriptControlFlow(arrow -> extractArrowFunctionName(arrow) != null),
+          new TypeScriptMembers());
 
   public TypeScriptFileDataListener(
       final TypeScriptFileDataHandler fileDataHandler,
@@ -36,6 +44,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
 
   @Override
   public void enterProgram(final TypeScriptParser.ProgramContext ctx) {
+    metricsCollector.enterFile(ctx);
     final int sloc = getSloc(tokens);
     final int cloc = getCloc(ctx);
 
@@ -54,6 +63,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
     addImportAndClassCountMetrics(fileDataHandler);
+    metricsCollector.exitFile(fileDataHandler);
   }
 
   @Override
@@ -100,6 +110,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
 
         classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
         classData.addMetric(LINE_COUNT, String.valueOf(classLoc));
+        metricsCollector.addClass(classData, ctx);
 
         if (ctx.classHeritage() != null && ctx.classHeritage().classExtendsClause() != null) {
           final String superClassFqn =
@@ -145,6 +156,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
         final int interfaceLoc = calculateLoc(ctx);
         classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
         classData.addMetric(LINE_COUNT, String.valueOf(interfaceLoc));
+        metricsCollector.addClass(classData, ctx);
 
         if (ctx.interfaceExtendsClause() != null) {
           for (final TypeScriptParser.TypeReferenceContext typeRef :
@@ -227,6 +239,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
       }
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
     }
 
     LOGGER.atTrace().addArgument(enumName).log("Enum: {}");
@@ -265,6 +278,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
       classData.addModifier("typealias");
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
     }
   }
 
@@ -291,7 +305,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
     final var classData = fileDataHandler.getCurrentClassData();
     if (classData != null) {
       final MethodDataHandler methodData = classData.addMethod(methodName, methodFqn, returnType);
-      populateMethod(methodData, ctx, parameters, async);
+      populateMethod(methodData, fileDataHandler.getCurrentClassData(), ctx, parameters, async);
 
       LOGGER.atTrace().addArgument(methodName).log("Class method: {}");
     }
@@ -311,7 +325,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
       final String constructorFqn =
           fileDataHandler.buildMethodFqn("constructor", extractParameterTypes(parameters));
       final MethodDataHandler methodData = classData.addConstructor("constructor", constructorFqn);
-      populateMethod(methodData, ctx, parameters, false);
+      populateMethod(methodData, classData, ctx, parameters, false);
 
       LOGGER.atTrace().log("Constructor detected");
     }
@@ -334,13 +348,13 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
           fileDataHandler.buildMethodFqn(functionName, extractParameterTypes(parameters));
       final var methodData =
           fileDataHandler.getCurrentClassData().addMethod(functionName, functionFqn, returnType);
-      populateMethod(methodData, ctx, parameters, async);
+      populateMethod(methodData, fileDataHandler.getCurrentClassData(), ctx, parameters, async);
 
       LOGGER.atTrace().addArgument(functionName).log("Function inside class: {}");
     } else {
       final MethodDataHandler methodHandler =
           fileDataHandler.addGlobalFunction(functionName, returnType);
-      populateMethod(methodHandler, ctx, parameters, async);
+      populateMethod(methodHandler, null, ctx, parameters, async);
 
       LOGGER.atTrace().addArgument(functionName).log("Global function: {}");
     }
@@ -370,13 +384,13 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
           fileDataHandler.buildMethodFqn(functionName, extractParameterTypes(parameters));
       final var methodData =
           fileDataHandler.getCurrentClassData().addMethod(functionName, functionFqn, returnType);
-      populateMethod(methodData, ctx, parameters, async);
+      populateMethod(methodData, fileDataHandler.getCurrentClassData(), ctx, parameters, async);
 
       LOGGER.atTrace().addArgument(functionName).log("Arrow function inside class: {}");
     } else {
       final MethodDataHandler methodHandler =
           fileDataHandler.addGlobalFunction(functionName, returnType);
-      populateMethod(methodHandler, ctx, parameters, async);
+      populateMethod(methodHandler, null, ctx, parameters, async);
 
       LOGGER.atTrace().addArgument(functionName).log("Global arrow function: {}");
     }
@@ -389,6 +403,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
 
   private void populateMethod(
       final MethodDataHandler methodData,
+      final ClassDataHandler owner,
       final ParserRuleContext ctx,
       final List<ParameterInfo> parameters,
       final boolean async) {
@@ -404,6 +419,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
     final int methodLoc = calculateLoc(ctx);
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(methodLoc));
+    metricsCollector.addFunction(methodData, owner, ctx);
   }
 
   private List<ParameterInfo> extractParameters(
@@ -577,7 +593,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
    * (callbacks passed as arguments, default parameter values, object literal values, ...) are
    * anonymous and yield {@code null}.
    */
-  private String extractArrowFunctionName(
+  private static String extractArrowFunctionName(
       final TypeScriptParser.ArrowFunctionDeclarationContext ctx) {
     ParserRuleContext child = ctx;
     ParserRuleContext parent = ctx.getParent();
@@ -589,7 +605,9 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
     if (parent instanceof TypeScriptParser.VariableDeclarationContext variableDeclaration) {
       final List<TypeScriptParser.SingleExpressionContext> expressions =
           variableDeclaration.singleExpression();
+      // The grammar also parses the call f(() => ...) as a declaration of f, but without "=".
       if (variableDeclaration.identifierOrKeyWord() != null
+          && variableDeclaration.Assign() != null
           && !expressions.isEmpty()
           && expressions.get(expressions.size() - 1) == child) {
         return variableDeclaration.identifierOrKeyWord().getText();

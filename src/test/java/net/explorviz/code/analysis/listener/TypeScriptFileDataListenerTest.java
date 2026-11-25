@@ -57,6 +57,36 @@ class TypeScriptFileDataListenerTest {
   }
 
   @Test
+  void statementsAreNoExpressions() {
+    final String source =
+        """
+        export default function f(a) {
+          let b
+          if (a) {
+            return a;
+          } else {
+            try { g(() => { while (a) { h(); } }); } catch (e) { throw e; }
+          }
+          return g(a);
+        }
+        """;
+    for (final String fileName : List.of("a.js", "a.ts")) {
+      final FileData fileData = parse(source, fileName);
+      assertEquals(List.of("f"), functionNames(fileData), fileName);
+      final FunctionData function = fileData.getFunctions(0);
+      assertEquals(4.0, function.getMetricsOrThrow("cyclomatic_complexity"), fileName);
+      assertEquals(5.0, function.getMetricsOrThrow("nestedBlockDepth"), fileName);
+    }
+  }
+
+  @Test
+  void genericCallsAreReturned() {
+    final FileData fileData =
+        parse("function f(a) { if (a) { return g<A[]>(a); } return h<A>(a); }", "a.ts");
+    assertEquals(2.0, fileData.getFunctions(0).getMetricsOrThrow("cyclomatic_complexity"));
+  }
+
+  @Test
   void typesWithTheSameFqnAreAllKept() {
     final String source =
         """

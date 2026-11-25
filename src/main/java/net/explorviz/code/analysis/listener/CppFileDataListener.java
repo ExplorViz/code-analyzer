@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import net.explorviz.code.analysis.antlr.generated.cpp.CPP14Parser;
 import net.explorviz.code.analysis.antlr.generated.cpp.CPP14ParserBaseListener;
+import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.CppFileDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
+import net.explorviz.code.analysis.metrics.MetricsCollector;
+import net.explorviz.code.analysis.metrics.cpp.CppControlFlow;
+import net.explorviz.code.analysis.metrics.cpp.CppMembers;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
@@ -21,6 +25,8 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private final MetricsCollector metricsCollector =
+      new MetricsCollector(new CppControlFlow(), new CppMembers());
 
   public CppFileDataListener(
       final CppFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
@@ -30,6 +36,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
 
   @Override
   public void enterTranslationUnit(final CPP14Parser.TranslationUnitContext ctx) {
+    metricsCollector.enterFile(ctx);
     // Calculate total source SLOC and CLOC for the entire file
     final int sloc = getSloc(tokens);
     final int cloc = getCloc(ctx);
@@ -52,6 +59,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
     addImportAndClassCountMetrics(fileDataHandler);
+    metricsCollector.exitFile(fileDataHandler);
   }
 
   /** Scans (hidden-channel) tokens for #include directives and adds them as imports. */
@@ -165,6 +173,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
       final int classLoc = calculateLoc(ctx);
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(classLoc));
+      metricsCollector.addClass(classData, ctx);
 
       // Handle base classes
       if (classHead.baseClause() != null) {
@@ -230,6 +239,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
     classData.addModifier(classKeyText(ctx.classHead()));
     classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addClass(classData, ctx);
     if (ctx.classHead().baseClause() != null) {
       extractBaseClasses(ctx.classHead().baseClause());
     }
@@ -260,6 +270,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
         classData.setIsEnum();
         classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
         classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+        metricsCollector.addClass(classData, ctx);
       }
 
       LOGGER.atTrace().addArgument(enumName).log("Enum: {}");
@@ -354,7 +365,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
         } else {
           methodData = classData.addMethod(functionName, methodKey, returnType);
         }
-        fillFunctionDefinition(methodData, ctx);
+        fillFunctionDefinition(methodData, classData, ctx);
 
         LOGGER.atTrace().addArgument(functionName).log("Class method: {}");
       }
@@ -383,12 +394,13 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
           methodData = classData.putMethod(functionName, methodKey, returnType);
         }
         if (declaration != null) {
+          metricsCollector.removeFunction(declaration);
           // Keep modifiers that only the declaration carries (e.g. virtual, static)
           for (final String modifier : declaration.getProtoBufObject().getModifiersList()) {
             methodData.addModifier(modifier);
           }
         }
-        fillFunctionDefinition(methodData, ctx);
+        fillFunctionDefinition(methodData, classData, ctx);
 
         LOGGER.atTrace().addArgument(qualifiedName).log("Out-of-class method definition: {}");
         return;
@@ -397,7 +409,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
       // The class is not part of this file, keep the definition as a global function
       functionCount++;
       final var methodHandler = fileDataHandler.addGlobalFunction(qualifiedName, returnType);
-      fillFunctionDefinition(methodHandler, ctx);
+      fillFunctionDefinition(methodHandler, null, ctx);
 
       LOGGER.atTrace().addArgument(qualifiedName).log("Out-of-class method definition: {}");
     } else {
@@ -408,6 +420,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
       }
       methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       methodHandler.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addFunction(methodHandler, null, ctx);
 
       addFunctionParameters(methodHandler, ctx.declarator());
 
@@ -417,7 +430,9 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
 
   /** Adds modifiers, parameters, lines and size metrics of a function definition. */
   private void fillFunctionDefinition(
-      final MethodDataHandler methodData, final CPP14Parser.FunctionDefinitionContext ctx) {
+      final MethodDataHandler methodData,
+      final ClassDataHandler owner,
+      final CPP14Parser.FunctionDefinitionContext ctx) {
     addFunctionModifiers(methodData, ctx);
     addFunctionParameters(methodData, ctx.declarator());
     if (ctx.start != null && ctx.stop != null) {
@@ -425,6 +440,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addFunction(methodData, owner, ctx);
   }
 
   /**
@@ -541,6 +557,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
         }
         methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
         methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+        metricsCollector.addDeclaredFunction(methodData, classData);
         continue;
       }
 

@@ -1,5 +1,6 @@
 package net.explorviz.code.analysis.metrics.java.lcom4;
 
+import net.explorviz.code.analysis.metrics.cohesion.DisjointSets;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 /**

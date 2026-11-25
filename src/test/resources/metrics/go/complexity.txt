@@ -1,0 +1,84 @@
+=== f(); g();
+f()
+g()
+=== return 1;
+return 1
+=== if (a) { f(); }
+if a { f() }
+=== if (a) { f(); } else { g(); }
+if a { f() } else { g() }
+=== if (a) { f(); } else if (b) { g(); } else if (c) { h(); } else { i(); }
+if a { f() } else if b { g() } else if c { h() } else { i() }
+=== if (a) { f(); } else if (b) { g(); }
+if x := y(); a { f() } else if b { g() }
+=== if (a) { f(); } else { if (b) { g(); } }
+if a { f() } else { if b { g() } }
+=== if (a) { f(); } if (b) { g(); }
+if a { f() }
+if b { g() }
+=== if (a && b || c && d) { f(); }
+if a && b || c && d { f() }
+=== return a && b && c;
+return a && b && c
+=== x = a && b;
+x = a && b
+=== if (a) { return 1; } return 2;
+if a { return 1 }
+return 2
+=== while (a && b) { f(); }
+for a && b { f() }
+=== for (int i = 0; i < n; i++) { f(); }
+for i := 0; i < n; i++ { f() }
+=== for (X x : xs) { if (x) { f(); } }
+for _, x := range xs { if x { f() } }
+=== for (X x : xs) { while (a) { if (b) { f(); } else { g(); } } }
+for _, x := range xs { for a { if b { f() } else { g() } } }
+=== switch (a) { case 1: f(); break; case 2: if (b) { g(); } break; default: h(); }
+switch a {
+case 1:
+ f()
+case 2:
+ if b { g() }
+default:
+ h()
+}
+=== switch (a) { case 1: f(); break; case 2: g(); break; }
+switch x := a.(type) {
+case int:
+ f()
+case string:
+ g()
+}
+=== switch (a) { case 1, 2 -> f(); default -> g(); }
+switch a {
+case 1, 2:
+ f()
+default:
+ g()
+}
+=== if (a && b) { f(); } else if (c) { g(); } else { h(); }
+switch {
+case a && b:
+ f()
+case c:
+ g()
+default:
+ h()
+}
+=== for (X x : xs) { switch (a) { case 1: while (b) { f(); } break; default: g(); } }
+for _, x := range xs { select {
+case y := <-z:
+ for b { f() }
+default:
+ g()
+} }
+=== x(() -> { if (a) { f(); } });
+x(func() { if a { f() } })
+=== if (a) { } else { f(); }
+if a { } else { f() }
+=== if (a) { if (b) { f(); } g(); if (c) { h(); } }
+if a {
+ if b { f() }
+ g()
+ if c { h() }
+}

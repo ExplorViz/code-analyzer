@@ -1,0 +1,86 @@
+=== f(); g();
+f()
+g()
+=== return 1;
+return 1
+=== if (a) { f(); }
+if a { f() }
+=== if (a) { f(); } else { g(); }
+if a { f() } else { g() }
+=== if (a) { f(); } else if (b) { g(); } else if (c) { h(); } else { i(); }
+if a { f() } else if b { g() } else if let x = c { h() } else { i() }
+=== if (a) { f(); } else if (b) { g(); }
+if a { f() } else if b { g() }
+=== if (a) { f(); } else { if (b) { g(); } }
+if a { f() } else { if b { g() } }
+=== if (a) { f(); } if (b) { g(); }
+if a { f() }
+if b { g() }
+=== if (a && b || c && d) { f(); }
+if a && b || c && d { f() }
+=== return a && b && c;
+return a && b && c
+=== x = a && b;
+x = a ?? b
+=== if (a) { return 1; } return 2;
+guard a else { return 1 }
+return 2
+=== while (a && b) { f(); }
+while a, b { f() }
+=== do { f(); } while (a && b);
+repeat { f() } while a && b
+=== for (X x : xs) { if (x) { f(); } }
+for x in xs { if x { f() } }
+=== for (X x : xs) { while (a) { if (b) { f(); } else { g(); } } }
+for x in xs { while let y = a { if b { f() } else { g() } } }
+=== switch (a) { case 1: f(); break; case 2: if (b) { g(); } break; default: h(); }
+switch a {
+case 1: f()
+case 2: if b { g() }
+default: h()
+}
+=== switch (a) { case 1: f(); break; case 2: g(); break; }
+switch a {
+case .x: f()
+case .y(let z): g()
+}
+=== switch (a) { case 1, 2 -> f(); default -> g(); }
+switch a {
+case 1, 2: f()
+default: g()
+}
+=== for (X x : xs) { switch (a) { case 1: while (b) { f(); } break; default: g(); } }
+for x in xs { switch a {
+case 1: while b { f() }
+default: g()
+} }
+=== switch (a) { case X x when b && c -> f(); default -> g(); }
+switch a {
+case let x where b && c: f()
+default: g()
+}
+=== x = a ? b : c;
+x = a ? b : c
+=== return a ? b : c;
+return a ? b : c
+=== x = a ? b : c ? d : e;
+x = a ? b : c ? d : e
+=== x = a && b ? c : d;
+x = a && b ? c : d
+=== try { f(); } catch (E e) { g(); }
+do { try f() } catch let e as E { g() }
+=== if (a) { f(); } try { g(); } catch (E e) { h(); }
+if a { f() }
+do { try g() } catch { h() }
+=== x(() -> { if (a) { f(); } });
+x { if a { f() } }
+=== x(y -> a && b);
+x { y in a && b }
+=== if (a) { } else { f(); }
+if a { } else { f() }
+=== if (a) { if (b) { f(); } g(); if (c) { h(); } }
+if a {
+ if b { f() }
+ g()
+ if c { h() }
+}

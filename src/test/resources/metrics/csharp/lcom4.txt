@@ -1,0 +1,92 @@
+=== 2
+class A { int x; int y; void a() { x++; } void b() { y++; } }
+=== 1
+class A { int x; void a() { x++; } void b() { f(x); } }
+=== 1
+class A { int x, y; void a() { this.y++; } void b() { y--; } }
+=== 1
+class A { static int x; void a() { A.x++; } void b() { x--; } }
+=== 2
+class A { const int X = 1; void a() { f(X); } void b() { g(X); } }
+=== 2
+class A { static readonly int X = 1; void a() { f(X); } void b() { g(X); } }
+=== 1
+class A { readonly int x = 1; void a() { f(x); } void b() { g(x); } }
+=== 2
+class A { int x; void a() { o.x++; } void b() { x--; } }
+=== 2
+class A { int x; void a() { base.x++; } void b() { x--; } }
+=== 1
+class A {  void a() { b(); } void b() { f(); } }
+=== 1
+class A {  void a() { this.b(); } void b() { f(); } }
+=== 1
+class A {  void a() { A.b(); } void b() { f(); } }
+=== 2
+class A {  void a() { o.b(); } void b() { f(); } }
+=== 2
+class A {  void a() { b(1); } void b() { f(); } }
+=== 1
+class A { void c(int i = 1) { b(); } void a() { c(); } void b() { f(); } }
+=== 1
+class A { void c(params int[] i) { b(); } void a() { c(1, 2); } void b() { f(); } }
+=== 1
+class A {  void a() { f(b); } void b() { f(); } }
+=== 1
+class A {  void a() { f(this.b); } void b() { f(); } }
+=== 2
+class A { int x; void a() { int x = 1; f(x); } void b() { x--; } }
+=== 1
+class A { int x; void a() { { int x = 1; } f(x); } void b() { x--; } }
+=== 2
+class A { int x; void a() { foreach (var x in l) f(x); } void b() { x--; } }
+=== 1
+class A { int x; void a() { foreach (var x in l) f(x); f(x); } void b() { x--; } }
+=== 2
+class A { int x; void a() { for (int x = 0; x < 1; x++) f(x); } void b() { x--; } }
+=== 2
+class A { int x; void a() { try { f(); } catch (E x) { f(x); } } void b() { x--; } }
+=== 2
+class A { int x; void a() { using (var x = f()) { f(x); } } void b() { x--; } }
+=== 2
+class A { int x; void a() { l.Select(x => x); } void b() { x--; } }
+=== 2
+class A { int x; void a() { l.Select((int x) => x); } void b() { x--; } }
+=== 1
+class A { int x; void a() { l.Select(y => x); } void b() { x--; } }
+=== 2
+class A { int x; void a() { f(out var x); g(x); } void b() { x--; } }
+=== 2
+class A { int x; void a() { if (o is T x) f(x); } void b() { x--; } }
+=== 1
+class A { int x; void a() { s = $"{x}"; } void b() { x--; } }
+=== 1
+class A { int x; void a() { this?.x.f(); } void b() { x--; } }
+=== 1
+class A { int P { get; set; } void a() { P = 1; } void b() { f(P); } }
+=== 1
+class A { int x; int P => x; void a() { f(P); } void b() { x--; } }
+=== 2
+class A { int x; int P { get { return x; } } void a() { f(); } void b() { x--; } }
+=== 2
+class A { int x; A() { x = 1; } void a() { f(); } void b() { x--; } }
+=== 1
+class A { int x; void a() { void l(int y) { x = y; } } void b() { x--; } }
+=== 2
+class A { event E e; void a() { f(); } void b() { e += g; } }
+=== 1
+class A { event E e; void a() { e?.Invoke(); } void b() { e += g; } }
+=== 2
+class A { abstract void c(); void a() { f(); } void b() { c(); } }
+=== 0
+interface A { void a(); int P { get; } }
+=== 0
+class A { int x; }
+=== 1
+struct A { int x; int a() => x; int b() => x; }
+=== 2
+class A { int x; int a() => x; int b() { return 1; } }
+=== 1
+class A { int x; int this[int i] { get { return x; } } int a() { return x; } }
+=== 0
+enum A { X, Y }

@@ -1,0 +1,100 @@
+=== 2
+class A { int x; int y; void a() { x++; } void b() { y++; } };
+=== 1
+class A { int x; void a() { x++; } void b() { f(x); } };
+=== 1
+class A { int x; void a() { x = 1; } void b() { return x; } };
+=== 1
+class A { int x, y; void a() { this->y++; } void b() { y--; } };
+=== 1
+class A { int x; void a() { (*this).x++; } void b() { x--; } };
+=== 1
+class A { static int x; void a() { A::x++; } void b() { x--; } };
+=== 1
+class A { static int x; void a() { A::x = 1; } void b() { x--; } };
+=== 2
+class A { static const int X = 1; void a() { f(X); } void b() { g(X); } };
+=== 2
+class A { static constexpr int X = 1; void a() { f(X); } void b() { g(X); } };
+=== 2
+class A { int x; void a() { o.x++; } void b() { x--; } };
+=== 2
+class A { int x; void a() { o->x++; } void b() { x--; } };
+=== 2
+class A { int x; void a() { B::x++; } void b() { x--; } };
+=== 1
+class A {  void a() { b(); } void b() { f(); } };
+=== 1
+class A {  void a() { this->b(); } void b() { f(); } };
+=== 1
+class A {  void a() { A::b(); } void b() { f(); } };
+=== 2
+class A {  void a() { o.b(); } void b() { f(); } };
+=== 2
+class A {  void a() { b(1); } void b() { f(); } };
+=== 1
+class A { void c(int i) { b(); } void a() { c(y); } void b() { f(); } };
+=== 1
+class A { void c(int i) { b(); } void a() { c(1); } void b() { f(); } };
+=== 1
+class A { void c(int i, int j = 1) { b(); } void a() { c(y); } void b() { f(); } };
+=== 1
+class A { int x; void a() { f(x); } void b() { g(x); } };
+=== 1
+class A { int x; void a() { T y(x); } void b() { x--; } };
+=== 1
+class A { int x; void a() { T y = x; } void b() { x--; } };
+=== 1
+class A { std::vector<int> x; void a() { x.push_back(1); } void b() { x.clear(); } };
+=== 1
+class A { int *x; void a() { *x = 1; } void b() { x--; } };
+=== 1
+class A { int x[2]; void a() { x[0] = 1; } void b() { x[1]++; } };
+=== 2
+class A { int x; void a() { int x = 1; f(x); } void b() { x--; } };
+=== 1
+class A { int x; void a() { { int x = 1; } f(x); } void b() { x--; } };
+=== 2
+class A { int x; void a() { for (auto x : l) f(x); } void b() { x--; } };
+=== 2
+class A { int x; void a() { for (int x = 0; x < 1; x++) f(x); } void b() { x--; } };
+=== 1
+class A { int x; void a() { for (auto y : x) f(y); } void b() { x--; } };
+=== 2
+class A { int x; void a() { try { f(); } catch (E &x) { f(x); } } void b() { x--; } };
+=== 1
+class A { int x; void a() { auto l = [this]() { return x; }; } void b() { x--; } };
+=== 2
+class A { int x; void a() { auto l = [](int x) { return x; }; } void b() { x--; } };
+=== 2
+class A { int x; A() : x(1) { x = 2; } ~A() { x = 1; } void a() { f(); } void b() { x--; } };
+=== 2
+class A { virtual void c() = 0; void a() { f(); } void b() { c(); } };
+=== 1
+class A { virtual void c() = 0; void a() { c(); } void b() { c(); } };
+=== 2
+class A { friend void c() { f(); } void a() { f(); } void b() { g(); } };
+=== 0
+struct A { int x; };
+=== 1
+class A { int x; void a(); void b(); };
+void A::a() { x++; }
+void A::b() { x--; }
+=== 2
+class A { int x; void a(); void b(); };
+void A::a() { x++; }
+void A::b() { f(); }
+=== 1
+class A { void a(int i = 1); void b(); };
+void A::a(int i) { f(); }
+void A::b() { a(); }
+=== 0
+class A { void a(); void b(); };
+=== 1
+class A { template <typename T> void a(T t) { x = t; } int x; void b() { x--; } };
+=== 2
+class A { int x; A(); void a() { x++; } void b() { f(); } };
+A::A() { x = 1; }
+=== 1
+class A { int x; A(); void a() { x++; } };
+A::A() { x = 1; }

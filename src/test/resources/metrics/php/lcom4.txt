@@ -1,0 +1,78 @@
+=== 2
+<?php
+class A { private $x; private int $y = 1; function a() { $this->x++; } function b() { $this->y++; } }
+=== 1
+<?php
+class A { private $x; function a() { $this->x++; } function b() { f($this->x); } }
+=== 1
+<?php
+class A { private static $x; function a() { self::$x++; } function b() { static::$x--; } }
+=== 1
+<?php
+class A { private static $x; function a() { A::$x++; } function b() { self::$x--; } }
+=== 2
+<?php
+class A { const X = 1; function a() { f(self::X); } function b() { g(self::X); } }
+=== 2
+<?php
+class A { private $x; function a() { $x++; } function b() { $this->x++; } }
+=== 2
+<?php
+class A { private $x; function a() { $o->x++; } function b() { $this->x++; } }
+=== 1
+<?php
+class A { private $x; function a() { f($this->x->y->z()); } function b() { $this->x[0] = 1; } }
+=== 1
+<?php
+class A { private $x; function a() { f("$this->x"); } function b() { $this->x; } }
+=== 1
+<?php
+class A { private $x; function a() { f("{$this->x}"); } function b() { $this->x; } }
+=== 1
+<?php
+class A {  function a() { $this->b(); } function b() { f(); } }
+=== 1
+<?php
+class A {  function a() { self::b(); } function b() { f(); } }
+=== 1
+<?php
+class A {  function a() { A::b(); } function b() { f(); } }
+=== 2
+<?php
+class A {  function a() { b(); } function b() { f(); } }
+=== 2
+<?php
+class A {  function a() { $o->b(); } function b() { f(); } }
+=== 2
+<?php
+class A {  function a() { parent::b(); } function b() { f(); } }
+=== 1
+<?php
+class A { private $x; function a() { f(function () { $this->x++; }); } function b() { $this->x; } }
+=== 1
+<?php
+class A { private $x; function a() { f(fn() => $this->x); } function b() { $this->x; } }
+=== 2
+<?php
+class A { private $x; private $y; function __construct() { $this->x = $this->y; } function a() { $this->x; } function b() { $this->y; } }
+=== 1
+<?php
+class A { function __construct(private $x) { } function a() { $this->x; } function b() { $this->x; } }
+=== 2
+<?php
+class A { private $x; function a() { f(new class { private $x; function m() { $this->x; } }); } function b() { $this->x; } }
+=== 2
+<?php
+class A { abstract function c(); function a() { f(); } function b() { $this->c(); } }
+=== 2
+<?php
+class A { function c() { } function a() { f(); } function b() { g(); } }
+=== 0
+<?php
+interface A { function a(); }
+=== 1
+<?php
+trait A { private $x; function a() { $this->x; } function b() { $this->x; } }
+=== 1
+<?php
+enum A { case X; function a() { $this->b(); } function b() { f(); } }

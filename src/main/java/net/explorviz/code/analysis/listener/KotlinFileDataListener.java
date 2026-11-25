@@ -7,6 +7,9 @@ import net.explorviz.code.analysis.antlr.generated.kotlin.KotlinParserBaseListen
 import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.KotlinFileDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
+import net.explorviz.code.analysis.metrics.MetricsCollector;
+import net.explorviz.code.analysis.metrics.kotlin.KotlinControlFlow;
+import net.explorviz.code.analysis.metrics.kotlin.KotlinMembers;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
@@ -22,6 +25,8 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private final MetricsCollector metricsCollector =
+      new MetricsCollector(new KotlinControlFlow(), new KotlinMembers());
 
   public KotlinFileDataListener(
       final KotlinFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
@@ -31,11 +36,13 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
 
   @Override
   public void enterKotlinFile(final KotlinParser.KotlinFileContext ctx) {
+    metricsCollector.enterFile(ctx);
     addFileMetrics();
   }
 
   @Override
   public void enterScript(final KotlinParser.ScriptContext ctx) {
+    metricsCollector.enterFile(ctx);
     addFileMetrics();
   }
 
@@ -67,6 +74,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
     addImportAndClassCountMetrics(fileDataHandler);
+    metricsCollector.exitFile(fileDataHandler);
   }
 
   @Override
@@ -106,6 +114,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
 
     classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addClass(classData, ctx);
 
     if (ctx.INTERFACE() != null) {
       classData.setIsInterface();
@@ -247,6 +256,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
       classData.setIsClass();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
       addObjectDelegationRelations(classData, ctx);
     }
   }
@@ -279,6 +289,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
       classData.setIsAnonymousClass();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
       if (ctx.delegationSpecifiers() != null) {
         addDelegationRelations(classData, ctx.delegationSpecifiers().delegationSpecifier(), false);
       }
@@ -302,6 +313,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
       classData.setIsClass();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
     }
   }
 
@@ -431,6 +443,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addFunction(methodData, fileDataHandler.getCurrentClassData(), ctx);
   }
 
   /**
@@ -476,6 +489,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addFunction(methodData, fileDataHandler.getCurrentClassData(), ctx);
   }
 
   private String extractReturnType(final KotlinParser.FunctionDeclarationContext ctx) {

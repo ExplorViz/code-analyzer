@@ -788,7 +788,7 @@ singleExpression
     | generatorFunctionDeclaration                                    # GeneratorsFunctionExpression // ECMAScript 6
     | yieldStatement                                                  # YieldExpression              // ECMAScript 6
     | This                                                            # ThisExpression
-    | identifierName                                                  # IdentifierExpression
+    | {this.notStatementKeyword()}? identifierName ({this.isTypeScript()}? typeGeneric)?              # IdentifierExpression
     | Super                                                           # SuperExpression
     | literal                                                         # LiteralExpression
     | arrayLiteral                                                    # ArrayLiteralExpression
@@ -829,8 +829,8 @@ arrowFunctionParameters
     ;
 
 arrowFunctionBody
-    : singleExpression
-    | '{' functionBody '}'
+    : '{' functionBody '}' // first, since an opening brace never starts an object literal here
+    | singleExpression
     ;
 
 assignmentOperator

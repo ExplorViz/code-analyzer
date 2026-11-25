@@ -1,0 +1,209 @@
+=== 2
+class A:
+    def a(self):
+        self.x += 1
+    def b(self):
+        self.y += 1
+
+=== 1
+class A:
+    def a(self):
+        self.x += 1
+    def b(self):
+        f(self.x)
+
+=== 1
+class A:
+    x = 1
+    def a(self):
+        A.x = 1
+    def b(self):
+        self.x = 2
+
+=== 2
+class A:
+    X = 1
+    def a(self):
+        f(self.X)
+    def b(self):
+        f(self.X)
+
+=== 2
+class A:
+    def a(self):
+        o.x = 1
+    def b(self):
+        self.x = 1
+
+=== 2
+class A:
+    def a(self):
+        x = 1
+    def b(self):
+        self.x = 1
+
+=== 1
+class A:
+    def a(self):
+        f(self.x.y.z)
+    def b(self):
+        self.x[0] = 1
+
+=== 1
+class A:
+    def a(self):
+        return f"{self.x}"
+    def b(self):
+        self.x = 1
+
+=== 2
+class A:
+    def a(self):
+        return "{self.x}"
+    def b(self):
+        self.x = 1
+
+=== 1
+class A:
+    def a(self):
+        self.b()
+    def b(self):
+        f()
+
+=== 1
+class A:
+    def a(self):
+        A.b(self)
+    def b(self):
+        f()
+
+=== 2
+class A:
+    def a(self):
+        b()
+    def b(self):
+        f()
+
+=== 2
+class A:
+    def a(self):
+        o.b()
+    def b(self):
+        f()
+
+=== 1
+class A:
+    def a(self):
+        f(self.b)
+    def b(self):
+        f()
+
+=== 2
+class A:
+    def a(self):
+        self.m()
+    def b(self):
+        self.m()
+
+=== 1
+class A:
+    def a(self):
+        return [i for i in self.x if i]
+    def b(self):
+        self.x = 1
+
+=== 1
+class A:
+    def a(self):
+        f(lambda i: self.x)
+    def b(self):
+        self.x = 1
+
+=== 1
+class A:
+    def a(self):
+        def l():
+            self.x = 1
+        l()
+    def b(self):
+        self.x = 2
+
+=== 2
+class A:
+    def __init__(self):
+        self.x = self.y = 1
+    def a(self):
+        return self.x
+    def b(self):
+        return self.y
+
+=== 3
+class A:
+    @staticmethod
+    def s(x):
+        return x.y
+    def a(self):
+        f()
+    def b(self):
+        return self.x
+
+=== 1
+class A:
+    @property
+    def p(self):
+        return self.x
+    def a(self):
+        return self.p
+    def b(self):
+        return self.x
+
+=== 1
+class A:
+    x = 1
+    @classmethod
+    def c(cls):
+        return cls.x
+    def a(self):
+        self.c()
+    def b(self):
+        return self.x
+
+=== 2
+class A:
+    def c(self):
+        pass
+    def a(self):
+        f()
+    def b(self):
+        g()
+
+=== 2
+class A:
+    def c(self):
+        """Doc"""
+        ...
+    def a(self):
+        f()
+    def b(self):
+        g()
+
+=== 2
+class A:
+    class B:
+        def m(self):
+            self.x = 1
+    def a(self):
+        f()
+    def b(self):
+        self.x = 1
+
+=== 1
+class A:
+    def a(self):
+        await self.b()
+    def b(self):
+        f()
+
+=== 0
+class A:
+    x = 1

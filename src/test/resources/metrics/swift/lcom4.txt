@@ -1,0 +1,238 @@
+=== 2
+class A {
+ var x = 1
+ var y = 2
+ func a() { x += 1 }
+ func b() { y += 1 }
+}
+=== 1
+class A {
+ var x = 1
+ func a() { x += 1 }
+ func b() { f(x) }
+}
+=== 1
+class A {
+ var x = 1
+ func a() { self.x = 2 }
+ func b() { x -= 1 }
+}
+=== 1
+class A {
+ static var x = 1
+ func a() { A.x = 2 }
+ func b() { Self.x = 1 }
+}
+=== 2
+class A {
+ static let x = 1
+ func a() { f(A.x) }
+ func b() { f(Self.x) }
+}
+=== 1
+class A {
+ let x = 1
+ func a() { f(x) }
+ func b() { g(x) }
+}
+=== 2
+class A {
+ var x = 1
+ func a() { o.x = 2 }
+ func b() { x -= 1 }
+}
+=== 1
+class A {
+ var x: T?
+ func a() { x?.f() }
+ func b() { x!.g() }
+}
+=== 1
+class A {
+ 
+ func a() { b() }
+ func b() { f() }
+}
+=== 1
+class A {
+ 
+ func a() { self.b() }
+ func b() { f() }
+}
+=== 2
+class A {
+ 
+ func a() { o.b() }
+ func b() { f() }
+}
+=== 2
+class A {
+ 
+ func a() { b(1) }
+ func b() { f() }
+}
+=== 1
+class A {
+ func c(_ i: Int = 1) { b() }
+ func a() { c() }
+ func b() { f() }
+}
+=== 1
+class A {
+ func c(i: Int, g: () -> Void) { b() }
+ func a() { c(i: 1) { } }
+ func b() { f() }
+}
+=== 1
+class A {
+ 
+ func a() { f(b) }
+ func b() { f() }
+}
+=== 1
+class A {
+ 
+ func a() { f(self.b) }
+ func b() { f() }
+}
+=== 1
+class A {
+ var x = 1
+ func a() { s = "\(x)" }
+ func b() { x -= 1 }
+}
+=== 1
+class A {
+ var x = 1
+ func a() { f { [weak self] in self?.x = 1 } }
+ func b() { x -= 1 }
+}
+=== 1
+class A {
+ var x = 1
+ func a() { f(&x) }
+ func b() { x -= 1 }
+}
+=== 2
+class A {
+ var x = 1
+ func a() { let x = 1
+ f(x) }
+ func b() { x -= 1 }
+}
+=== 1
+class A {
+ var x = 1
+ func a() { let x = x }
+ func b() { x -= 1 }
+}
+=== 1
+class A {
+ var x = 1
+ func a() { if c { let x = 1 }
+ f(x) }
+ func b() { x -= 1 }
+}
+=== 2
+class A {
+ var x = 1
+ func a() { for x in l { f(x) } }
+ func b() { x -= 1 }
+}
+=== 2
+class A {
+ var x = 1
+ func a() { if let x = o { f(x) } }
+ func b() { x -= 1 }
+}
+=== 1
+class A {
+ var x: Int?
+ func a() { if let x = x { f(x) } }
+ func b() { g(x) }
+}
+=== 2
+class A {
+ var x = 1
+ func a() { guard let x = o else { return }
+ f(x) }
+ func b() { x -= 1 }
+}
+=== 2
+class A {
+ var x = 1
+ func a() { switch o { case .p(let x): f(x)
+ default: g() } }
+ func b() { x -= 1 }
+}
+=== 2
+class A {
+ var x = 1
+ func a() { do { try f() } catch let x { f(x) } }
+ func b() { x -= 1 }
+}
+=== 2
+class A {
+ var x = 1
+ func a() { l.map { x in x } }
+ func b() { x -= 1 }
+}
+=== 2
+class A {
+ var x = 1
+ func a() { l.map { (x: Int) in x } }
+ func b() { x -= 1 }
+}
+=== 1
+class A {
+ var x = 1
+ func a() { l.map { $0 + x } }
+ func b() { x -= 1 }
+}
+=== 1
+class A {
+ var x = 1
+ var p: Int { return x }
+ func a() { f(p) }
+ func b() { f(x) }
+}
+=== 1
+class A {
+ var x = 1 { didSet { f() } }
+ func a() { x += 1 }
+ func b() { f(x) }
+}
+=== 2
+class A {
+ var x = 1
+ init() { x = 2 }
+ deinit { x = 1 }
+ func a() { f() }
+ func b() { x -= 1 }
+}
+=== 0
+struct A {
+ var x: Int
+}
+=== 1
+struct A {
+ let x: Int
+ func a() -> Int { x }
+ func b() -> Int { x }
+}
+=== 0
+protocol A {
+ func a()
+}
+=== 2
+class A {
+ var x = 1
+ func a(x: Int) { f(x) }
+ func b() { x -= 1 }
+}
+=== 1
+enum A {
+ case p, q
+ func a() { b() }
+ func b() { f() }
+}

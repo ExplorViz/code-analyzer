@@ -9,6 +9,9 @@ import net.explorviz.code.analysis.antlr.generated.golang.GoParserBaseListener;
 import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.GoFileDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
+import net.explorviz.code.analysis.metrics.MetricsCollector;
+import net.explorviz.code.analysis.metrics.golang.GoControlFlow;
+import net.explorviz.code.analysis.metrics.golang.GoMembers;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +25,8 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private final MetricsCollector metricsCollector =
+      new MetricsCollector(new GoControlFlow(), new GoMembers());
 
   /** Names of the types declared at the top level of this file. */
   private final Set<String> fileTypeNames = new HashSet<>();
@@ -40,6 +45,7 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
 
   @Override
   public void enterSourceFile(final GoParser.SourceFileContext ctx) {
+    metricsCollector.enterFile(ctx);
     collectFileTypeNames(ctx);
 
     final int sloc = getSloc(tokens);
@@ -66,6 +72,7 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
     addImportAndClassCountMetrics(fileDataHandler);
+    metricsCollector.exitFile(fileDataHandler);
   }
 
   @Override
@@ -105,6 +112,7 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
       return;
     }
 
+    metricsCollector.addClass(classData, ctx);
     if (ctx.type_().typeLit() != null) {
       if (ctx.type_().typeLit().structType() != null) {
         classData.setIsStruct();
@@ -159,6 +167,7 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
     }
     methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodHandler.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addFunction(methodHandler, null, ctx);
 
     LOGGER
         .atTrace()
@@ -198,7 +207,7 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
     final String methodFqn = methodName + "#" + extractParameterTypes(ctx.signature()).hashCode();
     final MethodDataHandler methodData = classData.addMethod(methodName, methodFqn, returnType);
     addSignatureParameters(methodData, ctx.signature());
-    setLinesAndMetrics(methodData, ctx);
+    setLinesAndMetrics(methodData, classData, ctx);
   }
 
   /**
@@ -213,18 +222,21 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
     final MethodDataHandler methodData =
         fileDataHandler.addGlobalFunction(qualifiedName, extractReturnType(ctx.signature()));
     addSignatureParameters(methodData, ctx.signature());
-    setLinesAndMetrics(methodData, ctx);
+    setLinesAndMetrics(methodData, null, ctx);
 
     LOGGER.atTrace().addArgument(qualifiedName).log("Method {} on a type declared in another file");
   }
 
   private void setLinesAndMetrics(
-      final MethodDataHandler methodData, final GoParser.MethodDeclContext ctx) {
+      final MethodDataHandler methodData,
+      final ClassDataHandler classData,
+      final GoParser.MethodDeclContext ctx) {
     if (ctx.start != null && ctx.stop != null) {
       methodData.setLines(ctx.start.getLine(), ctx.stop.getLine());
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addFunction(methodData, classData, ctx);
   }
 
   /** Collects the names of the types declared at the top level of the file. */

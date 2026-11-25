@@ -75,6 +75,35 @@ public abstract class TypeScriptParserBase extends Parser {
   }
 
   /**
+   * Semantic predicate: {@code false} iff the upcoming token is a keyword that starts a statement or
+   * clause. Keywords are also identifier names in the grammar, so that {@code if (x)} would
+   * otherwise be parsed as the call of a function {@code if}.
+   */
+  protected boolean notStatementKeyword() {
+    switch (_input.LT(1).getType()) {
+      case TypeScriptParser.If:
+      case TypeScriptParser.Else:
+      case TypeScriptParser.Do:
+      case TypeScriptParser.While:
+      case TypeScriptParser.For:
+      case TypeScriptParser.Switch:
+      case TypeScriptParser.Case:
+      case TypeScriptParser.Break:
+      case TypeScriptParser.Continue:
+      case TypeScriptParser.Return:
+      case TypeScriptParser.Throw:
+      case TypeScriptParser.Try:
+      case TypeScriptParser.Catch:
+      case TypeScriptParser.Finally:
+      case TypeScriptParser.With:
+      case TypeScriptParser.Debugger:
+        return false;
+      default:
+        return true;
+    }
+  }
+
+  /**
    * Semantic predicate: {@code false} iff the upcoming tokens start a type alias ({@code type X =}
    * or {@code type X<}, optionally preceded by {@code declare}). Without it, {@code type X = <T>(x:
    * T) => T} also parses as a variable named {@code type} (or an expression statement {@code

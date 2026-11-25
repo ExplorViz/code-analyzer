@@ -4,9 +4,9 @@ This project is a tool that analyzes a Git repository containing a java project.
 
 ## Build and test prerequisites
 
-Use JDK 25 and the included Gradle 9.7 wrapper. The project uses Quarkus 3.40.1.1 LTS.
-Run `./gradlew build jacocoTestReport` to package the application, run tests and code checks,
-and generate coverage reports.
+Use JDK 25 and the included Gradle 9.7 wrapper.
+The project uses Quarkus 3.40.1.1 LTS.
+Run `./gradlew build jacocoTestReport` to package the application, run tests and code checks, and generate coverage reports.
 
 ## Usage and Run Modes
 
@@ -175,7 +175,7 @@ Type: Boolean or Empty (defaults to true)
 When enabled, classes, functions, and parameters are included in exported file data.
 When disabled, only file-level metadata and computed metrics are sent.
 Metrics are always computed regardless of this setting.
-The code metrics for Java are described in [docs/java-metrics.md](docs/java-metrics.md).
+The code metrics are described in [docs/code-metrics.md](docs/code-metrics.md).
 
 ### explorviz.gitanalysis.assume-unresolved-types-from-wildcard-imports
 

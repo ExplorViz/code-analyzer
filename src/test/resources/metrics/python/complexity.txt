@@ -1,0 +1,124 @@
+=== f(); g();
+f()
+g()
+=== return 1;
+return 1
+=== if (a) { f(); }
+if a:
+    f()
+=== if (a) { f(); } else { g(); }
+if a:
+    f()
+else:
+    g()
+=== if (a) { f(); } else if (b) { g(); } else if (c) { h(); } else { i(); }
+if a:
+    f()
+elif b:
+    g()
+elif c:
+    h()
+else:
+    i()
+=== if (a) { f(); } else if (b) { g(); }
+if a:
+    f()
+elif b:
+    g()
+=== if (a) { f(); } else { if (b) { g(); } }
+if a:
+    f()
+else:
+    if b:
+        g()
+=== if (a) { f(); } if (b) { g(); }
+if a:
+    f()
+if b:
+    g()
+=== if (a && b || c && d) { f(); }
+if a and b or c and d:
+    f()
+=== return a && b && c;
+return a and b and c
+=== x = a && b;
+x = a or b
+=== if (a) { return 1; } return 2;
+if a:
+    return 1
+return 2
+=== while (a && b) { f(); }
+while a and b:
+    f()
+=== for (X x : xs) { if (x) { f(); } }
+for x in xs:
+    if x:
+        f()
+=== for (X x : xs) { while (a) { if (b) { f(); } else { g(); } } }
+for x in xs:
+    while a:
+        if b:
+            f()
+        else:
+            g()
+=== x = a ? b : c;
+x = b if a else c
+=== return a ? b : c;
+return b if a else c
+=== x = a ? b : c ? d : e;
+x = b if a else d if c else e
+=== x = a && b ? c : d;
+x = c if a and b else d
+=== if (a ? b : c) { f(); }
+if (b if a else c):
+    f()
+=== try { f(); } catch (E e) { g(); }
+try:
+    f()
+except E as e:
+    g()
+=== try { if (a) { f(); } } catch (E e) { g(); } catch (F e) { h(); } finally { i(); }
+try:
+    if a:
+        f()
+except E as e:
+    g()
+except F:
+    h()
+finally:
+    i()
+=== if (a) { f(); } try { g(); } catch (E e) { h(); }
+if a:
+    f()
+try:
+    g()
+except E:
+    h()
+=== x(() -> { if (a) { f(); } });
+def y():
+    if a:
+        f()
+x(y)
+=== x(y -> a && b);
+x(lambda y: a and b)
+=== if (a) { } else { f(); }
+if a:
+    pass
+else:
+    f()
+=== if (a) { if (b) { f(); } g(); if (c) { h(); } }
+if a:
+    if b:
+        f()
+    g()
+    if c:
+        h()
+=== synchronized (a) { f(); }
+with a:
+    f()
+=== return f(a ? b : c, d && e);
+return f(b if a else c, d and e)
+=== x = a ? b : c; if (d) { f(); }
+x = b if a else c
+if d:
+    f()

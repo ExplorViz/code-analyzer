@@ -6,6 +6,8 @@ import net.explorviz.code.analysis.antlr.generated.c.CParser;
 import net.explorviz.code.analysis.antlr.generated.c.CParserBaseListener;
 import net.explorviz.code.analysis.handler.CFileDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
+import net.explorviz.code.analysis.metrics.MetricsCollector;
+import net.explorviz.code.analysis.metrics.c.CControlFlow;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -24,6 +26,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private final MetricsCollector metricsCollector = new MetricsCollector(new CControlFlow(), null);
 
   public CFileDataListener(final CFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;
@@ -32,6 +35,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
 
   @Override
   public void enterTranslationUnit(final CParser.TranslationUnitContext ctx) {
+    metricsCollector.enterFile(ctx);
     // File-level SLOC/CLOC/includes are populated by AntlrCParserService via
     // populateLexerMetrics() before the walk (also covers parse-tree failures).
   }
@@ -57,6 +61,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
     addImportAndClassCountMetrics(fileDataHandler);
+    metricsCollector.exitFile(fileDataHandler);
   }
 
   private int getSlocIncludingPreprocessor() {
@@ -278,6 +283,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
         }
         methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
         methodData.addMetric(LINE_COUNT, String.valueOf(functionLoc));
+        metricsCollector.addFunction(methodData, classData, ctx);
       }
     } else {
       final var methodHandler = fileDataHandler.addGlobalFunction(functionName, returnType);
@@ -287,6 +293,7 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
       }
       methodHandler.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       methodHandler.addMetric(LINE_COUNT, String.valueOf(functionLoc));
+      metricsCollector.addFunction(methodHandler, null, ctx);
     }
   }
 

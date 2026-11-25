@@ -1,0 +1,305 @@
+=== 2
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	s.x++
+}
+
+func (t A) b() {
+	t.y++
+}
+
+=== 1
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	s.x++
+}
+
+func (t A) b() {
+	f(t.x)
+}
+
+=== 1
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	s.b()
+}
+
+func (t A) b() {
+	f()
+}
+
+=== 1
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	f(s.b)
+}
+
+func (t A) b() {
+	f()
+}
+
+=== 2
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	o.x++
+}
+
+func (t A) b() {
+	t.x++
+}
+
+=== 2
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	o.b()
+}
+
+func (t A) b() {
+	f()
+}
+
+=== 1
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	f(s.x.y.z)
+}
+
+func (t A) b() {
+	t.x[0] = 1
+}
+
+=== 1
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	go s.b()
+}
+
+func (t A) b() {
+	f()
+}
+
+=== 1
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	defer func() { s.x = 1 }()
+}
+
+func (t A) b() {
+	t.x = 1
+}
+
+=== 1
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	s.B.f()
+}
+
+func (t A) b() {
+	t.B.g()
+}
+
+=== 1
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	if s.x > 1 && f() {
+}
+}
+
+func (t A) b() {
+	return t.x
+}
+
+=== 1
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	for _, i := range s.x {
+ f(i)
+}
+}
+
+func (t A) b() {
+	t.x = nil
+}
+
+=== 2
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	f()
+}
+
+func (t A) b() {
+	g()
+}
+func (A) c() {
+}
+=== 3
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	f()
+}
+
+func (t A) b() {
+	g()
+}
+func (A) c() {
+	f()
+}
+=== 1
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	s.x++
+}
+
+func (t A) b() {
+	t.y++
+}
+func (a *A) c() {
+	a.x = a.y
+}
+=== 2
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	s.x++
+}
+
+func (t A) b() {
+	t.y++
+}
+func NewA() *A {
+	return &A{x: 1}
+}
+=== 2
+package p
+
+type A struct {
+	x, y int
+	B
+}
+
+func (s *A) a() {
+	s := f()
+	s.x++
+}
+
+func (t A) b() {
+	t.x++
+}
+
+=== 0
+package p
+
+type A struct {
+	x int
+}
+=== 0
+package p
+
+type A interface {
+	a()
+}
+=== 1
+package p
+
+func (s *A[T]) a() { s.x++ }
+
+func (s *A[T]) b() { s.x-- }
+
+type A[T any] struct {
+	x T
+}

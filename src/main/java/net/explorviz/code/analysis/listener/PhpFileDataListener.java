@@ -10,6 +10,9 @@ import net.explorviz.code.analysis.antlr.generated.php.PhpParserBaseListener;
 import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.handler.PhpFileDataHandler;
+import net.explorviz.code.analysis.metrics.MetricsCollector;
+import net.explorviz.code.analysis.metrics.php.PhpControlFlow;
+import net.explorviz.code.analysis.metrics.php.PhpMembers;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +26,8 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private final MetricsCollector metricsCollector =
+      new MetricsCollector(new PhpControlFlow(), new PhpMembers());
 
   public PhpFileDataListener(
       final PhpFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
@@ -32,6 +37,7 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
 
   @Override
   public void enterHtmlDocument(final PhpParser.HtmlDocumentContext ctx) {
+    metricsCollector.enterFile(ctx);
     final int sloc = getSloc(tokens);
     final int cloc = getCloc();
 
@@ -50,6 +56,7 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
     addImportAndClassCountMetrics(fileDataHandler);
+    metricsCollector.exitFile(fileDataHandler);
   }
 
   @Override
@@ -104,6 +111,7 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
 
     classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addClass(classData, ctx);
 
     if (ctx.Interface() != null) {
       classData.setIsInterface();
@@ -163,6 +171,7 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     final ClassDataHandler classData = fileDataHandler.getCurrentClassData();
     classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addClass(classData, ctx);
     if (ctx.qualifiedStaticTypeRef() != null) {
       addFormattedSuperClass(classData, ctx.qualifiedStaticTypeRef().getText());
     }
@@ -189,6 +198,7 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
       classData.setIsEnum();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
       addInterfaceImplements(classData, ctx.interfaceList());
     }
   }
@@ -231,6 +241,7 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addFunction(methodData, fileDataHandler.getCurrentClassData(), ctx);
   }
 
   @Override
@@ -259,6 +270,7 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
         }
         methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
         methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+        metricsCollector.addFunction(methodData, fileDataHandler.getCurrentClassData(), ctx);
       }
     }
   }

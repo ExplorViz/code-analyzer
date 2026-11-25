@@ -1,0 +1,253 @@
+=== 2
+class A {
+ var x = 1
+ var y = 2
+ fun a() { x++ }
+ fun b() { y++ }
+}
+=== 1
+class A {
+ var x = 1
+ fun a() { x++ }
+ fun b() { f(x) }
+}
+=== 1
+class A {
+ var x = 1
+ fun a() { this.x = 2 }
+ fun b() { x-- }
+}
+=== 1
+class A {
+ var x = 1
+ fun a() { this@A.x = 2 }
+ fun b() { x-- }
+}
+=== 2
+class A {
+ const val X = 1
+ fun a() { f(X) }
+ fun b() { g(X) }
+}
+=== 1
+class A {
+ val x = 1
+ fun a() { f(x) }
+ fun b() { g(x) }
+}
+=== 2
+class A {
+ var x = 1
+ fun a() { o.x = 2 }
+ fun b() { x-- }
+}
+=== 2
+class A {
+ var x = 1
+ fun a() { o?.x }
+ fun b() { x-- }
+}
+=== 1
+class A {
+ var x = 1
+ fun a() { x.f() }
+ fun b() { x?.g() }
+}
+=== 1
+class A {
+ 
+ fun a() { b() }
+ fun b() { f() }
+}
+=== 1
+class A {
+ 
+ fun a() { this.b() }
+ fun b() { f() }
+}
+=== 2
+class A {
+ 
+ fun a() { o.b() }
+ fun b() { f() }
+}
+=== 2
+class A {
+ 
+ fun a() { b(1) }
+ fun b() { f() }
+}
+=== 1
+class A {
+ fun c(i: Int = 1) { b() }
+ fun a() { c() }
+ fun b() { f() }
+}
+=== 1
+class A {
+ fun c(vararg i: Int) { b() }
+ fun a() { c(1, 2) }
+ fun b() { f() }
+}
+=== 1
+class A {
+ fun c(i: Int, g: () -> Unit) { b() }
+ fun a() { c(1) { } }
+ fun b() { f() }
+}
+=== 1
+class A {
+ 
+ fun a() { f(::b) }
+ fun b() { f() }
+}
+=== 1
+class A {
+ var x = 1
+ fun a() { s = "$x" }
+ fun b() { x-- }
+}
+=== 1
+class A {
+ var x = 1
+ fun a() { s = "${x}" }
+ fun b() { x-- }
+}
+=== 2
+class A {
+ var x = 1
+ fun a() { val x = 1
+ f(x) }
+ fun b() { x-- }
+}
+=== 1
+class A {
+ var x = 1
+ fun a() { val x = x }
+ fun b() { x-- }
+}
+=== 1
+class A {
+ var x = 1
+ fun a() { if (c) { val x = 1 }
+ f(x) }
+ fun b() { x-- }
+}
+=== 2
+class A {
+ var x = 1
+ fun a() { for (x in l) f(x) }
+ fun b() { x-- }
+}
+=== 2
+class A {
+ var x = 1
+ fun a() { for ((x, y) in l) f(x) }
+ fun b() { x-- }
+}
+=== 2
+class A {
+ var x = 1
+ fun a() { try { f() } catch (x: E) { f(x) } }
+ fun b() { x-- }
+}
+=== 2
+class A {
+ var x = 1
+ fun a() { l.map { x -> x } }
+ fun b() { x-- }
+}
+=== 1
+class A {
+ var x = 1
+ fun a() { l.map { y -> x } }
+ fun b() { x-- }
+}
+=== 1
+class A {
+ val x: Int by lazy { 1 }
+ fun a() { f(x) }
+ fun b() { x-- }
+}
+=== 1
+class A {
+ val x = 1
+ val p: Int get() = x
+ fun a() { f(p) }
+ fun b() { f(x) }
+}
+=== 2
+class A {
+ val x = 1
+ val p: Int
+  get() { return x }
+ fun a() { f() }
+ fun b() { f(x) }
+}
+=== 2
+class A {
+ var x = 1
+ init { x = 2 }
+ constructor(i: Int) { x = i }
+ fun a() { f() }
+ fun b() { x-- }
+}
+=== 1
+class A {
+ var x = 1
+ fun a() { val o = object : T {
+  val p = 1
+  override fun c() { x++ }
+ } }
+ fun b() { x-- }
+}
+=== 2
+class A {
+ var x = 1
+ fun a() { val o = object : T {
+  val p = 1
+  var x = 1
+  override fun c() { x++ }
+ } }
+ fun b() { x-- }
+}
+=== 1
+class A {
+ var x = 1
+ fun a() { fun l() { x++ } }
+ fun b() { x-- }
+}
+=== 0
+class A(val x: Int)
+=== 1
+class A(val x: Int) {
+ fun a() = x
+ fun b() = x
+}
+=== 2
+class A(x: Int) {
+ fun a() = x
+ fun b() = x
+}
+=== 0
+interface A {
+ fun a()
+}
+=== 1
+object A {
+ var x = 1
+ fun a() { x++ }
+ fun b() { A.x-- }
+}
+=== 2
+class A {
+ var x = 1
+ fun a(x: Int) { f(x) }
+ fun b() { x-- }
+}
+=== 1
+enum class A(val x: Int) {
+ P(1), Q(2);
+ fun a() = x
+ fun b() = x
+}

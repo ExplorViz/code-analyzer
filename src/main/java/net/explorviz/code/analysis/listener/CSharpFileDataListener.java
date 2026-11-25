@@ -10,6 +10,9 @@ import net.explorviz.code.analysis.antlr.generated.csharp.CSharpParserBaseListen
 import net.explorviz.code.analysis.handler.CSharpFileDataHandler;
 import net.explorviz.code.analysis.handler.ClassDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
+import net.explorviz.code.analysis.metrics.MetricsCollector;
+import net.explorviz.code.analysis.metrics.csharp.CSharpControlFlow;
+import net.explorviz.code.analysis.metrics.csharp.CSharpMembers;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -28,6 +31,8 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private final MetricsCollector metricsCollector =
+      new MetricsCollector(new CSharpControlFlow(), new CSharpMembers());
 
   public CSharpFileDataListener(
       final CSharpFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
@@ -37,6 +42,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
 
   @Override
   public void enterCompilation_unit(final CSharpParser.Compilation_unitContext ctx) {
+    metricsCollector.enterFile(ctx);
     final int sloc = getSloc(tokens);
     final int cloc = getCloc();
 
@@ -55,6 +61,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
     addImportAndClassCountMetrics(fileDataHandler);
+    metricsCollector.exitFile(fileDataHandler);
   }
 
   @Override
@@ -106,6 +113,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
       classData.setIsClass();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
 
       addClassBaseRelations(classData, ctx.class_base());
     }
@@ -163,6 +171,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
       classData.setIsStruct();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
 
       if (ctx.struct_interfaces() != null
           && ctx.struct_interfaces().interface_type_list() != null) {
@@ -196,6 +205,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
       classData.setIsInterface();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
     }
   }
 
@@ -221,6 +231,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
       classData.setIsEnum();
       classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       classData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+      metricsCollector.addClass(classData, ctx);
     }
   }
 
@@ -281,6 +292,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addFunction(methodData, fileDataHandler.getCurrentClassData(), ctx);
   }
 
   @Override
@@ -307,6 +319,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
     }
     methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
     methodData.addMetric(LINE_COUNT, String.valueOf(calculateLoc(ctx)));
+    metricsCollector.addFunction(methodData, fileDataHandler.getCurrentClassData(), ctx);
   }
 
   @Override

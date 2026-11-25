@@ -6,6 +6,9 @@ import net.explorviz.code.analysis.antlr.generated.python.PythonLexer;
 import net.explorviz.code.analysis.antlr.generated.python.PythonParser;
 import net.explorviz.code.analysis.antlr.generated.python.PythonParserBaseListener;
 import net.explorviz.code.analysis.handler.PythonFileDataHandler;
+import net.explorviz.code.analysis.metrics.MetricsCollector;
+import net.explorviz.code.analysis.metrics.python.PythonControlFlow;
+import net.explorviz.code.analysis.metrics.python.PythonMembers;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -22,6 +25,8 @@ public class PythonFileDataListener extends PythonParserBaseListener
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
+  private final MetricsCollector metricsCollector =
+      new MetricsCollector(new PythonControlFlow(), new PythonMembers());
 
   /**
    * Enclosing definitions, innermost first: {@code true} for a function, {@code false} for a class.
@@ -37,6 +42,7 @@ public class PythonFileDataListener extends PythonParserBaseListener
 
   @Override
   public void enterFile_input(final PythonParser.File_inputContext ctx) {
+    metricsCollector.enterFile(ctx);
     // Calculate total source SLOC and CLOC
     final int sloc = getSloc(tokens);
     final int cloc = getCloc(ctx);
@@ -56,6 +62,7 @@ public class PythonFileDataListener extends PythonParserBaseListener
     fileDataHandler.addMetric(FUNCTION_COUNT, String.valueOf(functionCount));
     fileDataHandler.addMetric(VARIABLE_COUNT, String.valueOf(variableCount));
     addImportAndClassCountMetrics(fileDataHandler);
+    metricsCollector.exitFile(fileDataHandler);
   }
 
   /** {@code import a.b, c as d} records {@code a.b} and {@code c}; aliases are dropped. */
@@ -126,6 +133,7 @@ public class PythonFileDataListener extends PythonParserBaseListener
       final int classLoc = getEndLine(ctx) - ctx.start.getLine() + 1;
       final var classData = fileDataHandler.getCurrentClassData();
       if (classData != null) {
+        metricsCollector.addClass(classData, ctx);
         classData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
         classData.addMetric(LINE_COUNT, String.valueOf(classLoc));
 
@@ -194,6 +202,7 @@ public class PythonFileDataListener extends PythonParserBaseListener
       methodData.setLines(startLine, endLine);
       methodData.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       methodData.addMetric(LINE_COUNT, String.valueOf(endLine - startLine + 1));
+      metricsCollector.addFunction(methodData, fileDataHandler.getCurrentClassData(), ctx);
 
       if (ctx.ASYNC() != null) {
         methodData.addModifier("async");
@@ -214,6 +223,7 @@ public class PythonFileDataListener extends PythonParserBaseListener
       funcBuilder.setLines(startLine, endLine);
       funcBuilder.addMetric(SLOC, String.valueOf(getSloc(ctx, tokens)));
       funcBuilder.addMetric(LINE_COUNT, String.valueOf(endLine - startLine + 1));
+      metricsCollector.addFunction(funcBuilder, null, ctx);
 
       LOGGER.atTrace().addArgument(functionName).log("Global function: {}");
     }

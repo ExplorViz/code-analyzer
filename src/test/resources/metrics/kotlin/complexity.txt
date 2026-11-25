@@ -1,0 +1,89 @@
+=== f(); g();
+f()
+g()
+=== return 1;
+return 1
+=== if (a) { f(); }
+if (a) { f() }
+=== if (a) { f(); } else { g(); }
+if (a) { f() } else { g() }
+=== if (a) { f(); } else if (b) { g(); } else if (c) { h(); } else { i(); }
+if (a) { f() } else if (b) { g() } else if (c) { h() } else { i() }
+=== if (a) { f(); } else if (b) { g(); }
+if (a) f() else if (b) g()
+=== if (a) { f(); } else { if (b) { g(); } }
+if (a) { f() } else { if (b) { g() } }
+=== if (a) { f(); } if (b) { g(); }
+if (a) { f() }
+if (b) { g() }
+=== if (a && b || c && d) { f(); }
+if (a && b || c && d) { f() }
+=== return a && b && c;
+return a && b && c
+=== x = a && b;
+x = a ?: b
+=== if (a) { return 1; } return 2;
+if (a) { return 1 }
+return 2
+=== while (a && b) { f(); }
+while (a && b) { f() }
+=== do { f(); } while (a && b);
+do { f() } while (a && b)
+=== for (X x : xs) { if (x) { f(); } }
+for (x in xs) { if (x) { f() } }
+=== for (X x : xs) { while (a) { if (b) { f(); } else { g(); } } }
+for ((x, y) in xs) { while (a) { if (b) { f() } else { g() } } }
+=== switch (a) { case 1: f(); break; case 2: if (b) { g(); } break; default: h(); }
+when (a) {
+ 1 -> f()
+ 2 -> if (b) { g() }
+ else -> h()
+}
+=== switch (a) { case 1: f(); break; case 2: g(); break; }
+when (a) {
+ is Int -> f()
+ in xs -> g()
+}
+=== switch (a) { case 1, 2 -> f(); default -> g(); }
+when (a) {
+ 1, 2 -> f()
+ else -> g()
+}
+=== if (a && b) { f(); } else if (c) { g(); } else { h(); }
+when {
+ a && b -> f()
+ c -> g()
+ else -> h()
+}
+=== for (X x : xs) { switch (a) { case 1: while (b) { f(); } break; default: g(); } }
+for (x in xs) { when (a) {
+ 1 -> while (b) { f() }
+ else -> g()
+} }
+=== return switch (a) { case 1 -> 2; case 3 -> 4; default -> 5; };
+return when (a) {
+ 1 -> 2
+ 3 -> 4
+ else -> 5
+}
+=== try { f(); } catch (E e) { g(); }
+try { f() } catch (e: E) { g() }
+=== try { if (a) { f(); } } catch (E e) { g(); } catch (F e) { h(); } finally { i(); }
+try { if (a) { f() } } catch (e: E) { g() } catch (e: F) { h() } finally { i() }
+=== if (a) { f(); } try { g(); } catch (E e) { h(); }
+if (a) { f() }
+try { g() } catch (e: E) { h() }
+=== x(() -> { if (a) { f(); } });
+x { if (a) { f() } }
+=== x(y -> a && b);
+x { y -> a && b }
+=== if (a) { } else { f(); }
+if (a) { } else { f() }
+=== if (a) { if (b) { f(); } g(); if (c) { h(); } }
+if (a) {
+ if (b) { f() }
+ g()
+ if (c) { h() }
+}
+=== x(() -> { f(); g(); });
+x { f(); g() }

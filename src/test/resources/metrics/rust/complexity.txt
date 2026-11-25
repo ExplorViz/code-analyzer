@@ -1,0 +1,53 @@
+=== f(); g();
+f();
+g();
+=== return 1;
+return 1;
+=== if (a) { f(); }
+if a { f(); }
+=== if (a) { f(); } else { g(); }
+if a { f(); } else { g(); }
+=== if (a) { f(); } else if (b) { g(); } else if (c) { h(); } else { i(); }
+if a { f(); } else if b { g(); } else if let Some(y) = c { h(); } else { i(); }
+=== if (a) { f(); } else if (b) { g(); }
+if let Some(x) = a { f(); } else if b { g(); }
+=== if (a) { f(); } else { if (b) { g(); } }
+if a { f(); } else { if b { g(); } }
+=== if (a) { f(); } if (b) { g(); }
+if a { f(); }
+if b { g(); }
+=== if (a && b || c && d) { f(); }
+if a && b || c && d { f(); }
+=== return a && b && c;
+return a && b && c;
+=== x = a && b;
+x = a && b;
+=== if (a) { return 1; } return 2;
+if a { return 1; }
+return 2;
+=== while (a && b) { f(); }
+while a && b { f(); }
+=== for (X x : xs) { if (x) { f(); } }
+for x in xs { if x { f(); } }
+=== for (X x : xs) { while (a) { if (b) { f(); } else { g(); } } }
+for x in xs { while let Some(y) = a { if b { f(); } else { g(); } } }
+=== switch (a) { case 1: f(); break; case 2: if (b) { g(); } break; default: h(); }
+match a { 1 => f(), 2 => { if b { g(); } } _ => h(), }
+=== switch (a) { case 1: f(); break; case 2: g(); break; }
+match a { X::Y => f(), X::Z(y) => g(), }
+=== switch (a) { case 1, 2 -> f(); default -> g(); }
+match a { 1 | 2 => f(), _ => g(), }
+=== for (X x : xs) { switch (a) { case 1: while (b) { f(); } break; default: g(); } }
+loop { match a { 1 => { while b { f(); } } _ => g(), } }
+=== return switch (a) { case 1 -> 2; case 3 -> 4; default -> 5; };
+return match a { 1 => 2, 3 => 4, _ => 5 };
+=== switch (a) { case X x when b && c -> f(); default -> g(); }
+match a { X(x) if b && c => f(), _ => g(), }
+=== x(() -> { if (a) { f(); } });
+x(|| { if a { f(); } });
+=== x(y -> a && b);
+x(|y| a && b);
+=== if (a) { } else { f(); }
+if a { } else { f(); }
+=== if (a) { if (b) { f(); } g(); if (c) { h(); } }
+if a { if b { f(); } g(); if c { h(); } }

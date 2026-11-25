@@ -1,0 +1,153 @@
+=== 2
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { self.x += 1; }
+ fn b(&self) { self.y += 1; }
+}
+=== 1
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { self.x += 1; }
+ fn b(&self) { f(self.x); }
+}
+=== 1
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { self.b(); }
+ fn b(&self) { f(); }
+}
+=== 1
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { Self::b(self); }
+ fn b(&self) { f(); }
+}
+=== 1
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { A::b(self); }
+ fn b(&self) { f(); }
+}
+=== 2
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { o.x += 1; }
+ fn b(&self) { self.x; }
+}
+=== 2
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { o.b(); }
+ fn b(&self) { f(); }
+}
+=== 1
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { f(self.x.y.z); }
+ fn b(&self) { self.x[0] = 1; }
+}
+=== 1
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { println!("{}", self.x); }
+ fn b(&self) { self.x; }
+}
+=== 1
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { vec![self.x; 2]; }
+ fn b(&self) { self.x; }
+}
+=== 1
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { f(|| self.x); }
+ fn b(&self) { self.x; }
+}
+=== 1
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { if self.x > 1 && f() { } }
+ fn b(&self) { self.x; }
+}
+=== 1
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { match self.x { 1 => f(), _ => g() } }
+ fn b(&self) { self.x; }
+}
+=== 1
+struct A { x: i32, y: i32 }
+
+impl A {
+ fn a(&mut self) { f(&mut self.x); }
+ fn b(&self) { self.x?; }
+}
+=== 1
+struct A { x: i32, y: i32 }
+impl T for A { fn c(&self) { f(self.x, self.y); } }
+impl A {
+ fn a(&mut self) { self.x; }
+ fn b(&self) { self.y; }
+}
+=== 2
+struct A { x: i32, y: i32 }
+impl A { fn new() -> Self { A { x: 1, y: f() } } }
+impl A {
+ fn a(&mut self) { self.x; }
+ fn b(&self) { self.y; }
+}
+=== 2
+struct A { x: i32, y: i32 }
+impl A { fn try_new() -> Result<A, E> { f() } }
+impl A {
+ fn a(&mut self) { self.x; }
+ fn b(&self) { self.y; }
+}
+=== 3
+struct A { x: i32, y: i32 }
+impl A { fn c(i: i32) -> i32 { i } }
+impl A {
+ fn a(&mut self) { self.x; }
+ fn b(&self) { self.y; }
+}
+=== 2
+struct A { x: i32, y: i32 }
+impl A { fn c(&self) { } }
+impl A {
+ fn a(&mut self) { self.x; }
+ fn b(&self) { self.y; }
+}
+=== 2
+struct A { x: i32, y: i32 }
+impl B { fn c(&self) { f(self.x, self.y); } }
+impl A {
+ fn a(&mut self) { self.x; }
+ fn b(&self) { self.y; }
+}
+=== 0
+struct A { x: i32 }
+=== 1
+struct A(i32, i32);
+impl A { fn a(&self) { self.0; } fn b(&self) { self.0; } }
+=== 1
+trait A { fn c(&self); fn a(&self) { self.c(); } fn b(&self) { self.c(); } }
+=== 1
+impl<T> A<T> { fn a(&self) { self.x; } fn b(&self) { self.x; } }
+struct A<T> { x: T }
+=== 1
+enum A { X, Y }
+impl A { fn a(&self) { self.b(); } fn b(&self) { f(); } }
