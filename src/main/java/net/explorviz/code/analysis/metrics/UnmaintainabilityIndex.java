@@ -58,6 +58,7 @@ public final class UnmaintainabilityIndex {
   }
 
   private static double logarithm(final double value) {
-    return Math.log(Math.max(1, value));
+    // StrictMath gives identical results on every CPU; Math.log may differ in the last digits.
+    return StrictMath.log(Math.max(1, value));
   }
 }

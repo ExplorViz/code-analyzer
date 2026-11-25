@@ -62,6 +62,9 @@ checkstyle:
 
 unit-test:
   stage: test
+  variables:
+    # TRACE output exceeds the 4 MB job log limit and cuts off the test summary.
+    EXPLORVIZ_LOG_LVL: INFO
   script:
     - *install-python
     - |

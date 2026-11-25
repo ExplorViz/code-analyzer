@@ -27,7 +27,7 @@ public final class HalsteadVolume {
   /** Returns the program length times the binary logarithm of the vocabulary. */
   public double value() {
     final int vocabulary = distinctOperators.size() + distinctOperands.size();
-    return vocabulary == 0 ? 0 : length * Math.log(vocabulary) / Math.log(2);
+    return vocabulary == 0 ? 0 : length * StrictMath.log(vocabulary) / StrictMath.log(2);
   }
 
   /** Returns the number of lines with code. */
