@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.metrics.MetricsCollector;
 import net.explorviz.code.analysis.metrics.kotlin.KotlinControlFlow;
 import net.explorviz.code.analysis.metrics.kotlin.KotlinMembers;
+import net.explorviz.code.analysis.metrics.kotlin.KotlinTokens;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ public class KotlinFileDataListener extends KotlinParserBaseListener
   private int functionCount = 0;
   private int variableCount = 0;
   private final MetricsCollector metricsCollector =
-      new MetricsCollector(new KotlinControlFlow(), new KotlinMembers());
+      new MetricsCollector(new KotlinControlFlow(), KotlinTokens.GRAMMAR, new KotlinMembers());
 
   public KotlinFileDataListener(
       final KotlinFileDataHandler fileDataHandler, final CommonTokenStream tokens) {

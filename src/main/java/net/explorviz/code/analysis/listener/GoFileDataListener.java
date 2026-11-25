@@ -12,6 +12,7 @@ import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.metrics.MetricsCollector;
 import net.explorviz.code.analysis.metrics.golang.GoControlFlow;
 import net.explorviz.code.analysis.metrics.golang.GoMembers;
+import net.explorviz.code.analysis.metrics.golang.GoTokens;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,7 @@ public class GoFileDataListener extends GoParserBaseListener implements CommonFi
   private int functionCount = 0;
   private int variableCount = 0;
   private final MetricsCollector metricsCollector =
-      new MetricsCollector(new GoControlFlow(), new GoMembers());
+      new MetricsCollector(new GoControlFlow(), GoTokens.GRAMMAR, new GoMembers());
 
   /** Names of the types declared at the top level of this file. */
   private final Set<String> fileTypeNames = new HashSet<>();

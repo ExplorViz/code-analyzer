@@ -1,0 +1,11 @@
+=== 11 9 1 1
+int f(int a) { return a + 1; }
+=== 18 15 2 3
+// comment
+int f(int a) {
+
+  /* comment */
+  return a < 1 ? g("x", 'c') : 2;
+}
+=== 12 10 1 1
+int f(void) { return sizeof(int) >> 1; }

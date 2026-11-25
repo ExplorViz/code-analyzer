@@ -1,5 +1,8 @@
 package net.explorviz.code.analysis.metrics;
 
+import java.util.OptionalDouble;
+import java.util.function.BiConsumer;
+
 /**
  * Unmaintainability index of one or several functions: 100 minus the maintainability index on the
  * scale from 0 to 100. Hence, 0 is maintainable and 100 is unmaintainable.
@@ -30,17 +33,28 @@ public final class UnmaintainabilityIndex {
     functionCount++;
   }
 
-  /** Returns the index of the added functions, or 0 if there are no functions. */
-  public double value() {
+  /** Returns the index of the added functions, which does not exist without functions. */
+  public OptionalDouble value() {
     if (functionCount == 0) {
-      return 0;
+      return OptionalDouble.empty();
     }
     final double maintainability =
         MAXIMUM
             - VOLUME_WEIGHT * logarithm(volume / functionCount)
             - COMPLEXITY_WEIGHT * complexity / functionCount
             - LINES_WEIGHT * logarithm((double) lines / functionCount);
-    return SCALE - Math.clamp(maintainability * SCALE / MAXIMUM, 0, SCALE);
+    return OptionalDouble.of(SCALE - Math.clamp(maintainability * SCALE / MAXIMUM, 0, SCALE));
+  }
+
+  /**
+   * Attaches the index if it exists.
+   *
+   * @param target receives the name and value of the metric
+   */
+  public void attachTo(final BiConsumer<String, String> target) {
+    value()
+        .ifPresent(
+            index -> target.accept(CodeMetrics.UNMAINTAINABILITY_INDEX, String.valueOf(index)));
   }
 
   private static double logarithm(final double value) {

@@ -1,0 +1,8 @@
+=== 9 8 1 1
+function f(a) { return a + 1 }
+=== 21 18 2 4
+function f(a) {
+  // comment
+  const s = `x ${a} y`;
+  return a.default >> 1 < 2 ? s : null;
+}

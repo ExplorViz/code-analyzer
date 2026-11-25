@@ -281,13 +281,13 @@ func (t A) b() {
 	t.x++
 }
 
-=== 0
+=== none
 package p
 
 type A struct {
 	x int
 }
-=== 0
+=== none
 package p
 
 type A interface {

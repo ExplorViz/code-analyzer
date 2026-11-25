@@ -2,11 +2,15 @@ package net.explorviz.code.analysis.metrics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import net.explorviz.code.proto.FileData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 
 class FileMetricsTest {
@@ -52,20 +56,72 @@ class FileMetricsTest {
         FileMetrics.MAX_NPATH_COMPLEXITY, file.getMetricsOrThrow(CodeMetrics.NPATH_COMPLEXITY));
   }
 
-  @Test
-  void filesWithoutCodeHaveNoComplexity() {
-    final FileData file = TestLanguage.JAVA.parse("interface A { }");
+  @ParameterizedTest
+  @CsvSource(
+      delimiter = '#',
+      value = {
+        "C          # struct S { int x; };",
+        "CPP        # class A { int x; };",
+        "CSHARP     # class A { int x; }",
+        "GO         # package p; type A struct { x int }",
+        "JAVA       # interface A { int X = 1; }",
+        "JAVASCRIPT # class A { x = 1; }",
+        "KOTLIN     # class A { val x = 1 }",
+        "PHP        # <?php class A { public $x; }",
+        "PYTHON     # x = 1",
+        "RUST       # struct A { x: i32 }",
+        "SWIFT      # class A { var x = 1 }",
+        "TYPESCRIPT # const f = [1].map(x => x + 1);",
+      })
+  void metricsDoNotExistWithoutFunctions(final TestLanguage language, final String source) {
+    final FileData file = language.parse(source);
 
-    assertEquals(0.0, file.getMetricsOrThrow(CodeMetrics.NESTED_BLOCK_DEPTH));
-    assertEquals(0.0, file.getMetricsOrThrow(CodeMetrics.NPATH_COMPLEXITY));
-    assertEquals(0.0, file.getMetricsOrThrow(CodeMetrics.LCOM4));
+    assertEquals(Set.of(), codeMetricsOf(file.getMetricsMap()));
+    file.getClassesList()
+        .forEach(type -> assertEquals(Set.of(), codeMetricsOf(type.getMetricsMap())));
+    // The other metrics are still known, even if their value is zero.
+    assertEquals(0.0, file.getMetricsOrThrow("functionCount"));
+    assertTrue(file.containsMetrics("sloc"));
   }
 
   @Test
-  void onlyJavaHasAnUnmaintainabilityIndex() {
+  void metricsOfCodeDoNotExistWithoutCode() {
+    final FileData file = TestLanguage.JAVA.parse("interface A { int a(); }");
+    final Set<String> expected =
+        Set.of(
+            CodeMetrics.CYCLOMATIC_COMPLEXITY,
+            CodeMetrics.AVERAGE_CYCLOMATIC_COMPLEXITY,
+            CodeMetrics.NPATH_COMPLEXITY);
+
+    assertEquals(expected, codeMetricsOf(file.getMetricsMap()));
+  }
+
+  @Test
+  void cohesionDoesNotExistWithoutMethods() {
+    final FileData file = TestLanguage.PYTHON.parse("def f():\n  return 1\n");
+
+    assertFalse(file.containsMetrics(CodeMetrics.LCOM4));
+    assertTrue(file.containsMetrics(CodeMetrics.UNMAINTAINABILITY_INDEX));
+  }
+
+  private static Set<String> codeMetricsOf(final Map<String, Double> metrics) {
+    final Set<String> names = new HashSet<>(metrics.keySet());
+    names.retainAll(
+        Set.of(
+            CodeMetrics.CYCLOMATIC_COMPLEXITY,
+            CodeMetrics.AVERAGE_CYCLOMATIC_COMPLEXITY,
+            CodeMetrics.NESTED_BLOCK_DEPTH,
+            CodeMetrics.NPATH_COMPLEXITY,
+            CodeMetrics.LCOM4,
+            CodeMetrics.UNMAINTAINABILITY_INDEX));
+    return names;
+  }
+
+  @Test
+  void filesOfCAreMeasuredWithoutCohesion() {
     final FileData file = TestLanguage.C.parse("int f(void) { return 1; }");
 
-    assertFalse(file.containsMetrics(CodeMetrics.UNMAINTAINABILITY_INDEX));
+    assertTrue(file.containsMetrics(CodeMetrics.UNMAINTAINABILITY_INDEX));
     assertFalse(file.containsMetrics(CodeMetrics.LCOM4));
     assertEquals(1.0, file.getMetricsOrThrow(CodeMetrics.NESTED_BLOCK_DEPTH));
   }

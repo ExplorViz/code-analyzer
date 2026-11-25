@@ -1,0 +1,8 @@
+=== 13 11 1 1
+func f(a: Int) -> Int { return a + 1 }
+=== 28 23 3 4
+func f(a: Array<Int>) {
+  // comment
+  let s = "x \(a) y"
+  g(a >= 2 ? "z" : nil); h(!a && b)
+}

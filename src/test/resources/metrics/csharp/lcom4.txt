@@ -78,9 +78,9 @@ class A { event E e; void a() { f(); } void b() { e += g; } }
 class A { event E e; void a() { e?.Invoke(); } void b() { e += g; } }
 === 2
 class A { abstract void c(); void a() { f(); } void b() { c(); } }
-=== 0
+=== none
 interface A { void a(); int P { get; } }
-=== 0
+=== none
 class A { int x; }
 === 1
 struct A { int x; int a() => x; int b() => x; }
@@ -88,5 +88,5 @@ struct A { int x; int a() => x; int b() => x; }
 class A { int x; int a() => x; int b() { return 1; } }
 === 1
 class A { int x; int this[int i] { get { return x; } } int a() { return x; } }
-=== 0
+=== none
 enum A { X, Y }

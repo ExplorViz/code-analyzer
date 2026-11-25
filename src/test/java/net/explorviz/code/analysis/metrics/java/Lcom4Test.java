@@ -2,11 +2,13 @@ package net.explorviz.code.analysis.metrics.java;
 
 import static net.explorviz.code.analysis.metrics.CodeMetrics.LCOM4;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import net.explorviz.code.proto.FileData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class Lcom4Test {
 
@@ -111,9 +113,6 @@ class Lcom4Test {
       delimiter = '#',
       quoteCharacter = '`',
       value = {
-        "0 # class A { int x; }",
-        "0 # interface A { void m(); int X = 1; }",
-        "0 # @interface A { int m(); }",
         "2 # class A { int x; int m(int x) { return x; } int n() { return x; } }",
         "1 # class A { int x; <T> int m() { return x; } int n() { return x; } }",
         "1 # interface A { int m(); default int a() { return m(); } default int b() { return m(); } }",
@@ -126,6 +125,20 @@ class Lcom4Test {
       })
   void ofType(final double expected, final String source) {
     assertEquals(expected, JavaMetricsTestSupport.ofClass(LCOM4, source));
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "class A { int x; }",
+        "class A { int x; A() { x = 1; } }",
+        "interface A { void m(); int X = 1; }",
+        "@interface A { int m(); }"
+      })
+  void typesWithoutMethodsAreNotMeasured(final String source) {
+    final FileData file = JavaMetricsTestSupport.parse(source);
+    assertFalse(file.getClasses(0).containsMetrics(LCOM4));
+    assertFalse(file.containsMetrics(LCOM4));
   }
 
   @Test

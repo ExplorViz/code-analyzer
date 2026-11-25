@@ -74,7 +74,7 @@ class A { virtual void c() = 0; void a() { f(); } void b() { c(); } };
 class A { virtual void c() = 0; void a() { c(); } void b() { c(); } };
 === 2
 class A { friend void c() { f(); } void a() { f(); } void b() { g(); } };
-=== 0
+=== none
 struct A { int x; };
 === 1
 class A { int x; void a(); void b(); };
@@ -88,7 +88,7 @@ void A::b() { f(); }
 class A { void a(int i = 1); void b(); };
 void A::a(int i) { f(); }
 void A::b() { a(); }
-=== 0
+=== none
 class A { void a(); void b(); };
 === 1
 class A { template <typename T> void a(T t) { x = t; } int x; void b() { x--; } };

@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import net.explorviz.code.proto.ClassData;
 import net.explorviz.code.proto.FileData;
 import net.explorviz.code.proto.FunctionData;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -50,24 +49,48 @@ class MetricsRobustnessTest {
 
   private static void assertMeasured(final TestLanguage language, final String source) {
     final FileData file = language.parse(source);
-    Assertions.assertTrue(file.containsMetrics(CodeMetrics.CYCLOMATIC_COMPLEXITY), source);
+    assertTrue(file.containsMetrics("functionCount"), source);
+    assertEquals(
+        hasFunctions(file), file.containsMetrics(CodeMetrics.CYCLOMATIC_COMPLEXITY), source);
+  }
+
+  private static boolean hasFunctions(final FileData file) {
+    return file.getFunctionsCount() > 0
+        || file.getClassesList().stream().anyMatch(MetricsRobustnessTest::hasFunctions);
+  }
+
+  private static boolean hasFunctions(final ClassData type) {
+    return type.getFunctionsCount() > 0
+        || type.getInnerClassesList().stream().anyMatch(MetricsRobustnessTest::hasFunctions);
   }
 
   private static void assertMeasured(final FunctionData function) {
     assertTrue(function.containsMetrics(CodeMetrics.CYCLOMATIC_COMPLEXITY), function.getName());
     assertTrue(function.containsMetrics(CodeMetrics.NPATH_COMPLEXITY), function.getName());
+    assertEquals(
+        function.containsMetrics(CodeMetrics.NESTED_BLOCK_DEPTH),
+        function.containsMetrics(CodeMetrics.UNMAINTAINABILITY_INDEX),
+        function.getName());
   }
 
   private static void assertMeasured(final TestLanguage language, final ClassData type) {
     type.getFunctionsList().forEach(MetricsRobustnessTest::assertMeasured);
     type.getInnerClassesList().forEach(inner -> assertMeasured(language, inner));
     if (language != TestLanguage.C) {
-      assertTrue(type.containsMetrics(CodeMetrics.LCOM4), type.getName());
+      assertEquals(
+          type.getFunctionsList().stream()
+              .anyMatch(f -> f.containsMetrics(CodeMetrics.UNMAINTAINABILITY_INDEX)),
+          type.containsMetrics(CodeMetrics.UNMAINTAINABILITY_INDEX),
+          type.getName());
+      assertEquals(
+          type.getFunctionsCount() > 0,
+          type.containsMetrics(CodeMetrics.CYCLOMATIC_COMPLEXITY),
+          type.getName());
       assertEquals(
           type.getFunctionsList().stream()
               .mapToDouble(f -> f.getMetricsOrThrow(CodeMetrics.CYCLOMATIC_COMPLEXITY))
               .sum(),
-          type.getMetricsOrThrow(CodeMetrics.CYCLOMATIC_COMPLEXITY),
+          type.getMetricsOrDefault(CodeMetrics.CYCLOMATIC_COMPLEXITY, 0),
           type.getName());
     }
   }

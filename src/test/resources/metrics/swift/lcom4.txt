@@ -210,7 +210,7 @@ class A {
  func a() { f() }
  func b() { x -= 1 }
 }
-=== 0
+=== none
 struct A {
  var x: Int
 }
@@ -220,7 +220,7 @@ struct A {
  func a() -> Int { x }
  func b() -> Int { x }
 }
-=== 0
+=== none
 protocol A {
  func a()
 }

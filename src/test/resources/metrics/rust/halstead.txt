@@ -1,0 +1,9 @@
+=== 12 10 1 1
+fn f(a: i32) -> i32 { a + 1 }
+=== 26 21 2 3
+fn f(a: Vec<u8>) {
+  // comment
+  if a.len() < 2 { println!("x {}", a + 1); }
+}
+=== 16 14 1 1
+fn f<'a>(x: &'a str) -> u8 { x >> 1 }

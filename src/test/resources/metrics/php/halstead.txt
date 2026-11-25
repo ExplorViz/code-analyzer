@@ -1,0 +1,10 @@
+=== 10 9 1 1
+<?php
+function f($a) { return $a + 1; }
+=== 20 17 2 4
+<?php
+function f($a) {
+  # comment
+  $x = "a $a b";
+  return $a->list < 2 ? 'x' : null;
+}

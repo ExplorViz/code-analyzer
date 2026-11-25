@@ -13,6 +13,7 @@ import net.explorviz.code.analysis.handler.RustFileDataHandler;
 import net.explorviz.code.analysis.metrics.MetricsCollector;
 import net.explorviz.code.analysis.metrics.rust.RustControlFlow;
 import net.explorviz.code.analysis.metrics.rust.RustMembers;
+import net.explorviz.code.analysis.metrics.rust.RustTokens;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -30,7 +31,7 @@ public class RustFileDataListener extends RustParserBaseListener implements Comm
   private int functionCount = 0;
   private int variableCount = 0;
   private final MetricsCollector metricsCollector =
-      new MetricsCollector(new RustControlFlow(), new RustMembers());
+      new MetricsCollector(new RustControlFlow(), RustTokens.GRAMMAR, new RustMembers());
 
   /** Fqns of the types of the enclosing {@code impl} blocks, innermost first. */
   private final Deque<String> implTypeStack = new ArrayDeque<>();

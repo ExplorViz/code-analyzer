@@ -112,8 +112,9 @@ class CyclomaticComplexityTest {
     final FileData file = JavaMetricsTestSupport.parse("@interface A { int value() default 1; }");
 
     final ClassData annotation = file.getClasses(0);
-    assertEquals(0.0, annotation.getMetricsOrThrow(CYCLOMATIC_COMPLEXITY));
-    assertEquals(0.0, annotation.getMetricsOrThrow(AVERAGE_CYCLOMATIC_COMPLEXITY));
-    assertEquals(0.0, file.getMetricsOrThrow(AVERAGE_CYCLOMATIC_COMPLEXITY));
+    assertFalse(annotation.containsMetrics(CYCLOMATIC_COMPLEXITY));
+    assertFalse(annotation.containsMetrics(AVERAGE_CYCLOMATIC_COMPLEXITY));
+    assertFalse(file.containsMetrics(CYCLOMATIC_COMPLEXITY));
+    assertFalse(file.containsMetrics(AVERAGE_CYCLOMATIC_COMPLEXITY));
   }
 }

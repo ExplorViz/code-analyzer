@@ -13,6 +13,7 @@ import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.metrics.MetricsCollector;
 import net.explorviz.code.analysis.metrics.csharp.CSharpControlFlow;
 import net.explorviz.code.analysis.metrics.csharp.CSharpMembers;
+import net.explorviz.code.analysis.metrics.csharp.CSharpTokens;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -32,7 +33,7 @@ public class CSharpFileDataListener extends CSharpParserBaseListener
   private int functionCount = 0;
   private int variableCount = 0;
   private final MetricsCollector metricsCollector =
-      new MetricsCollector(new CSharpControlFlow(), new CSharpMembers());
+      new MetricsCollector(new CSharpControlFlow(), CSharpTokens.GRAMMAR, new CSharpMembers());
 
   public CSharpFileDataListener(
       final CSharpFileDataHandler fileDataHandler, final CommonTokenStream tokens) {

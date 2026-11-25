@@ -9,6 +9,7 @@ import net.explorviz.code.analysis.handler.PythonFileDataHandler;
 import net.explorviz.code.analysis.metrics.MetricsCollector;
 import net.explorviz.code.analysis.metrics.python.PythonControlFlow;
 import net.explorviz.code.analysis.metrics.python.PythonMembers;
+import net.explorviz.code.analysis.metrics.python.PythonTokens;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -26,7 +27,7 @@ public class PythonFileDataListener extends PythonParserBaseListener
   private int functionCount = 0;
   private int variableCount = 0;
   private final MetricsCollector metricsCollector =
-      new MetricsCollector(new PythonControlFlow(), new PythonMembers());
+      new MetricsCollector(new PythonControlFlow(), PythonTokens.GRAMMAR, new PythonMembers());
 
   /**
    * Enclosing definitions, innermost first: {@code true} for a function, {@code false} for a class.

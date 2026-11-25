@@ -8,6 +8,7 @@ import net.explorviz.code.analysis.handler.CFileDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.metrics.MetricsCollector;
 import net.explorviz.code.analysis.metrics.c.CControlFlow;
+import net.explorviz.code.analysis.metrics.c.CTokens;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -26,7 +27,8 @@ public class CFileDataListener extends CParserBaseListener implements CommonFile
   private final CommonTokenStream tokens;
   private int functionCount = 0;
   private int variableCount = 0;
-  private final MetricsCollector metricsCollector = new MetricsCollector(new CControlFlow(), null);
+  private final MetricsCollector metricsCollector =
+      new MetricsCollector(new CControlFlow(), CTokens.GRAMMAR, null);
 
   public CFileDataListener(final CFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
     this.fileDataHandler = fileDataHandler;

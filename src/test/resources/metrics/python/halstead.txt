@@ -1,0 +1,9 @@
+=== 9 8 1 2
+def f(a):
+    return a + 1
+=== 20 16 2 3
+def f(a):
+    # comment
+    x = 1 if a not in y else None
+
+    print(x[0]); g()

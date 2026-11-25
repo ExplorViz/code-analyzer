@@ -32,7 +32,7 @@ class UnmaintainabilityIndexTest {
     for (int i = 0; i < count; i++) {
       index.add(volume, 1, lines);
     }
-    return index.value();
+    return index.value().orElseThrow();
   }
 
   @Test
@@ -43,7 +43,6 @@ class UnmaintainabilityIndexTest {
 
   @Test
   void isLimitedToTheRangeFrom0To100() {
-    assertEquals(0.0, ofFunctions(0, 0, 0));
     assertEquals(100.0, ofFunctions(1, 1e9, 100_000));
     assertTrue(ofFunctions(1, 0, 0) > 0);
     assertTrue(ofFunctions(1, 0, 0) < 1);
@@ -56,7 +55,7 @@ class UnmaintainabilityIndexTest {
     final UnmaintainabilityIndex index = new UnmaintainabilityIndex();
     index.add(100, 1, 4);
     index.add(300, 4, 12);
-    assertEquals(indexOf(200, 2.5, 8), index.value(), DELTA);
+    assertEquals(indexOf(200, 2.5, 8), index.value().orElseThrow(), DELTA);
   }
 
   /** The expected values are the length and the vocabulary including {@code Object m(...)}. */
@@ -139,10 +138,11 @@ class UnmaintainabilityIndexTest {
   }
 
   @Test
-  void typesWithoutCodeAreMaintainable() {
+  void typesWithoutCodeAreNotMeasured() {
     final FileData file = JavaMetricsTestSupport.parse("interface A { int a(); }");
-    assertIndex(0, file.getClasses(0).getMetricsMap());
-    assertIndex(0, file.getMetricsMap());
+    assertFalse(file.getClasses(0).containsMetrics(UNMAINTAINABILITY_INDEX));
+    assertFalse(file.containsMetrics(UNMAINTAINABILITY_INDEX));
+    assertTrue(new UnmaintainabilityIndex().value().isEmpty());
   }
 
   private static void assertIndex(final double expected, final Map<String, Double> metrics) {

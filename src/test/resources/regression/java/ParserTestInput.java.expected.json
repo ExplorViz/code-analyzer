@@ -73,7 +73,6 @@
         "lineCount": 5.0,
         "cyclomaticComplexity": 1.0,
         "averageCyclomaticComplexity": 1.0,
-        "lcom4": 0.0,
         "unmaintainabilityIndex": 13.024608387021203
       }
     }, {
@@ -309,11 +308,7 @@
       }],
       "metrics": {
         "sloc": 4.0,
-        "lineCount": 5.0,
-        "cyclomaticComplexity": 0.0,
-        "averageCyclomaticComplexity": 0.0,
-        "lcom4": 0.0,
-        "unmaintainabilityIndex": 0.0
+        "lineCount": 5.0
       }
     }],
     "functions": [{
@@ -652,11 +647,7 @@
     "enumValues": ["ONE", "TWO", "THREE"],
     "metrics": {
       "sloc": 5.0,
-      "lineCount": 5.0,
-      "cyclomaticComplexity": 0.0,
-      "averageCyclomaticComplexity": 0.0,
-      "lcom4": 0.0,
-      "unmaintainabilityIndex": 0.0
+      "lineCount": 5.0
     }
   }, {
     "name": "PointRecord",
@@ -824,11 +815,7 @@
     }],
     "metrics": {
       "sloc": 2.0,
-      "lineCount": 2.0,
-      "cyclomaticComplexity": 0.0,
-      "averageCyclomaticComplexity": 0.0,
-      "lcom4": 0.0,
-      "unmaintainabilityIndex": 0.0
+      "lineCount": 2.0
     }
   }],
   "metrics": {
@@ -842,7 +829,7 @@
     "averageCyclomaticComplexity": 1.4705882352941178,
     "nestedBlockDepth": 4.0,
     "npathComplexity": 3.0,
-    "lcom4": 5.0,
-    "unmaintainabilityIndex": 28.483805553439197
+    "unmaintainabilityIndex": 28.483805553439197,
+    "lcom4": 5.0
   }
 }

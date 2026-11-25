@@ -13,7 +13,8 @@
         "lineCount": 3.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 0.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 19.111341689141994
       },
       "startLine": 39,
       "endLine": 41
@@ -25,7 +26,8 @@
         "lineCount": 3.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 1.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 21.872968440671812
       },
       "startLine": 43,
       "endLine": 45
@@ -37,7 +39,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 0.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 16.891130617989845
       },
       "startLine": 47,
       "endLine": 48
@@ -47,7 +50,8 @@
       "lineCount": 13.0,
       "cyclomaticComplexity": 3.0,
       "averageCyclomaticComplexity": 1.0,
-      "lcom4": 2.0
+      "lcom4": 2.0,
+      "unmaintainabilityIndex": 19.60497964741205
     }
   }, {
     "name": "MarkerMixin",
@@ -59,7 +63,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 0.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 16.365417685894982
       },
       "startLine": 54,
       "endLine": 55
@@ -71,7 +76,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 0.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 17.501357294249033
       },
       "startLine": 57,
       "endLine": 58
@@ -81,7 +87,8 @@
       "lineCount": 8.0,
       "cyclomaticComplexity": 2.0,
       "averageCyclomaticComplexity": 1.0,
-      "lcom4": 1.0
+      "lcom4": 1.0,
+      "unmaintainabilityIndex": 16.98612313124461
     }
   }, {
     "name": "ParserTestInput",
@@ -96,7 +103,8 @@
           "lineCount": 3.0,
           "cyclomaticComplexity": 1.0,
           "npathComplexity": 0.0,
-          "nestedBlockDepth": 1.0
+          "nestedBlockDepth": 1.0,
+          "unmaintainabilityIndex": 16.365417685894982
         },
         "startLine": 132,
         "endLine": 134
@@ -106,7 +114,7 @@
         "lineCount": 4.0,
         "cyclomaticComplexity": 1.0,
         "averageCyclomaticComplexity": 1.0,
-        "lcom4": 0.0
+        "unmaintainabilityIndex": 16.365417685894982
       }
     }, {
       "name": "StaticNested",
@@ -118,7 +126,8 @@
           "lineCount": 2.0,
           "cyclomaticComplexity": 1.0,
           "npathComplexity": 0.0,
-          "nestedBlockDepth": 1.0
+          "nestedBlockDepth": 1.0,
+          "unmaintainabilityIndex": 19.01493295511247
         },
         "startLine": 152,
         "endLine": 153
@@ -130,7 +139,8 @@
           "lineCount": 2.0,
           "cyclomaticComplexity": 1.0,
           "npathComplexity": 1.0,
-          "nestedBlockDepth": 1.0
+          "nestedBlockDepth": 1.0,
+          "unmaintainabilityIndex": 17.643786927448346
         },
         "startLine": 155,
         "endLine": 156
@@ -140,7 +150,8 @@
         "lineCount": 8.0,
         "cyclomaticComplexity": 2.0,
         "averageCyclomaticComplexity": 1.0,
-        "lcom4": 1.0
+        "lcom4": 1.0,
+        "unmaintainabilityIndex": 18.405994574658422
       }
     }, {
       "name": "InnerClass",
@@ -152,7 +163,8 @@
           "lineCount": 3.0,
           "cyclomaticComplexity": 1.0,
           "npathComplexity": 0.0,
-          "nestedBlockDepth": 1.0
+          "nestedBlockDepth": 1.0,
+          "unmaintainabilityIndex": 16.365417685894982
         },
         "startLine": 161,
         "endLine": 163
@@ -162,7 +174,7 @@
         "lineCount": 6.0,
         "cyclomaticComplexity": 1.0,
         "averageCyclomaticComplexity": 1.0,
-        "lcom4": 0.0
+        "unmaintainabilityIndex": 16.365417685894982
       }
     }, {
       "name": "NestedEnum",
@@ -174,7 +186,8 @@
           "lineCount": 2.0,
           "cyclomaticComplexity": 1.0,
           "npathComplexity": 1.0,
-          "nestedBlockDepth": 1.0
+          "nestedBlockDepth": 1.0,
+          "unmaintainabilityIndex": 19.38231237650899
         },
         "startLine": 173,
         "endLine": 174
@@ -184,7 +197,8 @@
         "lineCount": 10.0,
         "cyclomaticComplexity": 1.0,
         "averageCyclomaticComplexity": 1.0,
-        "lcom4": 1.0
+        "lcom4": 1.0,
+        "unmaintainabilityIndex": 19.38231237650899
       }
     }],
     "functions": [{
@@ -195,7 +209,8 @@
         "lineCount": 5.0,
         "cyclomaticComplexity": 2.0,
         "npathComplexity": 2.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 32.306506447490534
       },
       "startLine": 71,
       "endLine": 75
@@ -207,7 +222,8 @@
         "lineCount": 3.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 0.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 18.383515003740015
       },
       "startLine": 77,
       "endLine": 79
@@ -219,7 +235,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 1.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 21.391912906387816
       },
       "startLine": 81,
       "endLine": 82
@@ -231,7 +248,8 @@
         "lineCount": 3.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 1.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 22.341730741900903
       },
       "startLine": 84,
       "endLine": 86
@@ -243,7 +261,8 @@
         "lineCount": 57.0,
         "cyclomaticComplexity": 15.0,
         "npathComplexity": 296.0,
-        "nestedBlockDepth": 4.0
+        "nestedBlockDepth": 4.0,
+        "unmaintainabilityIndex": 59.71993709600722
       },
       "startLine": 88,
       "endLine": 144
@@ -255,7 +274,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 1.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 17.908382927650706
       },
       "startLine": 146,
       "endLine": 147
@@ -265,7 +285,8 @@
       "lineCount": 114.0,
       "cyclomaticComplexity": 21.0,
       "averageCyclomaticComplexity": 3.5,
-      "lcom4": 4.0
+      "lcom4": 4.0,
+      "unmaintainabilityIndex": 39.38374256483788
     }
   }, {
     "name": "Noop",
@@ -278,7 +299,8 @@
         "lineCount": 5.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 0.0,
-        "nestedBlockDepth": 2.0
+        "nestedBlockDepth": 2.0,
+        "unmaintainabilityIndex": 25.20743347095454
       },
       "startLine": 197,
       "endLine": 201
@@ -288,7 +310,8 @@
       "lineCount": 6.0,
       "cyclomaticComplexity": 1.0,
       "averageCyclomaticComplexity": 1.0,
-      "lcom4": 1.0
+      "lcom4": 1.0,
+      "unmaintainabilityIndex": 25.20743347095454
     }
   }, {
     "name": "PropertyHolder",
@@ -300,7 +323,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 1.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 17.643786927448346
       },
       "startLine": 218,
       "endLine": 219
@@ -312,7 +336,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 0.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 19.111341689141994
       },
       "startLine": 222,
       "endLine": 223
@@ -324,7 +349,8 @@
         "lineCount": 1.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 0.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 11.34172542760912
       },
       "startLine": 226,
       "endLine": 226
@@ -336,7 +362,8 @@
         "lineCount": 1.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 0.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 11.34172542760912
       },
       "startLine": 229,
       "endLine": 229
@@ -348,7 +375,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 1.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 16.72358832063952
       },
       "startLine": 231,
       "endLine": 232
@@ -360,7 +388,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 0.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 16.365417685894982
       },
       "startLine": 234,
       "endLine": 235
@@ -372,7 +401,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 1.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 16.891130617989845
       },
       "startLine": 238,
       "endLine": 239
@@ -382,7 +412,8 @@
       "lineCount": 26.0,
       "cyclomaticComplexity": 7.0,
       "averageCyclomaticComplexity": 1.0,
-      "lcom4": 3.0
+      "lcom4": 3.0,
+      "unmaintainabilityIndex": 16.174069798177158
     }
   }, {
     "name": "Redefined",
@@ -394,7 +425,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 1.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 16.891130617989845
       },
       "startLine": 258,
       "endLine": 259
@@ -404,7 +436,8 @@
       "lineCount": 3.0,
       "cyclomaticComplexity": 1.0,
       "averageCyclomaticComplexity": 1.0,
-      "lcom4": 1.0
+      "lcom4": 1.0,
+      "unmaintainabilityIndex": 16.891130617989845
     }
   }, {
     "name": "Redefined",
@@ -416,7 +449,8 @@
         "lineCount": 2.0,
         "cyclomaticComplexity": 1.0,
         "npathComplexity": 1.0,
-        "nestedBlockDepth": 1.0
+        "nestedBlockDepth": 1.0,
+        "unmaintainabilityIndex": 16.891130617989845
       },
       "startLine": 262,
       "endLine": 263
@@ -426,7 +460,8 @@
       "lineCount": 3.0,
       "cyclomaticComplexity": 1.0,
       "averageCyclomaticComplexity": 1.0,
-      "lcom4": 1.0
+      "lcom4": 1.0,
+      "unmaintainabilityIndex": 16.891130617989845
     }
   }],
   "functions": [{
@@ -438,7 +473,8 @@
       "lineCount": 3.0,
       "cyclomaticComplexity": 1.0,
       "npathComplexity": 1.0,
-      "nestedBlockDepth": 1.0
+      "nestedBlockDepth": 1.0,
+      "unmaintainabilityIndex": 21.195203194331256
     },
     "startLine": 177,
     "endLine": 179
@@ -450,7 +486,8 @@
       "lineCount": 3.0,
       "cyclomaticComplexity": 1.0,
       "npathComplexity": 0.0,
-      "nestedBlockDepth": 1.0
+      "nestedBlockDepth": 1.0,
+      "unmaintainabilityIndex": 15.757531755666903
     },
     "startLine": 182,
     "endLine": 184
@@ -462,7 +499,8 @@
       "lineCount": 4.0,
       "cyclomaticComplexity": 1.0,
       "npathComplexity": 1.0,
-      "nestedBlockDepth": 1.0
+      "nestedBlockDepth": 1.0,
+      "unmaintainabilityIndex": 28.83807039511676
     },
     "startLine": 187,
     "endLine": 190
@@ -474,7 +512,8 @@
       "lineCount": 19.0,
       "cyclomaticComplexity": 1.0,
       "npathComplexity": 1.0,
-      "nestedBlockDepth": 2.0
+      "nestedBlockDepth": 2.0,
+      "unmaintainabilityIndex": 36.033991755201654
     },
     "startLine": 193,
     "endLine": 211
@@ -486,7 +525,8 @@
       "lineCount": 1.0,
       "cyclomaticComplexity": 1.0,
       "npathComplexity": 1.0,
-      "nestedBlockDepth": 1.0
+      "nestedBlockDepth": 1.0,
+      "unmaintainabilityIndex": 8.471138273146408
     },
     "startLine": 242,
     "endLine": 242
@@ -498,7 +538,8 @@
       "lineCount": 2.0,
       "cyclomaticComplexity": 1.0,
       "npathComplexity": 0.0,
-      "nestedBlockDepth": 1.0
+      "nestedBlockDepth": 1.0,
+      "unmaintainabilityIndex": 15.757531755666903
     },
     "startLine": 246,
     "endLine": 247
@@ -510,7 +551,8 @@
       "lineCount": 3.0,
       "cyclomaticComplexity": 1.0,
       "npathComplexity": 1.0,
-      "nestedBlockDepth": 1.0
+      "nestedBlockDepth": 1.0,
+      "unmaintainabilityIndex": 16.365417685894982
     },
     "startLine": 251,
     "endLine": 253
@@ -526,6 +568,7 @@
     "averageCyclomaticComplexity": 1.4545454545454546,
     "nestedBlockDepth": 4.0,
     "npathComplexity": 296.0,
+    "unmaintainabilityIndex": 26.283941208850493,
     "lcom4": 4.0
   }
 }

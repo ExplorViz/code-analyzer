@@ -1,0 +1,11 @@
+=== 13 10 1 1
+fun f(a: Int): Int { return a + 1 }
+=== 29 24 2 5
+fun f(a: List<Int>?) {
+  val s = "x $a ${b}\n"
+  // comment
+  if (a!!.size < 2) g(s);
+  h()
+}
+=== 9 9 1 1
+fun f() { open = data?.get }

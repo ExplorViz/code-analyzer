@@ -8,20 +8,28 @@ The definitions are originally written for Java and adapted to [the other langua
 | ----------------------------- | ----------- | ---------------------------------------------------------------- |
 | `cyclomaticComplexity`        | function    | Cyclomatic complexity                                            |
 | `cyclomaticComplexity`        | class, file | Sum over the functions (for classes: weighted methods per class) |
-| `averageCyclomaticComplexity` | class, file | Average per function, 0 without functions                        |
+| `averageCyclomaticComplexity` | class, file | Average per function                                             |
 | `nestedBlockDepth`            | function    | Deepest nesting of control structures                            |
 | `nestedBlockDepth`            | file        | Maximum of the functions                                         |
 | `npathComplexity`             | function    | Number of acyclic execution paths                                |
 | `npathComplexity`             | file        | Maximum of the functions, at most 1,000,000,000                  |
 | `lcom4`                       | class       | Number of unrelated groups of methods                            |
 | `lcom4`                       | file        | Maximum of the classes                                           |
-| `unmaintainabilityIndex`      | function    | Inverse of the maintainability index, only for Java              |
-| `unmaintainabilityIndex`      | class, file | Index of the average function, 0 without functions               |
+| `unmaintainabilityIndex`      | function    | Inverse of the maintainability index                             |
+| `unmaintainabilityIndex`      | class, file | Index of the average function                                    |
+
+A metric that cannot be computed has no value, whereas 0 is always a computed value:
+- Classes and files without functions have none of the metrics.
+- Functions without a body (abstract and native methods) have no `nestedBlockDepth` and `unmaintainabilityIndex`. The same applies to classes and files whose functions all have no body.
+- Classes without methods with code have no `lcom4`, as do files without such classes.
+- Files that are not parsed (e.g. text files, files that are too large or whose analysis failed) only have the metrics that do not require it.
+
+Functions that are not exported, e.g. anonymous callbacks on the top level of a TypeScript file, do not count as functions here.
 
 The metrics have the following properties and assumptions:
 - The metrics of classes (and `lcom4` of files) do not exist in C, whose types have no methods.
 - Functions are methods and constructors.
-- Abstract and native methods have a cyclomatic complexity of 1, an NPath complexity of 0 and no nested block depth and unmaintainability index.
+- Abstract and native methods have a cyclomatic complexity of 1 and an NPath complexity of 0, as in Checkstyle.
 - Lambdas belong to the function around them.
 - Functions of nested, local and anonymous classes only count for their own class and for the file.
 - Initializer blocks and field initializers are not exported.
@@ -69,7 +77,7 @@ The table is simplified. These properties of Checkstyle are reproduced on purpos
 ## LCOM4
 
 Hitz and Montazeri (1995): the number of connected components of methods, where two methods are connected if they use a common field or one calls the other.
-1 is cohesive, higher values hint at several responsibilities, 0 means that there are no methods with code.
+1 is cohesive, higher values hint at several responsibilities.
 
 - Constructors and initializers are ignored.
 - `static final` fields, interface fields and enum constants are not shared state.
@@ -88,10 +96,13 @@ The formula stems from Oman and Hagemeister (1992) and Coleman et al. (1994), wi
 
 - V is the Halstead volume, CC the cyclomatic complexity and LOC the number of lines with code, i.e. without comments and blank lines. V and LOC below 1 count as 1.
 - Classes and files use the averages of V, CC and LOC over their functions, as in the original definition. Functions without a body are ignored.
-- V and LOC start with the return type or name of the function. Like CC, they exclude the bodies of local and anonymous classes, whose functions are measured on their own.
-- The Halstead volume is N x log2(n) for N operators and operands, of which n are distinct. Operands are identifiers and literals. Operators are all other tokens, i.e. also keywords, primitive types and separators. Brackets that belong together count once, as do `?:`, `>>` and `>>>`.
+- V and LOC start with the rule that declares the function, i.e. in Java with the return type or name. Like CC, they exclude the code that is measured on its own, e.g. the bodies of local and anonymous classes in Java.
+- The Halstead volume is N x log2(n) for N operators and operands, of which n are distinct. Operands are identifiers and literals. Operators are all other tokens, i.e. also keywords, primitive types and separators. Brackets that belong together count once, as do operators that consist of several tokens, such as `?:`, `>>` and `not in`.
+- Strings are a single operand. Expressions inside of them count in addition, except in Python, whose formatted strings are not parsed.
+- Line breaks, indentation and semicolons that are optional are not counted (Go, JavaScript, Kotlin, Python, Swift, TypeScript).
 
 As tools count operators and operands differently, values can deviate slightly from those of other tools.
+Equivalent code has similar values in all languages, but not the same, because the languages need different numbers of tokens and lines.
 
 ## Other languages
 

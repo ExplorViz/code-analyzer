@@ -10,7 +10,9 @@ import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.metrics.CodeMetrics;
 import net.explorviz.code.analysis.metrics.ComplexityAggregate;
 import net.explorviz.code.analysis.metrics.FileMetrics;
+import net.explorviz.code.analysis.metrics.TreeWalker;
 import net.explorviz.code.analysis.metrics.UnmaintainabilityIndex;
+import net.explorviz.code.analysis.metrics.halstead.HalsteadVolume;
 import net.explorviz.code.analysis.metrics.java.lcom4.Lcom4;
 import org.antlr.v4.runtime.ParserRuleContext;
 
@@ -21,7 +23,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 public final class JavaMetricsCollector {
 
   private final FileMetrics fileMetrics = new FileMetrics();
-  private final UnmaintainabilityIndex fileUnmaintainability = new UnmaintainabilityIndex();
   private final Deque<ClassMetrics> classes = new ArrayDeque<>();
   private CyclomaticComplexity cyclomaticComplexities;
   private NpathComplexity npathComplexities;
@@ -39,15 +40,13 @@ public final class JavaMetricsCollector {
   /** Adds the metrics of the class that was entered last. */
   public void exitClass(final ClassDataHandler classData, final ParserRuleContext type) {
     final ClassMetrics metrics = classes.pop();
-    final ComplexityAggregate complexity = metrics.complexity();
     final int lcom4 = Lcom4.of(type);
-    classData.addMetric(CodeMetrics.CYCLOMATIC_COMPLEXITY, String.valueOf(complexity.sum()));
-    classData.addMetric(
-        CodeMetrics.AVERAGE_CYCLOMATIC_COMPLEXITY, String.valueOf(complexity.average()));
-    classData.addMetric(CodeMetrics.LCOM4, String.valueOf(lcom4));
-    classData.addMetric(
-        CodeMetrics.UNMAINTAINABILITY_INDEX, String.valueOf(metrics.unmaintainability().value()));
-    fileMetrics.addClass(lcom4);
+    metrics.complexity().attachTo(classData::addMetric);
+    if (lcom4 > 0) {
+      classData.addMetric(CodeMetrics.LCOM4, String.valueOf(lcom4));
+      fileMetrics.addClass(lcom4);
+    }
+    metrics.unmaintainability().attachTo(classData::addMetric);
   }
 
   /** Adds the metrics of a method. */
@@ -68,9 +67,7 @@ public final class JavaMetricsCollector {
 
   /** Adds the metrics of the file after all classes have been left. */
   public void exitFile(final JavaFileDataHandler file) {
-    fileMetrics.attachTo(file, true);
-    file.addMetric(
-        CodeMetrics.UNMAINTAINABILITY_INDEX, String.valueOf(fileUnmaintainability.value()));
+    fileMetrics.attachTo(file);
   }
 
   private void addFunction(
@@ -90,26 +87,43 @@ public final class JavaMetricsCollector {
     function.addMetric(
         CodeMetrics.NPATH_COMPLEXITY,
         String.valueOf(Math.min(npath.doubleValue(), Double.MAX_VALUE)));
-    fileMetrics.addFunction(complexity, npath.doubleValue(), blockDepth);
+    fileMetrics.addFunction(complexity, npath.doubleValue());
     if (!classes.isEmpty()) {
       classes.peek().complexity().add(complexity);
     }
     if (body != null) {
-      addUnmaintainability(function, declaration, complexity);
+      addCode(function, declaration, blockDepth, complexity);
     }
   }
 
-  private void addUnmaintainability(
-      final MethodDataHandler function, final ParserRuleContext declaration, final int complexity) {
-    final HalsteadVolume volume = HalsteadVolume.of(declaration);
+  private void addCode(
+      final MethodDataHandler function,
+      final ParserRuleContext declaration,
+      final int blockDepth,
+      final int complexity) {
+    final HalsteadVolume volume = volumeOf(declaration);
     final UnmaintainabilityIndex unmaintainability = new UnmaintainabilityIndex();
     unmaintainability.add(volume.value(), complexity, volume.lines());
-    function.addMetric(
-        CodeMetrics.UNMAINTAINABILITY_INDEX, String.valueOf(unmaintainability.value()));
-    fileUnmaintainability.add(volume.value(), complexity, volume.lines());
+    unmaintainability.attachTo(function::addMetric);
+    fileMetrics.addCode(blockDepth, volume.value(), complexity, volume.lines());
     if (!classes.isEmpty()) {
       classes.peek().unmaintainability().add(volume.value(), complexity, volume.lines());
     }
+  }
+
+  /** Measures the code of a function itself, without local and anonymous classes. */
+  /* package */ static HalsteadVolume volumeOf(final ParserRuleContext declaration) {
+    final HalsteadVolume volume = new HalsteadVolume(JavaTokens.GRAMMAR);
+    TreeWalker.walk(
+        declaration,
+        context -> {
+          if (JavaTreeWalker.isTypeBody(context)) {
+            return false;
+          }
+          volume.add(context);
+          return true;
+        });
+    return volume;
   }
 
   private record ClassMetrics(

@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.metrics.MetricsCollector;
 import net.explorviz.code.analysis.metrics.cpp.CppControlFlow;
 import net.explorviz.code.analysis.metrics.cpp.CppMembers;
+import net.explorviz.code.analysis.metrics.cpp.CppTokens;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ public class CppFileDataListener extends CPP14ParserBaseListener implements Comm
   private int functionCount = 0;
   private int variableCount = 0;
   private final MetricsCollector metricsCollector =
-      new MetricsCollector(new CppControlFlow(), new CppMembers());
+      new MetricsCollector(new CppControlFlow(), CppTokens.GRAMMAR, new CppMembers());
 
   public CppFileDataListener(
       final CppFileDataHandler fileDataHandler, final CommonTokenStream tokens) {

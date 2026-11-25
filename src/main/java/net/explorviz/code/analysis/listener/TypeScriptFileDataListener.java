@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.handler.TypeScriptFileDataHandler;
 import net.explorviz.code.analysis.metrics.MetricsCollector;
 import net.explorviz.code.analysis.metrics.typescript.TypeScriptControlFlow;
 import net.explorviz.code.analysis.metrics.typescript.TypeScriptMembers;
+import net.explorviz.code.analysis.metrics.typescript.TypeScriptTokens;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ public class TypeScriptFileDataListener extends TypeScriptParserBaseListener
   private final MetricsCollector metricsCollector =
       new MetricsCollector(
           new TypeScriptControlFlow(arrow -> extractArrowFunctionName(arrow) != null),
+          TypeScriptTokens.GRAMMAR,
           new TypeScriptMembers());
 
   public TypeScriptFileDataListener(

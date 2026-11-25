@@ -217,7 +217,7 @@ class A {
  fun a() { fun l() { x++ } }
  fun b() { x-- }
 }
-=== 0
+=== none
 class A(val x: Int)
 === 1
 class A(val x: Int) {
@@ -229,7 +229,7 @@ class A(x: Int) {
  fun a() = x
  fun b() = x
 }
-=== 0
+=== none
 interface A {
  fun a()
 }

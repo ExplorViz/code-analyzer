@@ -95,11 +95,7 @@ public class MethodDataHandler implements ProtoBufConvertable<FunctionData> {
    */
   public String addMetric(final String metricName, final String metricValue) {
     final String oldMetricValue = getMetricValue(metricName);
-    try {
-      builder.putMetrics(metricName, Double.parseDouble(metricValue));
-    } catch (NumberFormatException e) {
-      builder.putMetrics(metricName, 0.0);
-    }
+    MetricParser.parse(metricValue).ifPresent(value -> builder.putMetrics(metricName, value));
     return oldMetricValue;
   }
 

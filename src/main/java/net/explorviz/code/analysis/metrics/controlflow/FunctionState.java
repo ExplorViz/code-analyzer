@@ -2,13 +2,19 @@ package net.explorviz.code.analysis.metrics.controlflow;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import net.explorviz.code.analysis.metrics.halstead.HalsteadVolume;
+import net.explorviz.code.analysis.metrics.halstead.TokenGrammar;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 /** Measurement of a function that is being walked. */
 /* package */ final class FunctionState {
 
   /* package */ final NpathPaths paths = new NpathPaths();
-  private final boolean hasBody;
+
+  /** Volume of the code or {@code null} if there is no body. */
+  private final HalsteadVolume volume;
+
   private int complexity = 1;
   private int depth = 1;
   private int maxDepth = 1;
@@ -22,12 +28,22 @@ import org.antlr.v4.runtime.Token;
   /** Open constructs, innermost first. For a switch, whether one of its cases is open. */
   private final Deque<Switch> openConstructs = new ArrayDeque<>();
 
-  /* package */ FunctionState(final boolean hasBody) {
-    this.hasBody = hasBody;
+  /* package */ FunctionState(final boolean hasBody, final TokenGrammar tokens) {
+    this.volume = hasBody ? new HalsteadVolume(tokens) : null;
   }
 
   /* package */ FunctionMetrics toMetrics() {
-    return new FunctionMetrics(complexity, paths.current(), hasBody ? maxDepth : 0);
+    return volume == null
+        ? new FunctionMetrics(complexity, paths.current(), 0, 0, 0)
+        : new FunctionMetrics(
+            complexity, paths.current(), maxDepth, volume.value(), volume.lines());
+  }
+
+  /** Adds the tokens that are direct children of a rule of the function. */
+  /* package */ void addTokens(final ParserRuleContext context) {
+    if (volume != null) {
+      volume.add(context);
+    }
   }
 
   /* package */ void addDecisions(final int count) {

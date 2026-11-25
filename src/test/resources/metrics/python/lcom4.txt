@@ -204,6 +204,6 @@ class A:
     def b(self):
         f()
 
-=== 0
+=== none
 class A:
     x = 1

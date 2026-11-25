@@ -11,6 +11,7 @@ import net.explorviz.code.analysis.metrics.cohesion.TypeMembers;
 import net.explorviz.code.analysis.metrics.controlflow.ControlFlowAnalysis;
 import net.explorviz.code.analysis.metrics.controlflow.ControlFlowGrammar;
 import net.explorviz.code.analysis.metrics.controlflow.FunctionMetrics;
+import net.explorviz.code.analysis.metrics.halstead.TokenGrammar;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
@@ -20,6 +21,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 public final class MetricsCollector {
 
   private final ControlFlowGrammar controlFlow;
+  private final TokenGrammar tokens;
   private final MemberGrammar members;
   private final Map<ClassDataHandler, ParserRuleContext> classes = new IdentityHashMap<>();
   private final Map<MethodDataHandler, Function> functions = new IdentityHashMap<>();
@@ -29,16 +31,21 @@ public final class MetricsCollector {
    * Creates a collector for a file.
    *
    * @param controlFlow the control flow of the language
+   * @param tokens the operators and operands of the language
    * @param members the members of the language, {@code null} if its types have no methods
    */
-  public MetricsCollector(final ControlFlowGrammar controlFlow, final MemberGrammar members) {
+  public MetricsCollector(
+      final ControlFlowGrammar controlFlow,
+      final TokenGrammar tokens,
+      final MemberGrammar members) {
     this.controlFlow = controlFlow;
+    this.tokens = tokens;
     this.members = members;
   }
 
   /** Measures the functions of the file before any of them is added. */
   public void enterFile(final ParserRuleContext file) {
-    functionMetrics = ControlFlowAnalysis.ofFile(file, controlFlow);
+    functionMetrics = ControlFlowAnalysis.ofFile(file, controlFlow, tokens);
   }
 
   /** Adds a class that is declared by the given rule. */
@@ -78,36 +85,39 @@ public final class MetricsCollector {
   /** Adds the metrics of the classes and the file after everything else has been added. */
   public void exitFile(final AbstractFileDataHandler file) {
     final FileMetrics fileMetrics = new FileMetrics();
-    final Map<ClassDataHandler, ComplexityAggregate> classComplexities = new IdentityHashMap<>();
+    final Map<ClassDataHandler, ClassMetrics> classMetrics = new IdentityHashMap<>();
     if (members != null) {
-      classes.keySet().forEach(c -> classComplexities.put(c, new ComplexityAggregate()));
+      classes.keySet().forEach(c -> classMetrics.put(c, new ClassMetrics()));
     }
     for (final Function function : functions.values()) {
       final FunctionMetrics metrics = function.metrics();
       fileMetrics.addFunction(
-          metrics.cyclomaticComplexity(),
-          metrics.npathComplexity().doubleValue(),
-          metrics.nestedBlockDepth());
-      if (function.owner() != null && classComplexities.containsKey(function.owner())) {
-        classComplexities.get(function.owner()).add(metrics.cyclomaticComplexity());
+          metrics.cyclomaticComplexity(), metrics.npathComplexity().doubleValue());
+      if (metrics.hasBody()) {
+        fileMetrics.addCode(
+            metrics.nestedBlockDepth(),
+            metrics.halsteadVolume(),
+            metrics.cyclomaticComplexity(),
+            metrics.linesOfCode());
+      }
+      if (function.owner() != null && classMetrics.containsKey(function.owner())) {
+        classMetrics.get(function.owner()).add(metrics);
       }
     }
-    classComplexities.forEach(
-        (classData, complexity) -> addClassMetrics(classData, complexity, fileMetrics));
-    fileMetrics.attachTo(file, members != null);
+    classMetrics.forEach((classData, metrics) -> addClassMetrics(classData, metrics, fileMetrics));
+    fileMetrics.attachTo(file);
   }
 
   private void addClassMetrics(
-      final ClassDataHandler classData,
-      final ComplexityAggregate complexity,
-      final FileMetrics fileMetrics) {
+      final ClassDataHandler classData, final ClassMetrics metrics, final FileMetrics fileMetrics) {
     final TypeMembers typeMembers = members.membersOf(classes.get(classData));
     final int lcom4 = typeMembers == null ? 0 : Lcom4.of(typeMembers, members);
-    classData.addMetric(CodeMetrics.CYCLOMATIC_COMPLEXITY, String.valueOf(complexity.sum()));
-    classData.addMetric(
-        CodeMetrics.AVERAGE_CYCLOMATIC_COMPLEXITY, String.valueOf(complexity.average()));
-    classData.addMetric(CodeMetrics.LCOM4, String.valueOf(lcom4));
-    fileMetrics.addClass(lcom4);
+    metrics.complexity.attachTo(classData::addMetric);
+    if (lcom4 > 0) {
+      classData.addMetric(CodeMetrics.LCOM4, String.valueOf(lcom4));
+      fileMetrics.addClass(lcom4);
+    }
+    metrics.unmaintainability.attachTo(classData::addMetric);
   }
 
   private void attach(
@@ -120,9 +130,26 @@ public final class MetricsCollector {
     function.addMetric(
         CodeMetrics.NPATH_COMPLEXITY,
         String.valueOf(Math.min(metrics.npathComplexity().doubleValue(), Double.MAX_VALUE)));
-    if (metrics.nestedBlockDepth() > 0) {
+    if (metrics.hasBody()) {
       function.addMetric(
           CodeMetrics.NESTED_BLOCK_DEPTH, String.valueOf(metrics.nestedBlockDepth()));
+      final UnmaintainabilityIndex unmaintainability = new UnmaintainabilityIndex();
+      unmaintainability.add(
+          metrics.halsteadVolume(), metrics.cyclomaticComplexity(), metrics.linesOfCode());
+      unmaintainability.attachTo(function::addMetric);
+    }
+  }
+
+  private static final class ClassMetrics {
+    private final ComplexityAggregate complexity = new ComplexityAggregate();
+    private final UnmaintainabilityIndex unmaintainability = new UnmaintainabilityIndex();
+
+    private void add(final FunctionMetrics metrics) {
+      complexity.add(metrics.cyclomaticComplexity());
+      if (metrics.hasBody()) {
+        unmaintainability.add(
+            metrics.halsteadVolume(), metrics.cyclomaticComplexity(), metrics.linesOfCode());
+      }
     }
   }
 

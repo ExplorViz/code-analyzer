@@ -54,5 +54,5 @@ class A { x = 1; a() { class B { m() { this.x; } } } b() { this.x; } }
 class A { get v() { return 1; } a() { f(); } b() { g(); } }
 === 2
 class A { a2() { } a() { f(); } b() { g(); } }
-=== 0
+=== none
 class A { x = 1; }

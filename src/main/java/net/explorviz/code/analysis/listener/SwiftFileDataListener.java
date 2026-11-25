@@ -10,6 +10,7 @@ import net.explorviz.code.analysis.handler.SwiftFileDataHandler;
 import net.explorviz.code.analysis.metrics.MetricsCollector;
 import net.explorviz.code.analysis.metrics.swift.SwiftControlFlow;
 import net.explorviz.code.analysis.metrics.swift.SwiftMembers;
+import net.explorviz.code.analysis.metrics.swift.SwiftTokens;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ public class SwiftFileDataListener extends Swift5ParserBaseListener
   private int functionCount = 0;
   private int variableCount = 0;
   private final MetricsCollector metricsCollector =
-      new MetricsCollector(new SwiftControlFlow(), new SwiftMembers());
+      new MetricsCollector(new SwiftControlFlow(), SwiftTokens.GRAMMAR, new SwiftMembers());
 
   public SwiftFileDataListener(
       final SwiftFileDataHandler fileDataHandler, final CommonTokenStream tokens) {

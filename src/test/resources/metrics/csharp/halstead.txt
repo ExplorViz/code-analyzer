@@ -1,0 +1,6 @@
+=== 11 9 1 1
+class A { int F(int a) { return a + 1; } }
+=== 21 17 2 1
+class A { int F(List<int> a) { return a.Count >> 1 < 2 ? 1 : $"x{a}y"; } }
+=== 13 11 2 1
+class A { void F() { var value = get; value ??= null; } }

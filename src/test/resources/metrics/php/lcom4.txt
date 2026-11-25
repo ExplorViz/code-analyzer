@@ -67,7 +67,7 @@ class A { abstract function c(); function a() { f(); } function b() { $this->c()
 === 2
 <?php
 class A { function c() { } function a() { f(); } function b() { g(); } }
-=== 0
+=== none
 <?php
 interface A { function a(); }
 === 1

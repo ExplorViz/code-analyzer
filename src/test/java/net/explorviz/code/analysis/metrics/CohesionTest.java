@@ -15,8 +15,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Tests LCOM4. The resources consist of blocks with the expected value of the first class, followed
- * by the source code.
+ * Tests LCOM4. The resources consist of blocks with the expected value of the first class, "none"
+ * if it has no value, followed by the source code.
  */
 class CohesionTest {
 
@@ -33,7 +33,10 @@ class CohesionTest {
             .forEach(
                 parts ->
                     examples.add(
-                        new Example(language, Double.parseDouble(parts[0]), parts[1].strip())));
+                        new Example(
+                            language,
+                            "none".equals(parts[0]) ? null : Double.valueOf(parts[0]),
+                            parts[1].strip())));
       }
     }
     return examples.stream();
@@ -48,7 +51,8 @@ class CohesionTest {
             .language()
             .parse(example.source())
             .getClasses(0)
-            .getMetricsOrThrow(CodeMetrics.LCOM4));
+            .getMetricsMap()
+            .get(CodeMetrics.LCOM4));
   }
 
   @Test
@@ -59,5 +63,5 @@ class CohesionTest {
   }
 
   /** Source code in the given language. */
-  record Example(TestLanguage language, double expected, String source) {}
+  record Example(TestLanguage language, Double expected, String source) {}
 }

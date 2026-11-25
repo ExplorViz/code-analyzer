@@ -7,17 +7,19 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import net.explorviz.code.analysis.metrics.TreeWalker;
+import net.explorviz.code.analysis.metrics.halstead.TokenGrammar;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
  * Measures all functions of a file in a single pass: cyclomatic complexity (McCabe, 1976), NPath
- * complexity (Nejmeh, 1988) and nested block depth. The definitions are the same for all languages
- * and correspond to those for Java.
+ * complexity (Nejmeh, 1988), nested block depth and Halstead volume. The definitions are the same
+ * for all languages and correspond to those for Java.
  */
 public final class ControlFlowAnalysis implements TreeWalker.Visitor {
 
   private final ControlFlowGrammar grammar;
+  private final TokenGrammar tokens;
   private final Map<ParserRuleContext, FunctionMetrics> functions = new IdentityHashMap<>();
   private final Deque<FunctionState> states = new ArrayDeque<>();
   private final Deque<Entered> entered = new ArrayDeque<>();
@@ -27,16 +29,17 @@ public final class ControlFlowAnalysis implements TreeWalker.Visitor {
 
   private final Set<ParserRuleContext> alternatives = newIdentitySet();
 
-  private ControlFlowAnalysis(final ControlFlowGrammar grammar) {
+  private ControlFlowAnalysis(final ControlFlowGrammar grammar, final TokenGrammar tokens) {
     this.grammar = grammar;
+    this.tokens = tokens;
     // Code outside of functions is ignored.
-    states.push(new FunctionState(false));
+    states.push(new FunctionState(false, tokens));
   }
 
   /** Returns the metrics of all functions of the file by the rule that declares the function. */
   public static Map<ParserRuleContext, FunctionMetrics> ofFile(
-      final ParserRuleContext file, final ControlFlowGrammar grammar) {
-    final ControlFlowAnalysis analysis = new ControlFlowAnalysis(grammar);
+      final ParserRuleContext file, final ControlFlowGrammar grammar, final TokenGrammar tokens) {
+    final ControlFlowAnalysis analysis = new ControlFlowAnalysis(grammar, tokens);
     TreeWalker.walk(file, analysis);
     return Collections.unmodifiableMap(analysis.functions);
   }
@@ -67,6 +70,7 @@ public final class ControlFlowAnalysis implements TreeWalker.Visitor {
     if (!isMeasuredElsewhere) {
       enterConstruct(context, construct, state);
     }
+    states.peek().addTokens(context);
     return true;
   }
 
@@ -91,7 +95,7 @@ public final class ControlFlowAnalysis implements TreeWalker.Visitor {
   private void enterConstruct(
       final ParserRuleContext context, final Construct construct, final FunctionState state) {
     switch (construct.kind()) {
-      case FUNCTION, TYPE -> states.push(new FunctionState(construct.hasBody()));
+      case FUNCTION, TYPE -> states.push(new FunctionState(construct.hasBody(), tokens));
       case BRANCH, LOOP, SWITCH, GUARD -> {
         conditions.addAll(construct.conditions());
         if (construct.alternative() != null) {

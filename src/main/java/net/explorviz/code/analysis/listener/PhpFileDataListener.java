@@ -13,6 +13,7 @@ import net.explorviz.code.analysis.handler.PhpFileDataHandler;
 import net.explorviz.code.analysis.metrics.MetricsCollector;
 import net.explorviz.code.analysis.metrics.php.PhpControlFlow;
 import net.explorviz.code.analysis.metrics.php.PhpMembers;
+import net.explorviz.code.analysis.metrics.php.PhpTokens;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,7 @@ public class PhpFileDataListener extends PhpParserBaseListener implements Common
   private int functionCount = 0;
   private int variableCount = 0;
   private final MetricsCollector metricsCollector =
-      new MetricsCollector(new PhpControlFlow(), new PhpMembers());
+      new MetricsCollector(new PhpControlFlow(), PhpTokens.GRAMMAR, new PhpMembers());
 
   public PhpFileDataListener(
       final PhpFileDataHandler fileDataHandler, final CommonTokenStream tokens) {
