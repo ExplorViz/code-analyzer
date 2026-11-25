@@ -29,9 +29,9 @@ import org.slf4j.LoggerFactory;
 /** Visitor to calculate the cyclomatic complexity for methods and classes. */
 public class CyclomaticComplexityVisitor extends VoidVisitorAdapter<Pair<MetricAppender, Object>> {
 
-  public static final String CYCLOMATIC_COMPLEXITY = "cyclomatic_complexity";
+  public static final String CYCLOMATIC_COMPLEXITY = "cyclomaticComplexity";
   private static final Logger LOGGER = LoggerFactory.getLogger(CyclomaticComplexityVisitor.class);
-  private static final String CYCLOMATIC_COMPLEXITY_WEIGHTED = "cyclomatic_complexity_weighted";
+  private static final String AVERAGE_CYCLOMATIC_COMPLEXITY = "averageCyclomaticComplexity";
 
   private final Map<String, Integer> methodCounter;
 
@@ -74,7 +74,7 @@ public class CyclomaticComplexityVisitor extends VoidVisitorAdapter<Pair<MetricA
       metricValue = metricValue / methodCounter.size();
     }
     try {
-      data.a.putClassMetric(CYCLOMATIC_COMPLEXITY_WEIGHTED, String.valueOf(metricValue));
+      data.a.putClassMetric(AVERAGE_CYCLOMATIC_COMPLEXITY, String.valueOf(metricValue));
     } catch (NotFoundException e) {
       // metric was not addable.
       if (LOGGER.isErrorEnabled()) {
@@ -120,7 +120,7 @@ public class CyclomaticComplexityVisitor extends VoidVisitorAdapter<Pair<MetricA
       metricValue = metricValue / methodCounter.size();
     }
     try {
-      data.a.putClassMetric(CYCLOMATIC_COMPLEXITY_WEIGHTED, String.valueOf(metricValue));
+      data.a.putClassMetric(AVERAGE_CYCLOMATIC_COMPLEXITY, String.valueOf(metricValue));
     } catch (NotFoundException e) {
       // metric was not addable.
       if (LOGGER.isErrorEnabled()) {

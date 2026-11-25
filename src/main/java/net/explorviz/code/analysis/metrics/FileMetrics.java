@@ -46,8 +46,7 @@ public final class FileMetrics {
    */
   public void attachTo(final AbstractFileDataHandler file, final boolean hasCohesion) {
     file.addMetric(CodeMetrics.CYCLOMATIC_COMPLEXITY, String.valueOf(complexity.sum()));
-    file.addMetric(
-        CodeMetrics.CYCLOMATIC_COMPLEXITY_WEIGHTED, String.valueOf(complexity.average()));
+    file.addMetric(CodeMetrics.AVERAGE_CYCLOMATIC_COMPLEXITY, String.valueOf(complexity.average()));
     file.addMetric(CodeMetrics.NESTED_BLOCK_DEPTH, String.valueOf(nestedBlockDepth));
     file.addMetric(CodeMetrics.NPATH_COMPLEXITY, String.valueOf(npathComplexity));
     if (hasCohesion) {

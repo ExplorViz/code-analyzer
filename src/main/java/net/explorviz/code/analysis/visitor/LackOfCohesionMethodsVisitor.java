@@ -25,7 +25,7 @@ import net.explorviz.code.analysis.types.Graph;
 /** Basic LCOM4 implementation. */
 public class LackOfCohesionMethodsVisitor extends VoidVisitorAdapter<Pair<MetricAppender, Object>> {
 
-  private static final String METRIC_NAME = "LCOM4";
+  private static final String METRIC_NAME = "lcom4";
   private final Stack<Graph> graphStack = new Stack<>();
   private final Stack<List<FieldDeclaration>> fieldsStack = new Stack<>();
   private final Stack<List<String>> fieldNamesStack = new Stack<>();

@@ -43,7 +43,7 @@ public final class JavaMetricsCollector {
     final int lcom4 = Lcom4.of(type);
     classData.addMetric(CodeMetrics.CYCLOMATIC_COMPLEXITY, String.valueOf(complexity.sum()));
     classData.addMetric(
-        CodeMetrics.CYCLOMATIC_COMPLEXITY_WEIGHTED, String.valueOf(complexity.average()));
+        CodeMetrics.AVERAGE_CYCLOMATIC_COMPLEXITY, String.valueOf(complexity.average()));
     classData.addMetric(CodeMetrics.LCOM4, String.valueOf(lcom4));
     classData.addMetric(
         CodeMetrics.UNMAINTAINABILITY_INDEX, String.valueOf(metrics.unmaintainability().value()));

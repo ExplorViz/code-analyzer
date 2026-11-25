@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 public class LackOfCohesionMethodsVisitorTest {
 
-  private static final String LCOM4 = "LCOM4";
+  private static final String LCOM4 = "lcom4";
 
   @Test()
   void fileDataTest1() throws IOException {

@@ -74,7 +74,7 @@ class TypeScriptFileDataListenerTest {
       final FileData fileData = parse(source, fileName);
       assertEquals(List.of("f"), functionNames(fileData), fileName);
       final FunctionData function = fileData.getFunctions(0);
-      assertEquals(4.0, function.getMetricsOrThrow("cyclomatic_complexity"), fileName);
+      assertEquals(4.0, function.getMetricsOrThrow("cyclomaticComplexity"), fileName);
       assertEquals(5.0, function.getMetricsOrThrow("nestedBlockDepth"), fileName);
     }
   }
@@ -83,7 +83,7 @@ class TypeScriptFileDataListenerTest {
   void genericCallsAreReturned() {
     final FileData fileData =
         parse("function f(a) { if (a) { return g<A[]>(a); } return h<A>(a); }", "a.ts");
-    assertEquals(2.0, fileData.getFunctions(0).getMetricsOrThrow("cyclomatic_complexity"));
+    assertEquals(2.0, fileData.getFunctions(0).getMetricsOrThrow("cyclomaticComplexity"));
   }
 
   @Test

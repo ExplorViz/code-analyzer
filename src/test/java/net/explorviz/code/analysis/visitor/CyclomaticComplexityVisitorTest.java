@@ -30,17 +30,17 @@ public class CyclomaticComplexityVisitorTest {
         fileDataHandler
             .getClassData("com.easy.life.Nested")
             .getMethod("com.easy.life.Nested.heavyNested#1")
-            .getMetricValue("cyclomatic_complexity"));
+            .getMetricValue("cyclomaticComplexity"));
     Assertions.assertEquals(
         "2.0",
         fileDataHandler
             .getClassData("com.easy.life.Nested")
             .getMethod("com.easy.life.Nested.heavyNested2#1980e")
-            .getMetricValue("cyclomatic_complexity"));
+            .getMetricValue("cyclomaticComplexity"));
     Assertions.assertEquals(
         "4.0",
         fileDataHandler
             .getClassData("com.easy.life.Nested")
-            .getMetricValue("cyclomatic_complexity_weighted"));
+            .getMetricValue("averageCyclomaticComplexity"));
   }
 }

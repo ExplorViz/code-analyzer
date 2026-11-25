@@ -1,7 +1,7 @@
 package net.explorviz.code.analysis.metrics.java;
 
+import static net.explorviz.code.analysis.metrics.CodeMetrics.AVERAGE_CYCLOMATIC_COMPLEXITY;
 import static net.explorviz.code.analysis.metrics.CodeMetrics.CYCLOMATIC_COMPLEXITY;
-import static net.explorviz.code.analysis.metrics.CodeMetrics.CYCLOMATIC_COMPLEXITY_WEIGHTED;
 import static net.explorviz.code.analysis.metrics.CodeMetrics.NESTED_BLOCK_DEPTH;
 import static net.explorviz.code.analysis.metrics.CodeMetrics.NPATH_COMPLEXITY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -93,14 +93,14 @@ class CyclomaticComplexityTest {
 
     final ClassData a = file.getClasses(0);
     assertEquals(8.0, a.getMetricsOrThrow(CYCLOMATIC_COMPLEXITY));
-    assertEquals(1.6, a.getMetricsOrThrow(CYCLOMATIC_COMPLEXITY_WEIGHTED));
+    assertEquals(1.6, a.getMetricsOrThrow(AVERAGE_CYCLOMATIC_COMPLEXITY));
     final ClassData inner = JavaMetricsTestSupport.findClass(a.getInnerClassesList(), "Inner");
     assertEquals(2.0, inner.getMetricsOrThrow(CYCLOMATIC_COMPLEXITY));
     assertEquals(2.0, inner.getInnerClasses(0).getMetricsOrThrow(CYCLOMATIC_COMPLEXITY));
     assertEquals(2.0, file.getClasses(1).getMetricsOrThrow(CYCLOMATIC_COMPLEXITY));
     assertEquals(3.0, file.getClasses(2).getMetricsOrThrow(CYCLOMATIC_COMPLEXITY));
     assertEquals(17.0, file.getMetricsOrThrow(CYCLOMATIC_COMPLEXITY));
-    assertEquals(1.7, file.getMetricsOrThrow(CYCLOMATIC_COMPLEXITY_WEIGHTED));
+    assertEquals(1.7, file.getMetricsOrThrow(AVERAGE_CYCLOMATIC_COMPLEXITY));
 
     assertEquals(1.0, a.getFunctions(3).getMetricsOrThrow(CYCLOMATIC_COMPLEXITY));
     assertEquals(0.0, a.getFunctions(3).getMetricsOrThrow(NPATH_COMPLEXITY));
@@ -113,7 +113,7 @@ class CyclomaticComplexityTest {
 
     final ClassData annotation = file.getClasses(0);
     assertEquals(0.0, annotation.getMetricsOrThrow(CYCLOMATIC_COMPLEXITY));
-    assertEquals(0.0, annotation.getMetricsOrThrow(CYCLOMATIC_COMPLEXITY_WEIGHTED));
-    assertEquals(0.0, file.getMetricsOrThrow(CYCLOMATIC_COMPLEXITY_WEIGHTED));
+    assertEquals(0.0, annotation.getMetricsOrThrow(AVERAGE_CYCLOMATIC_COMPLEXITY));
+    assertEquals(0.0, file.getMetricsOrThrow(AVERAGE_CYCLOMATIC_COMPLEXITY));
   }
 }

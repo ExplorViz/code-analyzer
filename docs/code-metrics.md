@@ -4,28 +4,28 @@ The ANTLR analysis adds the following metrics next to the size metrics (`sloc`, 
 The metrics are available for C, C++, C#, Go, Java, JavaScript, Kotlin, PHP, Python, Rust, Swift and TypeScript.
 The definitions are originally written for Java and adapted to [the other languages](#other-languages) accordingly.
 
-| Metric key                       | Attached to | Meaning                                                          |
-| -------------------------------- | ----------- | ---------------------------------------------------------------- |
-| `cyclomatic_complexity`          | function    | Cyclomatic complexity                                            |
-| `cyclomatic_complexity`          | class, file | Sum over the functions (for classes: weighted methods per class) |
-| `cyclomatic_complexity_weighted` | class, file | Average per function, 0 without functions                        |
-| `nestedBlockDepth`               | function    | Deepest nesting of control structures                            |
-| `nestedBlockDepth`               | file        | Maximum of the functions                                         |
-| `npath_complexity`               | function    | Number of acyclic execution paths                                |
-| `npath_complexity`               | file        | Maximum of the functions, at most 1,000,000,000                  |
-| `LCOM4`                          | class       | Number of unrelated groups of methods                            |
-| `LCOM4`                          | file        | Maximum of the classes                                           |
-| `unmaintainability_index`        | function    | Inverse of the maintainability index, only for Java              |
-| `unmaintainability_index`        | class, file | Index of the average function, 0 without functions               |
+| Metric key                    | Attached to | Meaning                                                          |
+| ----------------------------- | ----------- | ---------------------------------------------------------------- |
+| `cyclomaticComplexity`        | function    | Cyclomatic complexity                                            |
+| `cyclomaticComplexity`        | class, file | Sum over the functions (for classes: weighted methods per class) |
+| `averageCyclomaticComplexity` | class, file | Average per function, 0 without functions                        |
+| `nestedBlockDepth`            | function    | Deepest nesting of control structures                            |
+| `nestedBlockDepth`            | file        | Maximum of the functions                                         |
+| `npathComplexity`             | function    | Number of acyclic execution paths                                |
+| `npathComplexity`             | file        | Maximum of the functions, at most 1,000,000,000                  |
+| `lcom4`                       | class       | Number of unrelated groups of methods                            |
+| `lcom4`                       | file        | Maximum of the classes                                           |
+| `unmaintainabilityIndex`      | function    | Inverse of the maintainability index, only for Java              |
+| `unmaintainabilityIndex`      | class, file | Index of the average function, 0 without functions               |
 
 The metrics have the following properties and assumptions:
-- The metrics of classes (and `LCOM4` of files) do not exist in C, whose types have no methods.
+- The metrics of classes (and `lcom4` of files) do not exist in C, whose types have no methods.
 - Functions are methods and constructors.
 - Abstract and native methods have a cyclomatic complexity of 1, an NPath complexity of 0 and no nested block depth and unmaintainability index.
 - Lambdas belong to the function around them.
 - Functions of nested, local and anonymous classes only count for their own class and for the file.
 - Initializer blocks and field initializers are not exported.
-- ExplorViz sums up the values of all files of a commit. Except for `cyclomatic_complexity`, such sums depend on the number of files.
+- ExplorViz shows the sum over all files of a commit and the average of the files that have the metric. Only the sum of `cyclomaticComplexity` is meaningful on its own, the other sums depend on the number of files.
 
 The cyclomatic and NPath complexities of Java functions is matched to metrics that Checkstyle 14.4.0 reports (`CyclomaticComplexity`, `NPathComplexity`).
 `CheckstyleComparisonTest` compares all functions of this repository and of `ComplexityConstructs.java`.
