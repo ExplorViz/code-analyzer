@@ -62,6 +62,7 @@ class JavaMetricsRobustnessTest {
     @Override
     public void enterBlock(final JavaParser.BlockContext ctx) {
       NestedBlockDepth.of(ctx);
+      HalsteadVolume.of(ctx);
     }
 
     @Override

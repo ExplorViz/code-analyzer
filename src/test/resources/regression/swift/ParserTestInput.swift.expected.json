@@ -540,6 +540,9 @@
     "importCount": 1.0,
     "classCount": 11.0,
     "cyclomatic_complexity": 38.0,
-    "cyclomatic_complexity_weighted": 1.52
+    "cyclomatic_complexity_weighted": 1.52,
+    "nestedBlockDepth": 4.0,
+    "npath_complexity": 120.0,
+    "LCOM4": 4.0
   }
 }

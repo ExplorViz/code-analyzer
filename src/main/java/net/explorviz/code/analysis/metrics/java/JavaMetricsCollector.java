@@ -9,6 +9,8 @@ import net.explorviz.code.analysis.handler.JavaFileDataHandler;
 import net.explorviz.code.analysis.handler.MethodDataHandler;
 import net.explorviz.code.analysis.metrics.CodeMetrics;
 import net.explorviz.code.analysis.metrics.ComplexityAggregate;
+import net.explorviz.code.analysis.metrics.FileMetrics;
+import net.explorviz.code.analysis.metrics.UnmaintainabilityIndex;
 import net.explorviz.code.analysis.metrics.java.lcom4.Lcom4;
 import org.antlr.v4.runtime.ParserRuleContext;
 
@@ -18,8 +20,9 @@ import org.antlr.v4.runtime.ParserRuleContext;
  */
 public final class JavaMetricsCollector {
 
-  private final ComplexityAggregate fileComplexity = new ComplexityAggregate();
-  private final Deque<ComplexityAggregate> classComplexities = new ArrayDeque<>();
+  private final FileMetrics fileMetrics = new FileMetrics();
+  private final UnmaintainabilityIndex fileUnmaintainability = new UnmaintainabilityIndex();
+  private final Deque<ClassMetrics> classes = new ArrayDeque<>();
   private CyclomaticComplexity cyclomaticComplexities;
   private NpathComplexity npathComplexities;
 
@@ -30,16 +33,21 @@ public final class JavaMetricsCollector {
   }
 
   public void enterClass() {
-    classComplexities.push(new ComplexityAggregate());
+    classes.push(new ClassMetrics(new ComplexityAggregate(), new UnmaintainabilityIndex()));
   }
 
   /** Adds the metrics of the class that was entered last. */
   public void exitClass(final ClassDataHandler classData, final ParserRuleContext type) {
-    final ComplexityAggregate complexity = classComplexities.pop();
+    final ClassMetrics metrics = classes.pop();
+    final ComplexityAggregate complexity = metrics.complexity();
+    final int lcom4 = Lcom4.of(type);
     classData.addMetric(CodeMetrics.CYCLOMATIC_COMPLEXITY, String.valueOf(complexity.sum()));
     classData.addMetric(
         CodeMetrics.CYCLOMATIC_COMPLEXITY_WEIGHTED, String.valueOf(complexity.average()));
-    classData.addMetric(CodeMetrics.LCOM4, String.valueOf(Lcom4.of(type)));
+    classData.addMetric(CodeMetrics.LCOM4, String.valueOf(lcom4));
+    classData.addMetric(
+        CodeMetrics.UNMAINTAINABILITY_INDEX, String.valueOf(metrics.unmaintainability().value()));
+    fileMetrics.addClass(lcom4);
   }
 
   /** Adds the metrics of a method. */
@@ -60,17 +68,18 @@ public final class JavaMetricsCollector {
 
   /** Adds the metrics of the file after all classes have been left. */
   public void exitFile(final JavaFileDataHandler file) {
-    file.addMetric(CodeMetrics.CYCLOMATIC_COMPLEXITY, String.valueOf(fileComplexity.sum()));
+    fileMetrics.attachTo(file, true);
     file.addMetric(
-        CodeMetrics.CYCLOMATIC_COMPLEXITY_WEIGHTED, String.valueOf(fileComplexity.average()));
+        CodeMetrics.UNMAINTAINABILITY_INDEX, String.valueOf(fileUnmaintainability.value()));
   }
 
   private void addFunction(
       final MethodDataHandler function,
       final ParserRuleContext declaration,
       final JavaParser.BlockContext body) {
+    final int blockDepth = body == null ? 0 : NestedBlockDepth.of(body);
     if (body != null) {
-      function.addMetric(CodeMetrics.NESTED_BLOCK_DEPTH, String.valueOf(NestedBlockDepth.of(body)));
+      function.addMetric(CodeMetrics.NESTED_BLOCK_DEPTH, String.valueOf(blockDepth));
     }
     final BigInteger npath = npathComplexities.values().get(declaration);
     final Integer complexity = cyclomaticComplexities.values().get(declaration);
@@ -81,9 +90,28 @@ public final class JavaMetricsCollector {
     function.addMetric(
         CodeMetrics.NPATH_COMPLEXITY,
         String.valueOf(Math.min(npath.doubleValue(), Double.MAX_VALUE)));
-    fileComplexity.add(complexity);
-    if (!classComplexities.isEmpty()) {
-      classComplexities.peek().add(complexity);
+    fileMetrics.addFunction(complexity, npath.doubleValue(), blockDepth);
+    if (!classes.isEmpty()) {
+      classes.peek().complexity().add(complexity);
+    }
+    if (body != null) {
+      addUnmaintainability(function, declaration, complexity);
     }
   }
+
+  private void addUnmaintainability(
+      final MethodDataHandler function, final ParserRuleContext declaration, final int complexity) {
+    final HalsteadVolume volume = HalsteadVolume.of(declaration);
+    final UnmaintainabilityIndex unmaintainability = new UnmaintainabilityIndex();
+    unmaintainability.add(volume.value(), complexity, volume.lines());
+    function.addMetric(
+        CodeMetrics.UNMAINTAINABILITY_INDEX, String.valueOf(unmaintainability.value()));
+    fileUnmaintainability.add(volume.value(), complexity, volume.lines());
+    if (!classes.isEmpty()) {
+      classes.peek().unmaintainability().add(volume.value(), complexity, volume.lines());
+    }
+  }
+
+  private record ClassMetrics(
+      ComplexityAggregate complexity, UnmaintainabilityIndex unmaintainability) {}
 }

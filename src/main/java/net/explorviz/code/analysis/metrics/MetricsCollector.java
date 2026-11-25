@@ -77,38 +77,44 @@ public final class MetricsCollector {
 
   /** Adds the metrics of the classes and the file after everything else has been added. */
   public void exitFile(final AbstractFileDataHandler file) {
-    final ComplexityAggregate fileComplexity = new ComplexityAggregate();
+    final FileMetrics fileMetrics = new FileMetrics();
     final Map<ClassDataHandler, ComplexityAggregate> classComplexities = new IdentityHashMap<>();
     if (members != null) {
       classes.keySet().forEach(c -> classComplexities.put(c, new ComplexityAggregate()));
     }
     for (final Function function : functions.values()) {
-      fileComplexity.add(function.complexity());
+      final FunctionMetrics metrics = function.metrics();
+      fileMetrics.addFunction(
+          metrics.cyclomaticComplexity(),
+          metrics.npathComplexity().doubleValue(),
+          metrics.nestedBlockDepth());
       if (function.owner() != null && classComplexities.containsKey(function.owner())) {
-        classComplexities.get(function.owner()).add(function.complexity());
+        classComplexities.get(function.owner()).add(metrics.cyclomaticComplexity());
       }
     }
-    classComplexities.forEach(this::addClassMetrics);
-    file.addMetric(CodeMetrics.CYCLOMATIC_COMPLEXITY, String.valueOf(fileComplexity.sum()));
-    file.addMetric(
-        CodeMetrics.CYCLOMATIC_COMPLEXITY_WEIGHTED, String.valueOf(fileComplexity.average()));
+    classComplexities.forEach(
+        (classData, complexity) -> addClassMetrics(classData, complexity, fileMetrics));
+    fileMetrics.attachTo(file, members != null);
   }
 
   private void addClassMetrics(
-      final ClassDataHandler classData, final ComplexityAggregate complexity) {
+      final ClassDataHandler classData,
+      final ComplexityAggregate complexity,
+      final FileMetrics fileMetrics) {
     final TypeMembers typeMembers = members.membersOf(classes.get(classData));
     final int lcom4 = typeMembers == null ? 0 : Lcom4.of(typeMembers, members);
     classData.addMetric(CodeMetrics.CYCLOMATIC_COMPLEXITY, String.valueOf(complexity.sum()));
     classData.addMetric(
         CodeMetrics.CYCLOMATIC_COMPLEXITY_WEIGHTED, String.valueOf(complexity.average()));
     classData.addMetric(CodeMetrics.LCOM4, String.valueOf(lcom4));
+    fileMetrics.addClass(lcom4);
   }
 
   private void attach(
       final MethodDataHandler function,
       final ClassDataHandler owner,
       final FunctionMetrics metrics) {
-    functions.put(function, new Function(owner, metrics.cyclomaticComplexity()));
+    functions.put(function, new Function(owner, metrics));
     function.addMetric(
         CodeMetrics.CYCLOMATIC_COMPLEXITY, String.valueOf(metrics.cyclomaticComplexity()));
     function.addMetric(
@@ -120,5 +126,5 @@ public final class MetricsCollector {
     }
   }
 
-  private record Function(ClassDataHandler owner, int complexity) {}
+  private record Function(ClassDataHandler owner, FunctionMetrics metrics) {}
 }

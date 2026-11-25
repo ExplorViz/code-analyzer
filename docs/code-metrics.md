@@ -10,16 +10,22 @@ The definitions are originally written for Java and adapted to [the other langua
 | `cyclomatic_complexity`          | class, file | Sum over the functions (for classes: weighted methods per class) |
 | `cyclomatic_complexity_weighted` | class, file | Average per function, 0 without functions                        |
 | `nestedBlockDepth`               | function    | Deepest nesting of control structures                            |
+| `nestedBlockDepth`               | file        | Maximum of the functions                                         |
 | `npath_complexity`               | function    | Number of acyclic execution paths                                |
+| `npath_complexity`               | file        | Maximum of the functions, at most 1,000,000,000                  |
 | `LCOM4`                          | class       | Number of unrelated groups of methods                            |
+| `LCOM4`                          | file        | Maximum of the classes                                           |
+| `unmaintainability_index`        | function    | Inverse of the maintainability index, only for Java              |
+| `unmaintainability_index`        | class, file | Index of the average function, 0 without functions               |
 
 The metrics have the following properties and assumptions:
-- The metrics of classes do not exist in C, whose types have no methods.
+- The metrics of classes (and `LCOM4` of files) do not exist in C, whose types have no methods.
 - Functions are methods and constructors.
-- Abstract and native methods have a cyclomatic complexity of 1, an NPath complexity of 0 and no nested block depth.
+- Abstract and native methods have a cyclomatic complexity of 1, an NPath complexity of 0 and no nested block depth and unmaintainability index.
 - Lambdas belong to the function around them.
 - Functions of nested, local and anonymous classes only count for their own class and for the file.
 - Initializer blocks and field initializers are not exported.
+- ExplorViz sums up the values of all files of a commit. Except for `cyclomatic_complexity`, such sums depend on the number of files.
 
 The cyclomatic and NPath complexities of Java functions is matched to metrics that Checkstyle 14.4.0 reports (`CyclomaticComplexity`, `NPathComplexity`).
 `CheckstyleComparisonTest` compares all functions of this repository and of `ComplexityConstructs.java`.
@@ -69,6 +75,23 @@ Hitz and Montazeri (1995): the number of connected components of methods, where 
 - `static final` fields, interface fields and enum constants are not shared state.
 - Methods without code are no component of their own, but connect the methods that call them.
 - Types are not resolved: overloads are told apart by the number of arguments, accesses through other instances (`other.x`) are not recognized, and inherited members are unknown.
+
+## Unmaintainability index
+
+100 - MI, i.e. 0 is maintainable and 100 is unmaintainable, where MI is the maintainability index on the scale from 0 to 100:
+
+```
+MI = max(0, (171 - 5.2 x ln(V) - 0.23 x CC - 16.2 x ln(LOC)) x 100 / 171)
+```
+
+The formula stems from Oman and Hagemeister (1992) and Coleman et al. (1994), without the optional term for comments. Scale and limit are those of Visual Studio.
+
+- V is the Halstead volume, CC the cyclomatic complexity and LOC the number of lines with code, i.e. without comments and blank lines. V and LOC below 1 count as 1.
+- Classes and files use the averages of V, CC and LOC over their functions, as in the original definition. Functions without a body are ignored.
+- V and LOC start with the return type or name of the function. Like CC, they exclude the bodies of local and anonymous classes, whose functions are measured on their own.
+- The Halstead volume is N x log2(n) for N operators and operands, of which n are distinct. Operands are identifiers and literals. Operators are all other tokens, i.e. also keywords, primitive types and separators. Brackets that belong together count once, as do `?:`, `>>` and `>>>`.
+
+As tools count operators and operands differently, values can deviate slightly from those of other tools.
 
 ## Other languages
 
